@@ -1,0 +1,1193 @@
+{
+  "meta": {
+    "app": "RUTE CoffeeOps",
+    "version": 1,
+    "seededAt": "2026-05-17T14:12:14.001Z"
+  },
+  "users": {
+    "owner": {
+      "id": 1,
+      "name": "Owner RUTE",
+      "email": "owner@rute.coffee",
+      "role": "owner"
+    },
+    "partner": {
+      "id": 2,
+      "name": "Partner Malinau",
+      "email": "partner@rute.coffee",
+      "role": "partner"
+    }
+  },
+  "products": [
+    {
+      "id": 1,
+      "name": "Kopi Susu RUTE",
+      "category": "Kopi",
+      "sellingPrice": 10000,
+      "hpp": 6800,
+      "margin": 32,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 1,
+          "name": "Kopi Blend",
+          "qty": 18,
+          "unit": "gram",
+          "costPerUnit": 111,
+          "cost": 2000
+        },
+        {
+          "ingredientId": 2,
+          "name": "Susu UHT",
+          "qty": 120,
+          "unit": "ml",
+          "costPerUnit": 21,
+          "cost": 2500
+        },
+        {
+          "ingredientId": 3,
+          "name": "Gula Aren",
+          "qty": 25,
+          "unit": "ml",
+          "costPerUnit": 40,
+          "cost": 1000
+        },
+        {
+          "ingredientId": 6,
+          "name": "Cup 16oz",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 750,
+          "cost": 750
+        },
+        {
+          "ingredientId": 7,
+          "name": "Lid",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 150,
+          "cost": 150
+        },
+        {
+          "ingredientId": 8,
+          "name": "Sedotan",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 100,
+          "cost": 100
+        },
+        {
+          "ingredientId": 10,
+          "name": "Es Batu",
+          "qty": 1,
+          "unit": "porsi",
+          "costPerUnit": 300,
+          "cost": 300
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Matcha Latte",
+      "category": "Non-Kopi",
+      "sellingPrice": 12000,
+      "hpp": 7200,
+      "margin": 40,
+      "emoji": "🍵",
+      "recipe": [
+        {
+          "ingredientId": 4,
+          "name": "Matcha Powder",
+          "qty": 5,
+          "unit": "gram",
+          "costPerUnit": 300,
+          "cost": 1500
+        },
+        {
+          "ingredientId": 2,
+          "name": "Susu UHT",
+          "qty": 150,
+          "unit": "ml",
+          "costPerUnit": 21,
+          "cost": 3150
+        },
+        {
+          "ingredientId": 3,
+          "name": "Gula Aren",
+          "qty": 20,
+          "unit": "ml",
+          "costPerUnit": 40,
+          "cost": 800
+        },
+        {
+          "ingredientId": 6,
+          "name": "Cup 16oz",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 750,
+          "cost": 750
+        },
+        {
+          "ingredientId": 7,
+          "name": "Lid",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 150,
+          "cost": 150
+        },
+        {
+          "ingredientId": 8,
+          "name": "Sedotan",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 100,
+          "cost": 100
+        },
+        {
+          "ingredientId": 10,
+          "name": "Es Batu",
+          "qty": 1,
+          "unit": "porsi",
+          "costPerUnit": 300,
+          "cost": 300
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Americano",
+      "category": "Kopi",
+      "sellingPrice": 8000,
+      "hpp": 3500,
+      "margin": 56,
+      "emoji": "🫗",
+      "recipe": [
+        {
+          "ingredientId": 1,
+          "name": "Kopi Blend",
+          "qty": 18,
+          "unit": "gram",
+          "costPerUnit": 111,
+          "cost": 2000
+        },
+        {
+          "ingredientId": 6,
+          "name": "Cup 16oz",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 750,
+          "cost": 750
+        },
+        {
+          "ingredientId": 7,
+          "name": "Lid",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 150,
+          "cost": 150
+        },
+        {
+          "ingredientId": 8,
+          "name": "Sedotan",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 100,
+          "cost": 100
+        },
+        {
+          "ingredientId": 10,
+          "name": "Es Batu",
+          "qty": 1,
+          "unit": "porsi",
+          "costPerUnit": 300,
+          "cost": 300
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Chocolate",
+      "category": "Non-Kopi",
+      "sellingPrice": 10000,
+      "hpp": 6500,
+      "margin": 35,
+      "emoji": "🍫",
+      "recipe": [
+        {
+          "ingredientId": 5,
+          "name": "Chocolate Powder",
+          "qty": 25,
+          "unit": "gram",
+          "costPerUnit": 80,
+          "cost": 2000
+        },
+        {
+          "ingredientId": 2,
+          "name": "Susu UHT",
+          "qty": 150,
+          "unit": "ml",
+          "costPerUnit": 21,
+          "cost": 3150
+        },
+        {
+          "ingredientId": 6,
+          "name": "Cup 16oz",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 750,
+          "cost": 750
+        },
+        {
+          "ingredientId": 7,
+          "name": "Lid",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 150,
+          "cost": 150
+        },
+        {
+          "ingredientId": 8,
+          "name": "Sedotan",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 100,
+          "cost": 100
+        },
+        {
+          "ingredientId": 10,
+          "name": "Es Batu",
+          "qty": 1,
+          "unit": "porsi",
+          "costPerUnit": 300,
+          "cost": 300
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Es Kopi",
+      "category": "Kopi",
+      "sellingPrice": 8000,
+      "hpp": 4200,
+      "margin": 47,
+      "emoji": "🧊",
+      "recipe": [
+        {
+          "ingredientId": 1,
+          "name": "Kopi Blend",
+          "qty": 18,
+          "unit": "gram",
+          "costPerUnit": 111,
+          "cost": 2000
+        },
+        {
+          "ingredientId": 3,
+          "name": "Gula Aren",
+          "qty": 25,
+          "unit": "ml",
+          "costPerUnit": 40,
+          "cost": 1000
+        },
+        {
+          "ingredientId": 6,
+          "name": "Cup 16oz",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 750,
+          "cost": 750
+        },
+        {
+          "ingredientId": 7,
+          "name": "Lid",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 150,
+          "cost": 150
+        },
+        {
+          "ingredientId": 10,
+          "name": "Es Batu",
+          "qty": 1,
+          "unit": "porsi",
+          "costPerUnit": 300,
+          "cost": 300
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Thai Tea",
+      "category": "Non-Kopi",
+      "sellingPrice": 10000,
+      "hpp": 5800,
+      "margin": 42,
+      "emoji": "🫖",
+      "recipe": [
+        {
+          "ingredientId": 2,
+          "name": "Susu UHT",
+          "qty": 100,
+          "unit": "ml",
+          "costPerUnit": 21,
+          "cost": 2100
+        },
+        {
+          "ingredientId": 3,
+          "name": "Gula Aren",
+          "qty": 30,
+          "unit": "ml",
+          "costPerUnit": 40,
+          "cost": 1200
+        },
+        {
+          "ingredientId": 6,
+          "name": "Cup 16oz",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 750,
+          "cost": 750
+        },
+        {
+          "ingredientId": 7,
+          "name": "Lid",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 150,
+          "cost": 150
+        },
+        {
+          "ingredientId": 8,
+          "name": "Sedotan",
+          "qty": 1,
+          "unit": "pcs",
+          "costPerUnit": 100,
+          "cost": 100
+        },
+        {
+          "ingredientId": 10,
+          "name": "Es Batu",
+          "qty": 1,
+          "unit": "porsi",
+          "costPerUnit": 300,
+          "cost": 300
+        }
+      ]
+    },
+    {
+      "id": 1779031553821,
+      "name": "Kopi Morpis",
+      "category": "espresso_based",
+      "sellingPrice": 20000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 1,
+          "qty": 15,
+          "unit": "gram",
+          "cost": 150
+        }
+      ],
+      "hpp": 2250,
+      "margin": 89,
+      "createdAt": "2026-05-17T15:25:53.844Z"
+    }
+  ],
+  "sales": [
+    {
+      "id": "TRX-001",
+      "date": "2026-05-17T09:15:00",
+      "items": [
+        {
+          "productId": 1,
+          "name": "Kopi Susu RUTE",
+          "qty": 2,
+          "price": 10000,
+          "subtotal": 20000
+        },
+        {
+          "productId": 3,
+          "name": "Americano",
+          "qty": 1,
+          "price": 8000,
+          "subtotal": 8000
+        }
+      ],
+      "total": 28000,
+      "paymentMethod": "cash",
+      "user": "Partner"
+    },
+    {
+      "id": "TRX-002",
+      "date": "2026-05-17T10:30:00",
+      "items": [
+        {
+          "productId": 2,
+          "name": "Matcha Latte",
+          "qty": 2,
+          "price": 12000,
+          "subtotal": 24000
+        }
+      ],
+      "total": 24000,
+      "paymentMethod": "qris",
+      "user": "Partner"
+    },
+    {
+      "id": "TRX-003",
+      "date": "2026-05-17T11:45:00",
+      "items": [
+        {
+          "productId": 1,
+          "name": "Kopi Susu RUTE",
+          "qty": 3,
+          "price": 10000,
+          "subtotal": 30000
+        },
+        {
+          "productId": 4,
+          "name": "Chocolate",
+          "qty": 1,
+          "price": 10000,
+          "subtotal": 10000
+        },
+        {
+          "productId": 6,
+          "name": "Thai Tea",
+          "qty": 2,
+          "price": 10000,
+          "subtotal": 20000
+        }
+      ],
+      "total": 60000,
+      "paymentMethod": "cash",
+      "user": "Partner"
+    },
+    {
+      "id": "TRX-004",
+      "date": "2026-05-17T13:00:00",
+      "items": [
+        {
+          "productId": 5,
+          "name": "Es Kopi",
+          "qty": 2,
+          "price": 8000,
+          "subtotal": 16000
+        },
+        {
+          "productId": 2,
+          "name": "Matcha Latte",
+          "qty": 1,
+          "price": 12000,
+          "subtotal": 12000
+        }
+      ],
+      "total": 28000,
+      "paymentMethod": "transfer",
+      "user": "Partner"
+    },
+    {
+      "id": "TRX-005",
+      "date": "2026-05-17T14:20:00",
+      "items": [
+        {
+          "productId": 1,
+          "name": "Kopi Susu RUTE",
+          "qty": 4,
+          "price": 10000,
+          "subtotal": 40000
+        }
+      ],
+      "total": 40000,
+      "paymentMethod": "qris",
+      "user": "Partner"
+    },
+    {
+      "id": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "items": [
+        {
+          "productId": 1,
+          "name": "Kopi Susu RUTE",
+          "qty": 1,
+          "price": 10000,
+          "subtotal": 10000
+        },
+        {
+          "productId": 2,
+          "name": "Matcha Latte",
+          "qty": 1,
+          "price": 12000,
+          "subtotal": 12000
+        }
+      ],
+      "total": 22000,
+      "paymentMethod": "cash",
+      "user": "Partner"
+    }
+  ],
+  "expenses": [
+    {
+      "date": "2026-05-17T15:09:14.232Z",
+      "description": "Beli Token Listrik",
+      "total": 50000,
+      "category": "lainnya",
+      "items": [],
+      "user": "Owner RUTE"
+    },
+    {
+      "id": "EXP-001",
+      "date": "2026-05-17T08:30:00",
+      "category": "bahan_baku",
+      "description": "Pembelian susu UHT",
+      "items": [
+        {
+          "name": "Susu UHT 1L",
+          "qty": 12,
+          "price": 18000,
+          "total": 216000,
+          "addsStock": true,
+          "ingredientId": 2
+        }
+      ],
+      "total": 216000,
+      "status": "approved",
+      "photoUrl": null,
+      "user": "Partner"
+    },
+    {
+      "id": "EXP-002",
+      "date": "2026-05-17T09:00:00",
+      "category": "bahan_baku",
+      "description": "Pembelian gula aren dan kopi",
+      "items": [
+        {
+          "name": "Gula Aren",
+          "qty": 2,
+          "price": 25000,
+          "total": 50000,
+          "addsStock": true,
+          "ingredientId": 3
+        },
+        {
+          "name": "Kopi Blend 1kg",
+          "qty": 1,
+          "price": 110000,
+          "total": 110000,
+          "addsStock": true,
+          "ingredientId": 1
+        }
+      ],
+      "total": 160000,
+      "status": "approved",
+      "photoUrl": null,
+      "user": "Partner"
+    },
+    {
+      "id": "EXP-003",
+      "date": "2026-05-17T10:00:00",
+      "category": "packaging",
+      "description": "Pembelian cup dan sedotan",
+      "items": [
+        {
+          "name": "Cup 16oz",
+          "qty": 100,
+          "price": 750,
+          "total": 75000,
+          "addsStock": true,
+          "ingredientId": 6
+        },
+        {
+          "name": "Sedotan",
+          "qty": 100,
+          "price": 150,
+          "total": 15000,
+          "addsStock": true,
+          "ingredientId": 8
+        }
+      ],
+      "total": 90000,
+      "status": "auto_approved",
+      "photoUrl": null,
+      "user": "Partner"
+    },
+    {
+      "id": "EXP-004",
+      "date": "2026-05-16T14:00:00",
+      "category": "peralatan",
+      "description": "Service grinder",
+      "items": [
+        {
+          "name": "Service grinder + ganti burr",
+          "qty": 1,
+          "price": 450000,
+          "total": 450000,
+          "addsStock": false
+        }
+      ],
+      "total": 450000,
+      "status": "pending",
+      "photoUrl": null,
+      "user": "Partner"
+    },
+    {
+      "id": "EXP-005",
+      "date": "2026-05-16T07:00:00",
+      "category": "operasional",
+      "description": "Beli es batu",
+      "items": [
+        {
+          "name": "Es Batu",
+          "qty": 20,
+          "price": 5000,
+          "total": 100000,
+          "addsStock": true,
+          "ingredientId": 10
+        }
+      ],
+      "total": 100000,
+      "status": "approved",
+      "photoUrl": null,
+      "user": "Partner"
+    }
+  ],
+  "ingredients": [
+    {
+      "id": 1,
+      "name": "Kopi Blend",
+      "unit": "gram",
+      "stock": 533,
+      "minStock": 500,
+      "status": "aman",
+      "costPerUnit": 150,
+      "unitConversions": {
+        "kg": 1000,
+        "kilogram": 1000,
+        "gram": 1,
+        "g": 1
+      }
+    },
+    {
+      "id": 2,
+      "name": "Susu UHT",
+      "unit": "ml",
+      "stock": 0,
+      "minStock": 2000,
+      "status": "kritis",
+      "costPerUnit": 18,
+      "unitConversions": {
+        "pcs": 1000,
+        "kotak": 1000,
+        "liter": 1000,
+        "l": 1000,
+        "ml": 1
+      }
+    },
+    {
+      "id": 3,
+      "name": "Gula Aren",
+      "unit": "ml",
+      "stock": 755,
+      "minStock": 500,
+      "status": "aman",
+      "costPerUnit": 25,
+      "unitConversions": {
+        "botol": 1000,
+        "liter": 1000,
+        "l": 1000,
+        "ml": 1
+      }
+    },
+    {
+      "id": 4,
+      "name": "Matcha Powder",
+      "unit": "gram",
+      "stock": 145,
+      "minStock": 200,
+      "status": "kritis",
+      "costPerUnit": 200,
+      "unitConversions": {
+        "kg": 1000,
+        "kilogram": 1000,
+        "gram": 1,
+        "g": 1
+      }
+    },
+    {
+      "id": 5,
+      "name": "Chocolate Powder",
+      "unit": "gram",
+      "stock": 350,
+      "minStock": 200,
+      "status": "aman",
+      "costPerUnit": 120,
+      "unitConversions": {
+        "kg": 1000,
+        "kilogram": 1000,
+        "gram": 1,
+        "g": 1
+      }
+    },
+    {
+      "id": 6,
+      "name": "Cup 16oz",
+      "unit": "pcs",
+      "stock": 43,
+      "minStock": 50,
+      "status": "kritis",
+      "costPerUnit": 400,
+      "unitConversions": {
+        "pack": 50,
+        "pcs": 1
+      }
+    },
+    {
+      "id": 7,
+      "name": "Lid",
+      "unit": "pcs",
+      "stock": 118,
+      "minStock": 50,
+      "status": "aman",
+      "costPerUnit": 100,
+      "unitConversions": {
+        "pack": 50,
+        "pcs": 1
+      }
+    },
+    {
+      "id": 8,
+      "name": "Sedotan",
+      "unit": "pcs",
+      "stock": 198,
+      "minStock": 50,
+      "status": "aman",
+      "costPerUnit": 50,
+      "unitConversions": {
+        "pack": 100,
+        "pcs": 1
+      }
+    },
+    {
+      "id": 9,
+      "name": "Plastik",
+      "unit": "pcs",
+      "stock": 80,
+      "minStock": 50,
+      "status": "aman",
+      "costPerUnit": 150,
+      "unitConversions": {
+        "pack": 50,
+        "pcs": 1
+      }
+    },
+    {
+      "id": 10,
+      "name": "Es Batu",
+      "unit": "porsi",
+      "stock": 13,
+      "minStock": 10,
+      "status": "aman",
+      "costPerUnit": 200,
+      "unitConversions": {
+        "porsi": 1,
+        "bungkus": 10
+      }
+    }
+  ],
+  "stockMovements": [
+    {
+      "id": 1,
+      "ingredientId": 2,
+      "type": "masuk",
+      "qty": 12,
+      "source": "Pembelian (Resi #R001)",
+      "date": "2026-05-17T10:30:00",
+      "user": "Partner"
+    },
+    {
+      "id": 2,
+      "ingredientId": 1,
+      "type": "keluar",
+      "qty": 54,
+      "source": "Penjualan (3x Kopi Susu)",
+      "date": "2026-05-17T11:00:00",
+      "user": "Sistem"
+    },
+    {
+      "id": 3,
+      "ingredientId": 1,
+      "type": "koreksi",
+      "qty": -50,
+      "source": "Tumpah",
+      "date": "2026-05-17T15:20:00",
+      "user": "Partner"
+    },
+    {
+      "id": 4,
+      "ingredientId": 6,
+      "type": "masuk",
+      "qty": 100,
+      "source": "Pembelian (Resi #R002)",
+      "date": "2026-05-16T09:00:00",
+      "user": "Partner"
+    },
+    {
+      "id": 5,
+      "ingredientId": 4,
+      "type": "keluar",
+      "qty": 25,
+      "source": "Penjualan (5x Matcha)",
+      "date": "2026-05-16T14:00:00",
+      "user": "Sistem"
+    },
+    {
+      "ingredientId": 1,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 18,
+      "unit": "gram",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-0"
+    },
+    {
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 120,
+      "unit": "ml",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-1"
+    },
+    {
+      "ingredientId": 3,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 25,
+      "unit": "ml",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-2"
+    },
+    {
+      "ingredientId": 6,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-3"
+    },
+    {
+      "ingredientId": 7,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-4"
+    },
+    {
+      "ingredientId": 8,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-5"
+    },
+    {
+      "ingredientId": 10,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "porsi",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-6"
+    },
+    {
+      "ingredientId": 4,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 5,
+      "unit": "gram",
+      "source": "Penjualan (1x Matcha Latte)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-7"
+    },
+    {
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 150,
+      "unit": "ml",
+      "source": "Penjualan (1x Matcha Latte)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-8"
+    },
+    {
+      "ingredientId": 3,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 20,
+      "unit": "ml",
+      "source": "Penjualan (1x Matcha Latte)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-9"
+    },
+    {
+      "ingredientId": 6,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Matcha Latte)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-10"
+    },
+    {
+      "ingredientId": 7,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Matcha Latte)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-11"
+    },
+    {
+      "ingredientId": 8,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Matcha Latte)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-12"
+    },
+    {
+      "ingredientId": 10,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "porsi",
+      "source": "Penjualan (1x Matcha Latte)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779027621234",
+      "date": "2026-05-17T14:20:21.234Z",
+      "user": "Sistem",
+      "id": "SM-1779027621237-13"
+    },
+    {
+      "id": "SM-1779031389584-1",
+      "ingredientId": 1,
+      "type": "koreksi",
+      "movementType": "adjustment",
+      "qty": 1,
+      "unit": "gram",
+      "source": "Testing endpoint API",
+      "sourceType": "manual",
+      "sourceId": null,
+      "date": "2026-05-17T15:23:09.584Z",
+      "user": "Owner"
+    },
+    {
+      "id": "SM-1779031482999-1",
+      "ingredientId": 1,
+      "type": "koreksi",
+      "movementType": "adjustment",
+      "qty": 100,
+      "unit": "gram",
+      "source": "Testing",
+      "sourceType": "manual",
+      "sourceId": null,
+      "date": "2026-05-17T15:24:42.999Z",
+      "user": "Owner RUTE"
+    }
+  ],
+  "activityLog": [
+    {
+      "id": 1,
+      "time": "2026-05-17T09:02:00",
+      "action": "Buka kas awal Rp 100.000",
+      "user": "Partner",
+      "type": "kas"
+    },
+    {
+      "id": 2,
+      "time": "2026-05-17T09:15:00",
+      "action": "Input penjualan: Kopi Susu 2x, Americano 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": 3,
+      "time": "2026-05-17T10:30:00",
+      "action": "Input penjualan: Matcha Latte 2x (QRIS)",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": 4,
+      "time": "2026-05-17T10:35:00",
+      "action": "Upload resi pembelian susu UHT Rp 216.000",
+      "user": "Partner",
+      "type": "pengeluaran"
+    },
+    {
+      "id": 5,
+      "time": "2026-05-17T11:45:00",
+      "action": "Input penjualan: Kopi Susu 3x, Chocolate 1x, Thai Tea 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": 6,
+      "time": "2026-05-17T13:00:00",
+      "action": "Input penjualan: Es Kopi 2x, Matcha 1x (Transfer)",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": 7,
+      "time": "2026-05-17T14:20:00",
+      "action": "Input penjualan: Kopi Susu 4x (QRIS)",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": 8,
+      "time": "2026-05-17T14:45:00",
+      "action": "Stok Cup 16oz diupdate: +100 pcs",
+      "user": "Partner",
+      "type": "stok"
+    },
+    {
+      "id": 9,
+      "time": "2026-05-17T15:20:00",
+      "action": "Koreksi stok kopi: -50 gram (tumpah)",
+      "user": "Partner",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779027621250",
+      "time": "2026-05-17T14:20:21.234Z",
+      "action": "Input penjualan: Kopi Susu RUTE 1x, Matcha Latte 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1779030554255",
+      "time": "2026-05-17T15:09:14.232Z",
+      "action": "Input pengeluaran: Beli Token Listrik",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1779031389584",
+      "time": "2026-05-17T15:23:09.584Z",
+      "action": "Koreksi stok Kopi Blend: Testing endpoint API",
+      "user": "Owner",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779031482999",
+      "time": "2026-05-17T15:24:42.999Z",
+      "action": "Koreksi stok Kopi Blend: Testing",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779031553844",
+      "time": "2026-05-17T15:25:53.844Z",
+      "action": "Menu baru ditambahkan: Kopi Morpis",
+      "user": "Owner",
+      "type": "menu"
+    }
+  ],
+  "cashSessions": [
+    {
+      "date": "2026-05-16",
+      "openingCash": 100000,
+      "closingCash": 280000,
+      "expectedCash": 280000,
+      "difference": 0,
+      "qris": 124000,
+      "transfer": 56000,
+      "totalExpenseCash": 150000,
+      "status": "closed",
+      "notes": "Tidak ada kendala"
+    },
+    {
+      "date": "2026-05-17",
+      "openingCash": 100000,
+      "closingCash": null,
+      "expectedCash": null,
+      "difference": null,
+      "qris": null,
+      "transfer": null,
+      "totalExpenseCash": null,
+      "status": "open",
+      "notes": null
+    }
+  ],
+  "dailyNotes": [
+    {
+      "date": "2026-05-17",
+      "note": "Hari ini agak sepi pagi tapi ramai mulai jam 11. Banyak yang pesan kopi susu. Stok cup mulai menipis, sudah dibeli 100 pcs. Grinder agak bunyi aneh, mungkin perlu dicek. Ada pelanggan tanya menu baru rasa taro.",
+      "createdBy": "Partner",
+      "createdAt": "2026-05-17T16:00:00"
+    },
+    {
+      "date": "2026-05-16",
+      "note": "Hari ramai, total 25 cup. QRIS sempat error sekitar jam 2 siang tapi sudah normal. Ada komplain es kurang, besok beli es lebih banyak.",
+      "createdBy": "Partner",
+      "createdAt": "2026-05-16T21:00:00"
+    }
+  ],
+  "receiptUploads": []
+}

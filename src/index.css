@@ -1,0 +1,324 @@
+@import "tailwindcss";
+
+/* ============================================
+   RUTE Coffee — Design System
+   Theme: Warm Coffee Dashboard
+   ============================================ */
+
+@theme {
+  /* Core Palette */
+  --color-band-1: #9a906f;
+  --color-band-2: #96855e;
+  --color-band-3: #ccb38b;
+  --color-band-4: #f6e9d0;
+
+  /* Extended Coffee */
+  --color-coffee-dark: #7a6e4f;
+  --color-coffee-medium: #96855e;
+  --color-coffee-light: #b8a47e;
+  --color-coffee-cream: #ccb38b;
+  --color-coffee-latte: #e8d9c0;
+  --color-coffee-milk: #f6e9d0;
+
+  /* Backgrounds */
+  --color-bg-warm: #faf6ef;
+  --color-bg-primary: #faf6ef;
+  --color-bg-card: #FFFFFF;
+  --color-bg-glass: rgba(255, 255, 255, 0.9);
+
+  /* Accents */
+  --color-accent-green: #6b8f5e;
+  --color-accent-red: #c4705a;
+  --color-accent-blue: #5a7a8f;
+  --color-accent-orange: #c4955a;
+  
+  /* Fallbacks for existing tailwind classes used in app */
+  --color-accent-primary: #9a906f; 
+  --color-success: #6b8f5e;
+  --color-warning: #c4955a;
+  --color-danger: #c4705a;
+  --color-info: #5a7a8f;
+
+  /* Text */
+  --color-text-primary: #3d3629;
+  --color-text-secondary: #8a7d6b;
+  --color-text-muted: rgba(138, 125, 107, 0.6);
+
+  /* Borders */
+  --color-border: #e8d9c0;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 3px 0 rgba(90, 78, 58, 0.08);
+  --shadow-md: 0 4px 12px -1px rgba(90, 78, 58, 0.12), 0 2px 6px -1px rgba(90, 78, 58, 0.06);
+  --shadow-lg: 0 12px 24px -4px rgba(90, 78, 58, 0.15);
+
+  /* Radius */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-card: 18px;
+  --radius-button: 14px;
+  --radius-badge: 10px;
+
+  /* Font */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg-primary);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-band-3);
+    border-radius: 3px;
+  }
+}
+
+/* ============================================
+   Component Utilities
+   ============================================ */
+
+@layer components {
+  /* Warm Coffee Card */
+  .glass-card, .kpi-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-coffee-latte);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-band-1), var(--color-band-3));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+  .kpi-card:hover::before { opacity: 1; }
+
+  /* Button base */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.25s;
+    min-height: 40px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--color-band-1), var(--color-band-2));
+    color: white;
+    box-shadow: 0 2px 8px rgba(122, 110, 79, 0.3);
+  }
+  .btn-primary:hover, .btn-primary:active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(122, 110, 79, 0.4);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1.5px solid var(--color-band-3);
+    color: var(--color-band-1);
+  }
+  .btn-secondary:hover {
+    background: var(--color-band-4);
+    border-color: var(--color-band-2);
+  }
+
+  .btn-danger {
+    background: var(--color-accent-red);
+    color: white;
+  }
+  .btn-success {
+    background: var(--color-accent-green);
+    color: white;
+  }
+
+  /* Status badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .badge-success {
+    background: #e8f5e4;
+    color: #4a7a3f;
+  }
+  .badge-warning {
+    background: #f5efe0;
+    color: var(--color-accent-orange);
+  }
+  .badge-danger {
+    background: #fae8e0;
+    color: #8a4a3a;
+  }
+  .badge-info {
+    background: #e0ecf5;
+    color: var(--color-accent-blue);
+  }
+
+  /* Menu button for Partner quick sales */
+  .menu-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    min-height: 100px;
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-coffee-latte);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--color-text-primary);
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .menu-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+  .menu-btn:active {
+    transform: translateY(0);
+  }
+  .menu-btn.selected {
+    border-color: var(--color-band-1);
+    background: linear-gradient(135deg, var(--color-band-4), var(--color-coffee-latte));
+    box-shadow: 0 2px 8px rgba(122, 110, 79, 0.15);
+  }
+
+  /* Form Elements */
+  .form-input, .form-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--color-coffee-latte);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: var(--color-bg-primary);
+  }
+  .form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--color-band-2);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(150, 133, 94, 0.1);
+  }
+
+  /* Table styling */
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .data-table th {
+    text-align: left;
+    padding: 14px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 2px solid var(--color-coffee-latte);
+    background: var(--color-bg-primary);
+  }
+  .data-table td {
+    padding: 14px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--color-coffee-latte);
+  }
+  .data-table tr:hover td {
+    background: var(--color-bg-primary);
+  }
+
+  /* Animations */
+  .fade-in {
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-in {
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .animate-pulse-custom {
+    animation: pulseCustom 2s infinite;
+  }
+
+  @keyframes pulseCustom {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+  }
+}
