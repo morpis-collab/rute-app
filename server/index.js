@@ -208,6 +208,14 @@ function requireRole(role) {
   };
 }
 
+function checkCashLock(db, businessDate) {
+  const session = db.cashSessions.find((s) => s.date === businessDate);
+  if (session?.status === 'closed') {
+    return { error: `Kas untuk tanggal ${businessDate} sudah ditutup, transaksi ditolak.`, statusCode: 403 };
+  }
+  return null;
+}
+
 function notFound(res, entity = 'Data') {
   return res.status(404).json({ error: `${entity} tidak ditemukan` });
 }
@@ -298,6 +306,9 @@ app.get('/api/sales', (req, res) => {
 
 app.post('/api/sales', (req, res) => {
   const result = updateDb((db) => {
+    const lockError = checkCashLock(db, today());
+    if (lockError) return lockError;
+
     const body = req.body || {};
     const products = refreshProductCosts(db.products, db.ingredients);
     const rawItems = Array.isArray(body.transaction?.items)
@@ -380,6 +391,10 @@ app.get('/api/expenses', (req, res) => {
 app.post('/api/expenses', (req, res) => {
   const result = updateDb((db) => {
     const body = req.body || {};
+    const expenseDate = body.date || body.expense?.date || today();
+    const lockError = checkCashLock(db, expenseDate.substring(0, 10));
+    if (lockError) return lockError;
+
     const items = Array.isArray(body.expense?.items)
       ? body.expense.items
       : Array.isArray(body.items)
@@ -475,6 +490,10 @@ app.post('/api/receipt-expenses', (req, res) => {
   const result = updateDb((db) => {
     const body = req.body || {};
     const receipt = body.receipt || {};
+    const receiptDate = receipt.transactionDate || body.expense?.date || today();
+    const lockError = checkCashLock(db, receiptDate.substring(0, 10));
+    if (lockError) return lockError;
+
     const total = receipt.items?.reduce((sum, item) => sum + Number(item.total || 0), 0) || 0;
     const expense = body.expense || {
       id: `EXP-${Date.now()}`,
