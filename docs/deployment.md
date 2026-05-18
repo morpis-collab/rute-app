@@ -11,6 +11,7 @@ This repo includes:
 
 - `vercel.json` for frontend SPA rewrites.
 - `render.yaml` for a Render backend service with a persistent `/data` disk.
+- `scripts/deploy-vps.sh` and `scripts/setup-nginx.sh` for a single VPS serving both frontend and API.
 
 Set frontend env:
 
@@ -57,12 +58,55 @@ AI_BASE_URL=https://api.openai.com/v1
 3. Add `VITE_API_URL=https://your-api-host.example.com/api`.
 4. Deploy after backend URL is known.
 
+## Single VPS Quick Path
+
+Current VPS target:
+
+```bash
+http://202.10.34.42
+```
+
+Run on the VPS as root:
+
+```bash
+PUBLIC_ORIGIN=http://202.10.34.42 bash scripts/deploy-vps.sh
+bash scripts/setup-nginx.sh 202.10.34.42
+```
+
+If using a domain later:
+
+```bash
+PUBLIC_ORIGIN=https://ruteapp.cloud bash scripts/deploy-vps.sh
+bash scripts/setup-nginx.sh ruteapp.cloud
+```
+
+The VPS script writes production config to `/opt/rute-app/.env`, which is the file loaded by `server/index.js` when PM2 starts from `/opt/rute-app`. On each run, the script keeps existing secrets but forces deploy-safe VPS values for `NODE_ENV`, `PORT`, `VITE_API_URL=/api`, `RUTE_CORS_ORIGIN`, `RUTE_DATA_FILE`, and `RUTE_UPLOAD_DIR` before building.
+
+Required edits before real users log in:
+
+```bash
+nano /opt/rute-app/.env
+```
+
+Set these values:
+
+```bash
+JWT_SECRET=<long-random-secret>
+RUTE_OWNER_PIN=<new-6-digit-owner-pin>
+RUTE_PARTNER_PIN=<new-6-digit-partner-pin>
+RUTE_CORS_ORIGIN=http://202.10.34.42
+VITE_API_URL=/api
+```
+
+Use `VITE_API_URL=/api` when frontend and backend are served from the same VPS origin. This keeps browser requests on the same origin and avoids accidentally calling `localhost` from the user's device.
+
 ## Important
 
 - `RUTE_DATA_FILE` must point to persistent storage. On Render/Railway, attach a persistent disk/volume if using the JSON database.
 - `RUTE_UPLOAD_DIR` must also point to persistent storage if receipt photos need to survive deploy/restart.
 - Do not deploy production with the dev PINs from `.env.example`.
 - `RUTE_CORS_ORIGIN` must be the exact frontend origin in production.
+- For single-VPS deploy, use the public IP/domain as `PUBLIC_ORIGIN` and keep `VITE_API_URL=/api`.
 - Vercel SPA rewrites only serve the frontend. The Express API still needs a separate Node backend unless the app is migrated to serverless API routes.
 - If the backend URL changes, redeploy the frontend so `VITE_API_URL` is baked into the static build.
 

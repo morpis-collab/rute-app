@@ -687,7 +687,8 @@
         "kilogram": 1000,
         "gram": 1,
         "g": 1
-      }
+      },
+      "category": "bahan_baku"
     },
     {
       "id": 2,
@@ -703,7 +704,8 @@
         "liter": 1000,
         "l": 1000,
         "ml": 1
-      }
+      },
+      "category": "bahan_baku"
     },
     {
       "id": 3,
@@ -718,7 +720,8 @@
         "liter": 1000,
         "l": 1000,
         "ml": 1
-      }
+      },
+      "category": "bahan_baku"
     },
     {
       "id": 4,
@@ -733,7 +736,8 @@
         "kilogram": 1000,
         "gram": 1,
         "g": 1
-      }
+      },
+      "category": "bahan_baku"
     },
     {
       "id": 5,
@@ -748,7 +752,8 @@
         "kilogram": 1000,
         "gram": 1,
         "g": 1
-      }
+      },
+      "category": "bahan_baku"
     },
     {
       "id": 6,
@@ -761,7 +766,8 @@
       "unitConversions": {
         "pack": 50,
         "pcs": 1
-      }
+      },
+      "category": "bahan_baku"
     },
     {
       "id": 7,
@@ -774,7 +780,8 @@
       "unitConversions": {
         "pack": 50,
         "pcs": 1
-      }
+      },
+      "category": "bahan_baku"
     },
     {
       "id": 8,
@@ -787,7 +794,8 @@
       "unitConversions": {
         "pack": 100,
         "pcs": 1
-      }
+      },
+      "category": "bahan_baku"
     },
     {
       "id": 9,
@@ -800,7 +808,8 @@
       "unitConversions": {
         "pack": 50,
         "pcs": 1
-      }
+      },
+      "category": "bahan_baku"
     },
     {
       "id": 10,
@@ -813,7 +822,8 @@
       "unitConversions": {
         "porsi": 1,
         "bungkus": 10
-      }
+      },
+      "category": "bahan_baku"
     }
   ],
   "stockMovements": [
@@ -1397,6 +1407,18 @@
       "user": "Rute Owner"
     }
   ],
+  "openingCapital": {
+    "businessStartDate": null,
+    "cashCapital": 0,
+    "assetContributions": [],
+    "inventoryContributions": [],
+    "personalExcludedItems": [],
+    "notes": "",
+    "createdBy": "System",
+    "createdAt": "2026-05-18T13:09:02.416Z",
+    "updatedBy": "System",
+    "updatedAt": "2026-05-18T13:09:02.416Z"
+  },
   "dailyNotes": [
     {
       "date": "2026-05-17",
