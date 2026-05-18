@@ -22,11 +22,20 @@ import { authenticateRequest, getAuthenticatedUser, loginWithRolePin } from './a
 import { answerCopilot, buildCopilotContext, buildCopilotInsights } from './copilot.js';
 
 const app = express();
+const RECEIPT_ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+]);
+const RECEIPT_CATEGORIES = new Set(['bahan_baku', 'packaging', 'operasional', 'lainnya']);
+const EXPENSE_STATUSES = new Set(['auto_approved', 'pending', 'approved', 'rejected']);
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (!file.mimetype?.startsWith('image/')) {
+    if (!RECEIPT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
       return cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'receipt'));
     }
     return cb(null, true);
@@ -83,16 +92,103 @@ function bootstrapPayload(db) {
     cashSessions: db.cashSessions,
     cashAccounts: db.cashAccounts,
     cashTransactions: db.cashTransactions,
+    openingCapital: openingCapitalPayload(db.openingCapital, { includePersonal: false }),
     dailyNotes: db.dailyNotes,
     receiptUploads: db.receiptUploads,
     dashboard: dashboardFrom(db),
   };
 }
 
+function sumContributionValues(items = []) {
+  return items.reduce((sum, item) => sum + Number(item.estimatedValue || 0), 0);
+}
+
+function openingCapitalPayload(openingCapital = {}, { includePersonal = true } = {}) {
+  const cashCapital = Number(openingCapital.cashCapital || 0);
+  const assetContributions = Array.isArray(openingCapital.assetContributions)
+    ? openingCapital.assetContributions
+    : [];
+  const inventoryContributions = Array.isArray(openingCapital.inventoryContributions)
+    ? openingCapital.inventoryContributions
+    : [];
+  const personalExcludedItems = includePersonal && Array.isArray(openingCapital.personalExcludedItems)
+    ? openingCapital.personalExcludedItems
+    : [];
+  const totalAssetContributions = sumContributionValues(assetContributions);
+  const totalInventoryContributions = sumContributionValues(inventoryContributions);
+  const totalPersonalExcluded = sumContributionValues(personalExcludedItems);
+
+  return {
+    businessStartDate: openingCapital.businessStartDate || null,
+    cashCapital,
+    assetContributions,
+    inventoryContributions,
+    personalExcludedItems,
+    notes: openingCapital.notes || '',
+    createdBy: openingCapital.createdBy || 'System',
+    createdAt: openingCapital.createdAt || null,
+    updatedBy: openingCapital.updatedBy || 'System',
+    updatedAt: openingCapital.updatedAt || null,
+    totals: {
+      cashCapital,
+      assetContributions: totalAssetContributions,
+      inventoryContributions: totalInventoryContributions,
+      businessCapital: cashCapital + totalAssetContributions + totalInventoryContributions,
+      personalExcluded: totalPersonalExcluded,
+    },
+  };
+}
+
+function normalizeCapitalItems(items, kind) {
+  if (!Array.isArray(items)) return [];
+  return items.map((item, index) => {
+    const name = String(item?.name || '').trim();
+    const estimatedValue = Number(item?.estimatedValue ?? item?.value ?? 0);
+    const quantity = Number(item?.quantity ?? 1);
+    const normalized = {
+      id: item?.id || `${kind.toUpperCase()}-${Date.now()}-${index}`,
+      name,
+      estimatedValue,
+      notes: String(item?.notes || '').trim(),
+    };
+
+    if (kind !== 'personal') {
+      normalized.quantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+      normalized.unit = String(item?.unit || 'item').trim();
+      if (item?.category) normalized.category = String(item.category).trim();
+    }
+    if (kind === 'inventory' && item?.ingredientId) normalized.ingredientId = String(item.ingredientId);
+    if (kind === 'personal') normalized.reason = String(item?.reason || 'Barang pribadi, tidak masuk usaha').trim();
+
+    return normalized;
+  });
+}
+
+function validateCapitalItems(items, label) {
+  if (items.length > 100) return { error: `${label} maksimal 100 item` };
+  const invalid = items.find((item) => (
+    !item.name ||
+    !Number.isFinite(Number(item.estimatedValue)) ||
+    Number(item.estimatedValue) < 0 ||
+    (item.quantity != null && (!Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))
+  ));
+  if (invalid) return { error: `${label} wajib punya nama, nilai wajar tidak negatif, dan jumlah valid` };
+  return null;
+}
+
+function openingCashFromCapital(db, businessDate, existingSession, openingCash) {
+  if (openingCash != null) return { value: Number(openingCash), source: 'query' };
+  if (existingSession?.openingCash != null) return { value: Number(existingSession.openingCash), source: 'cashSession' };
+  if (db.openingCapital?.businessStartDate === businessDate) {
+    return { value: Number(db.openingCapital.cashCapital || 0), source: 'openingCapital' };
+  }
+  return { value: 0, source: 'default' };
+}
+
 function cashExpectedPayload(db, { date, openingCash } = {}) {
   const businessDate = date || today();
   const existingSession = db.cashSessions.find((session) => session.date === businessDate) || null;
-  const resolvedOpeningCash = Number(openingCash ?? existingSession?.openingCash ?? 0);
+  const resolvedOpeningCash = openingCashFromCapital(db, businessDate, existingSession, openingCash);
   const daySales = db.sales.filter((sale) => sale.date?.startsWith(businessDate));
   const dayExpenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate));
   const salesSummary = getSalesSummary(daySales);
@@ -101,13 +197,14 @@ function cashExpectedPayload(db, { date, openingCash } = {}) {
   const expectedCash = getCashExpected({
     sales: db.sales,
     expenses: db.expenses,
-    openingCash: resolvedOpeningCash,
+    openingCash: resolvedOpeningCash.value,
     businessDate,
   });
 
   return {
     date: businessDate,
-    openingCash: resolvedOpeningCash,
+    openingCash: resolvedOpeningCash.value,
+    openingCashSource: resolvedOpeningCash.source,
     cashSales,
     cashExpenses,
     expectedCash,
@@ -193,11 +290,108 @@ function stockContractFrom(ingredient) {
   };
 }
 
+function ingredientUnitConversions(unit) {
+  const normalizedUnit = String(unit || '').trim().toLowerCase();
+  const conversions = {
+    gram: { kg: 1000 },
+    kg: { gram: 0.001 },
+    ml: { l: 1000, liter: 1000 },
+    l: { ml: 0.001, liter: 1 },
+    liter: { ml: 0.001, l: 1 },
+  };
+  return conversions[normalizedUnit] || {};
+}
+
 function expenseContractFrom(expense) {
   return {
     ...expense,
     proofUrl: expense.proofUrl ?? expense.photoUrl ?? null,
   };
+}
+
+function parseNonNegativeNumber(value, fieldName) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) {
+    return { error: `${fieldName} harus berupa angka positif` };
+  }
+  return { value: number };
+}
+
+function normalizeReceiptDate(value, fallback = new Date().toISOString()) {
+  const raw = String(value || '').trim();
+  if (!raw) return fallback;
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+}
+
+function normalizeReceiptItems(items, ingredients = []) {
+  if (!Array.isArray(items) || !items.length) {
+    return { error: 'Minimal satu item resi wajib diisi sebelum konfirmasi', statusCode: 400 };
+  }
+
+  const normalized = [];
+  for (const [index, item] of items.entries()) {
+    const row = index + 1;
+    const name = String(item.name || item.description || '').trim();
+    if (!name) return { error: `Nama item resi baris ${row} wajib diisi`, statusCode: 400 };
+
+    const category = RECEIPT_CATEGORIES.has(item.category) ? item.category : 'lainnya';
+    const qty = Number(item.qty ?? item.quantity ?? 0);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      return { error: `Qty item resi baris ${row} wajib lebih dari 0`, statusCode: 400 };
+    }
+
+    const priceResult = parseNonNegativeNumber(item.price ?? item.unitPrice ?? 0, `Harga item resi baris ${row}`);
+    if (priceResult.error) return { ...priceResult, statusCode: 400 };
+
+    const computedTotal = qty * priceResult.value;
+    const totalResult = parseNonNegativeNumber(item.total ?? item.amount ?? computedTotal, `Total item resi baris ${row}`);
+    if (totalResult.error) return { ...totalResult, statusCode: 400 };
+    if (totalResult.value <= 0) {
+      return { error: `Total item resi baris ${row} wajib lebih dari 0`, statusCode: 400 };
+    }
+
+    const addsStock = Boolean(item.addsStock);
+    const ingredientId = item.ingredientId == null || item.ingredientId === ''
+      ? null
+      : Number(item.ingredientId);
+    const ingredient = ingredients.find((candidate) => Number(candidate.id) === ingredientId);
+    if (addsStock && !ingredient) {
+      return { error: `Bahan stok item resi baris ${row} tidak valid`, statusCode: 400 };
+    }
+
+    const stockQty = addsStock ? Number(item.stockQty ?? qty) : 0;
+    if (addsStock && (!Number.isFinite(stockQty) || stockQty <= 0)) {
+      return { error: `Qty stok item resi baris ${row} wajib lebih dari 0`, statusCode: 400 };
+    }
+
+    normalized.push({
+      id: item.id || row,
+      name,
+      category,
+      qty,
+      unit: String(item.unit || 'pcs').trim(),
+      price: priceResult.value,
+      total: totalResult.value,
+      amount: totalResult.value,
+      addsStock,
+      ingredientId: addsStock ? ingredient.id : null,
+      stockQty,
+      stockUnit: addsStock ? String(item.stockUnit || ingredient.unit || item.unit || 'pcs').trim() : null,
+    });
+  }
+
+  return { items: normalized };
+}
+
+function receiptAlreadyConfirmed(receiptUploads, uploadRecord) {
+  if (!uploadRecord) return false;
+  return receiptUploads.some((existing) => (
+    (uploadRecord.fileName && existing.fileName === uploadRecord.fileName)
+    || (uploadRecord.imageUrl && existing.imageUrl === uploadRecord.imageUrl)
+  ));
 }
 
 function requireRole(role) {
@@ -296,6 +490,70 @@ app.post('/api/products', (req, res) => {
 
 app.get('/api/ingredients', (req, res) => {
   res.json(readDb().ingredients);
+});
+
+app.post('/api/ingredients', requireRole('owner'), (req, res) => {
+  const result = updateDb((db) => {
+    const body = req.body || {};
+    const name = String(body.name || '').trim();
+    const unit = String(body.unit || '').trim();
+    const category = String(body.category || 'bahan_baku').trim();
+    const stock = Number(body.stock ?? body.stockCurrent ?? 0);
+    const minStock = Number(body.minStock ?? 0);
+    const costPerUnit = Number(body.costPerUnit ?? 0);
+
+    if (!name) return { error: 'Nama bahan baku wajib diisi', statusCode: 400 };
+    if (!unit) return { error: 'Unit bahan baku wajib diisi', statusCode: 400 };
+    if (!Number.isFinite(stock) || stock < 0) {
+      return { error: 'Stok awal harus berupa angka positif', statusCode: 400 };
+    }
+    if (!Number.isFinite(minStock) || minStock < 0) {
+      return { error: 'Minimal stok harus berupa angka positif', statusCode: 400 };
+    }
+    if (!Number.isFinite(costPerUnit) || costPerUnit < 0) {
+      return { error: 'Biaya per unit harus berupa angka positif', statusCode: 400 };
+    }
+    const duplicate = db.ingredients.some(
+      (ingredient) => ingredient.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (duplicate) return { error: 'Bahan baku dengan nama tersebut sudah ada', statusCode: 409 };
+
+    const numericIds = db.ingredients
+      .map((ingredient) => Number(ingredient.id))
+      .filter((id) => Number.isInteger(id));
+    const now = new Date().toISOString();
+    const ingredient = {
+      id: numericIds.length ? Math.max(...numericIds) + 1 : 1,
+      name,
+      category,
+      unit,
+      stock: Number(stock.toFixed(3)),
+      minStock: Number(minStock.toFixed(3)),
+      costPerUnit: Number(costPerUnit.toFixed(2)),
+      status: stock <= minStock ? 'kritis' : 'aman',
+      unitConversions: ingredientUnitConversions(unit),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    db.ingredients.push(ingredient);
+    db.activityLog.push({
+      id: 'ACT-' + Date.now(),
+      time: now,
+      action: 'Bahan baku baru ditambahkan: ' + ingredient.name,
+      user: body.user || req.auth?.name || 'Owner',
+      type: 'stok',
+    });
+
+    return {
+      ingredient: stockContractFrom(ingredient),
+      stock: db.ingredients.map(stockContractFrom),
+      state: bootstrapPayload(db),
+    };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json(result);
+  return res.status(201).json(result);
 });
 
 app.get('/api/sales', (req, res) => {
@@ -474,6 +732,10 @@ app.patch('/api/expenses/:id/status', (req, res) => {
 
 app.post('/api/receipts/scan', upload.single('receipt'), async (req, res, next) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'File resi wajib diunggah' });
+    }
+
     const uploadRecord = saveUploadedFile(req.file, { folder: 'receipts' });
     const result = await scanReceipt({
       file: req.file,
@@ -491,41 +753,95 @@ app.post('/api/receipt-expenses', (req, res) => {
   const result = updateDb((db) => {
     const body = req.body || {};
     const receipt = body.receipt || {};
-    const receiptDate = receipt.transactionDate || body.expense?.date || today();
+    const receiptDate = normalizeReceiptDate(receipt.transactionDate || body.expense?.date);
+    if (!receiptDate) return { error: 'Tanggal resi tidak valid', statusCode: 400 };
+
     const lockError = checkCashLock(db, receiptDate.substring(0, 10));
     if (lockError) return lockError;
 
-    const total = receipt.items?.reduce((sum, item) => sum + Number(item.total || 0), 0) || 0;
-    const expense = body.expense || {
-      id: `EXP-${Date.now()}`,
-      date: receipt.transactionDate || new Date().toISOString(),
-      category: receipt.items?.some((item) => item.category === 'packaging') ? 'packaging' : 'bahan_baku',
-      description: `Resi ${receipt.merchantName || 'pembelian'}`,
-      items: receipt.items || [],
-      total,
-      status: calculateApprovalStatus(total),
-      photoUrl: body.imageUrl || null,
-      sourceType: 'receipt_ai',
-      user: body.user || 'Partner',
-    };
-    const movements = body.stockMovements || buildExpenseStockMovements(expense);
-    const uploadRecord = body.upload || {
-      id: `RCPT-${Date.now()}`,
-      expenseId: expense.id,
-      originalFileName: receipt.originalFileName,
-      imageUrl: body.imageUrl || null,
-      fileName: receipt.upload?.fileName || null,
-      mimeType: receipt.upload?.mimeType || null,
-      fileSize: receipt.fileSize || receipt.upload?.fileSize || null,
+    const normalizedItems = normalizeReceiptItems(receipt.items || body.expense?.items, db.ingredients);
+    if (normalizedItems.error) return normalizedItems;
+
+    const items = normalizedItems.items;
+    const total = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
+    if (!Number.isFinite(total) || total <= 0) {
+      return { error: 'Total resi wajib lebih dari 0', statusCode: 400 };
+    }
+
+    const incomingUpload = body.upload || receipt.upload || {};
+    const uploadRecord = {
+      id: incomingUpload.id || `RCPT-${Date.now()}`,
+      originalFileName: incomingUpload.originalFileName || receipt.originalFileName || null,
+      imageUrl: incomingUpload.imageUrl || receipt.imageUrl || body.imageUrl || null,
+      fileName: incomingUpload.fileName || null,
+      mimeType: incomingUpload.mimeType || null,
+      fileSize: incomingUpload.fileSize || receipt.fileSize || null,
       aiStatus: 'confirmed',
+      aiSource: receipt.source || null,
+      aiConfidence: Number(receipt.confidence || 0),
       aiRaw: receipt,
       createdAt: new Date().toISOString(),
-      user: body.user || 'Partner',
+      user: body.user || body.expense?.user || getAuthenticatedUser(db, req.auth)?.name || 'Partner',
     };
-    uploadRecord.imageUrl = uploadRecord.imageUrl || receipt.imageUrl || body.imageUrl || null;
+    if (receiptAlreadyConfirmed(db.receiptUploads, uploadRecord)) {
+      return { error: 'Resi ini sudah pernah dikonfirmasi', statusCode: 409, upload: uploadRecord };
+    }
+
+    const requestedStatus = body.expense?.status;
+    if (requestedStatus && !EXPENSE_STATUSES.has(requestedStatus)) {
+      return { error: 'Status pengeluaran tidak valid', statusCode: 400 };
+    }
+
+    const defaultCashAccountId = db.cashAccounts.find((account) => (
+      ['cash', 'tunai'].includes(String(account.type || '').toLowerCase())
+    ))?.id || db.cashAccounts[0]?.id || null;
+    const cashAccountId = body.cashAccountId || body.expense?.cashAccountId || defaultCashAccountId;
+    const cashAccount = cashAccountId
+      ? db.cashAccounts.find((account) => String(account.id) === String(cashAccountId))
+      : null;
+    if (cashAccountId && !cashAccount) {
+      return { error: 'Akun kas pengeluaran tidak ditemukan', statusCode: 400 };
+    }
+
+    const merchantName = String(receipt.merchantName || body.expense?.merchantName || '').trim();
+    const expense = {
+      id: body.expense?.id || `EXP-${Date.now()}`,
+      date: receiptDate,
+      category: body.expense?.category || (items.some((item) => item.category === 'packaging') ? 'packaging' : 'bahan_baku'),
+      description: body.expense?.description || `Resi ${merchantName || 'pembelian'}`,
+      items,
+      total,
+      status: requestedStatus || calculateApprovalStatus(total),
+      photoUrl: uploadRecord.imageUrl,
+      proofUrl: uploadRecord.imageUrl,
+      sourceType: 'receipt_ai',
+      cashAccountId: cashAccount?.id || null,
+      receiptUploadId: uploadRecord.id,
+      user: uploadRecord.user,
+    };
+    const movements = buildExpenseStockMovements(expense);
+    uploadRecord.expenseId = expense.id;
+
+    const cashTransaction = cashAccount ? {
+      id: `CTX-${Date.now()}-${expense.id}`,
+      date: expense.date,
+      type: 'out',
+      amount: expense.total,
+      category: 'pengeluaran',
+      description: expense.description,
+      accountId: cashAccount.id,
+      sourceType: 'receipt_expense',
+      sourceId: expense.id,
+      user: expense.user,
+    } : null;
+    if (cashTransaction) {
+      cashAccount.balance = Number(cashAccount.balance || 0) - expense.total;
+      expense.cashTransactionId = cashTransaction.id;
+    }
 
     db.expenses.unshift(expense);
     db.receiptUploads.unshift(uploadRecord);
+    if (cashTransaction) db.cashTransactions = [cashTransaction, ...db.cashTransactions];
     db.stockMovements.push(...movements);
     db.ingredients = applyPurchaseCosts(db.ingredients, expense.items || []);
     db.ingredients = applyStockMovements(db.ingredients, movements);
@@ -537,9 +853,10 @@ app.post('/api/receipt-expenses', (req, res) => {
       type: 'pengeluaran',
     });
 
-    return { expense, upload: uploadRecord, movements, state: bootstrapPayload(db) };
+    return { expense, upload: uploadRecord, cashTransaction, movements, state: bootstrapPayload(db) };
   });
 
+  if (result?.error) return res.status(result.statusCode || 400).json(result);
   res.status(201).json(result);
 });
 
@@ -610,6 +927,63 @@ app.post('/api/stock/adjust', (req, res) => {
   return res.status(201).json(result);
 });
 
+app.get('/api/opening-capital', requireRole('owner'), (req, res) => {
+  res.json(openingCapitalPayload(readDb().openingCapital));
+});
+
+app.put('/api/opening-capital', requireRole('owner'), (req, res) => {
+  const result = updateDb((db) => {
+    const body = req.body || {};
+    const businessStartDate = body.businessStartDate || body.date || null;
+    const cashCapital = Number(body.cashCapital ?? 0);
+    const assetContributions = normalizeCapitalItems(body.assetContributions, 'asset');
+    const inventoryContributions = normalizeCapitalItems(body.inventoryContributions, 'inventory');
+    const personalExcludedItems = normalizeCapitalItems(body.personalExcludedItems, 'personal');
+
+    if (businessStartDate && !/^\d{4}-\d{2}-\d{2}$/.test(String(businessStartDate))) {
+      return { error: 'businessStartDate harus format YYYY-MM-DD', statusCode: 400 };
+    }
+    if (!Number.isFinite(cashCapital) || cashCapital < 0) {
+      return { error: 'cashCapital harus berupa angka positif', statusCode: 400 };
+    }
+
+    const validations = [
+      validateCapitalItems(assetContributions, 'assetContributions'),
+      validateCapitalItems(inventoryContributions, 'inventoryContributions'),
+      validateCapitalItems(personalExcludedItems, 'personalExcludedItems'),
+    ].filter(Boolean);
+    if (validations[0]) return { ...validations[0], statusCode: 400 };
+
+    const now = new Date().toISOString();
+    const user = getAuthenticatedUser(db, req.auth)?.name || body.user || 'Owner';
+    const previous = db.openingCapital || {};
+    db.openingCapital = {
+      businessStartDate,
+      cashCapital,
+      assetContributions,
+      inventoryContributions,
+      personalExcludedItems,
+      notes: String(body.notes || '').trim(),
+      createdBy: previous.createdBy || user,
+      createdAt: previous.createdAt || now,
+      updatedBy: user,
+      updatedAt: now,
+    };
+    db.activityLog.push({
+      id: `ACT-${Date.now()}`,
+      time: now,
+      action: `Update modal awal usaha: Rp ${openingCapitalPayload(db.openingCapital).totals.businessCapital.toLocaleString('id-ID')}`,
+      user,
+      type: 'kas',
+    });
+
+    return { openingCapital: openingCapitalPayload(db.openingCapital), state: bootstrapPayload(db) };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json(result);
+  return res.json(result);
+});
+
 app.get('/api/cash/expected', (req, res) => {
   const openingCash = req.query.openingCash != null ? Number(req.query.openingCash) : undefined;
   if (openingCash != null && (!Number.isFinite(openingCash) || openingCash < 0)) {
@@ -674,9 +1048,13 @@ app.post('/api/cash/transactions', requireRole('owner'), (req, res) => {
     }
 
     const now = new Date().toISOString();
+    const transactionDate = body.date || now;
+    const lockError = checkCashLock(db, String(transactionDate).substring(0, 10));
+    if (lockError) return lockError;
+
     const transaction = {
       id: `CTX-${Date.now()}`,
-      date: now,
+      date: transactionDate,
       type,
       amount,
       category: body.category || type,
@@ -746,8 +1124,11 @@ app.post('/api/cash/close', (req, res) => {
       return { error: 'actualCash harus berupa angka positif', statusCode: 400 };
     }
 
-    const requestedOpeningCash = Number(existing?.openingCash ?? body.openingCash ?? 0);
-    if (!Number.isFinite(requestedOpeningCash) || requestedOpeningCash < 0) {
+    const openingCashInput = existing?.openingCash ?? body.openingCash;
+    const requestedOpeningCash = openingCashInput == null || openingCashInput === ''
+      ? undefined
+      : Number(openingCashInput);
+    if (requestedOpeningCash != null && (!Number.isFinite(requestedOpeningCash) || requestedOpeningCash < 0)) {
       return { error: 'openingCash harus berupa angka positif', statusCode: 400 };
     }
 

@@ -56,8 +56,9 @@ export default function App() {
   const loadRemoteData = useAppStore((state) => state.loadRemoteData);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     loadRemoteData();
-  }, [loadRemoteData]);
+  }, [isAuthenticated, loadRemoteData]);
 
   return (
     <BrowserRouter>

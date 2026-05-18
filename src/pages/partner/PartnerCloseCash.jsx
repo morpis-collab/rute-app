@@ -1,84 +1,108 @@
-import { useState, useEffect } from 'react';
-import { Check, Loader2, AlertTriangle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAuthStore from '../../store/useAuthStore';
 import { getCashExpected, postCashClose } from '../../services/apiClient';
 import { formatRupiah } from '../../utils/formatters';
 
+const cashSourceLabel = {
+  openingCapital: 'Modal awal usaha',
+  cashSession: 'Sesi kas tersimpan',
+  query: 'Override manual',
+  default: 'Tanpa kas awal',
+};
+
 export default function PartnerCloseCash() {
   const [form, setForm] = useState({ cashActual: '', qris: '0', transfer: '0', notes: '' });
-  const [status, setStatus] = useState('loading'); // loading, ready, closed, error
+  const [status, setStatus] = useState('loading');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [expectedData, setExpectedData] = useState(null);
-  
+
   const { user } = useAuthStore();
-  const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     async function fetchExpected() {
       try {
         setStatus('loading');
-        const data = await getCashExpected(today, 100000); 
-        
+        const data = await getCashExpected();
+
+        setExpectedData(data);
+        setForm((prev) => ({
+          ...prev,
+          qris: data.salesByMethod?.qris || 0,
+          transfer: data.salesByMethod?.transfer || 0,
+        }));
+
         if (!data.canClose && data.existingSession) {
           setStatus('closed');
           setMessage('Kas untuk hari ini sudah ditutup.');
           return;
         }
-        
-        setExpectedData(data);
-        setForm(prev => ({ 
-          ...prev, 
-          qris: data.salesByMethod?.qris || 0,
-          transfer: data.salesByMethod?.transfer || 0 
-        }));
+
         setStatus('ready');
       } catch {
         setStatus('error');
         setMessage('Gagal mengambil data kas dari server.');
       }
     }
+
     fetchExpected();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const expectedCash = expectedData?.expectedCash || 0;
-  const cashActual = parseInt(form.cashActual) || 0;
+  const expectedCash = Number(expectedData?.expectedCash || 0);
+  const cashActual = Number(form.cashActual || 0);
   const difference = cashActual - expectedCash;
+  const openingCashSource = cashSourceLabel[expectedData?.openingCashSource] || cashSourceLabel.default;
+
+  const updateForm = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
 
   const handleSubmit = async () => {
-    if (cashActual === 0) {
-      setMessage('Cash Fisik (actualCash) harus diisi.');
+    if (!expectedData) {
+      setMessage('Data kas sistem belum siap.');
       return;
     }
-    
+    if (form.cashActual === '') {
+      setMessage('Cash fisik wajib diisi.');
+      return;
+    }
+    if (cashActual < 0) {
+      setMessage('Cash fisik tidak boleh negatif.');
+      return;
+    }
+
     try {
-      setStatus('loading');
+      setIsSubmitting(true);
+      setMessage('');
       await postCashClose({
+        date: expectedData.date,
         actualCash: cashActual,
-        openingCash: 100000,
-        qris: parseInt(form.qris) || 0,
-        transfer: parseInt(form.transfer) || 0,
+        qris: Number(form.qris || 0),
+        transfer: Number(form.transfer || 0),
         notes: form.notes,
         user: user?.name || 'Partner',
       });
       setStatus('closed');
-      setMessage('✅ Kas berhasil ditutup.');
+      setMessage('Kas berhasil ditutup.');
     } catch (err) {
       setStatus('ready');
       if (err.response?.status === 409) {
         setStatus('closed');
         setMessage('Kas hari ini sudah ditutup.');
       } else {
-        setMessage(err.response?.data?.message || 'Gagal menutup kas.');
+        setMessage(err.response?.data?.error || err.response?.data?.message || 'Gagal menutup kas.');
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (status === 'loading') {
     return (
       <PageWrapper title="Kas" subtitle="Tutup kas harian">
-        <div className="flex flex-col items-center justify-center h-64 text-[var(--color-text-muted)] gap-3">
+        <div className="flex h-64 flex-col items-center justify-center gap-3 text-[var(--color-text-muted)]">
           <Loader2 size={32} className="animate-spin" />
           <p>Memuat data kas...</p>
         </div>
@@ -89,65 +113,107 @@ export default function PartnerCloseCash() {
   return (
     <PageWrapper title="Kas" subtitle="Tutup kas harian">
       {(status === 'closed' || status === 'error') && (
-        <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
-          status === 'closed' 
-            ? message.includes('✅') 
-              ? 'bg-[var(--color-band-4)] border-[var(--color-band-3)] text-[var(--color-text-primary)]' 
-              : 'bg-white border-[var(--color-border)] text-[var(--color-text-secondary)]'
-            : 'bg-red-50 border-[var(--color-accent-red)] text-red-700'
+        <div className={`mb-6 flex items-start gap-3 rounded-xl border p-4 ${
+          status === 'closed'
+            ? message.includes('berhasil')
+              ? 'border-[var(--color-band-3)] bg-[var(--color-band-4)] text-[var(--color-text-primary)]'
+              : 'border-[var(--color-border)] bg-white text-[var(--color-text-secondary)]'
+            : 'border-[var(--color-accent-red)] bg-red-50 text-red-700'
         }`}>
-          {status === 'closed' ? <Check className={message.includes('✅') ? "text-[var(--color-accent-green)]" : ""} /> : <AlertTriangle />}
-          <div className="font-medium text-sm">{message}</div>
+          {status === 'closed' ? <Check className={message.includes('berhasil') ? 'text-[var(--color-accent-green)]' : ''} /> : <AlertTriangle />}
+          <div className="text-sm font-medium">{message}</div>
         </div>
       )}
 
       {status === 'ready' && message && (
-        <div className="mb-4 text-sm text-[var(--color-accent-red)] slide-in text-center">
-          ⚠️ {message}
+        <div className="slide-in mb-4 text-center text-sm text-[var(--color-accent-red)]">
+          {message}
         </div>
       )}
 
       {expectedData && status !== 'error' && (
         <>
-          {/* Summary Tabular */}
-          <div className="bg-white border border-[var(--color-border)] rounded-xl overflow-hidden mb-6 shadow-sm">
+          <div className="mb-6 overflow-hidden rounded-xl border border-[var(--color-border)] bg-white shadow-sm">
             <table className="w-full text-left text-sm">
               <tbody className="divide-y divide-[var(--color-border)]">
-                <tr><td className="p-3 text-[var(--color-text-muted)]">Kas Seharusnya</td><td className="p-3 text-right font-mono font-bold text-[var(--color-text-primary)]">{formatRupiah(expectedCash)}</td></tr>
-                <tr><td className="p-3 text-[var(--color-text-muted)]">QRIS (Sistem)</td><td className="p-3 text-right font-mono">{formatRupiah(form.qris)}</td></tr>
+                <tr>
+                  <td className="p-3 text-[var(--color-text-muted)]">Tanggal Kas</td>
+                  <td className="p-3 text-right font-mono font-semibold">{expectedData.date}</td>
+                </tr>
+                <tr>
+                  <td className="p-3 text-[var(--color-text-muted)]">
+                    Kas Awal
+                    <div className="text-[11px] text-[var(--color-text-muted)]">{openingCashSource}</div>
+                  </td>
+                  <td className="p-3 text-right font-mono">{formatRupiah(expectedData.openingCash || 0)}</td>
+                </tr>
+                <tr>
+                  <td className="p-3 text-[var(--color-text-muted)]">Penjualan Tunai</td>
+                  <td className="p-3 text-right font-mono">{formatRupiah(expectedData.cashSales || 0)}</td>
+                </tr>
+                <tr>
+                  <td className="p-3 text-[var(--color-text-muted)]">Pengeluaran Tunai</td>
+                  <td className="p-3 text-right font-mono">{formatRupiah(expectedData.cashExpenses || 0)}</td>
+                </tr>
+                <tr>
+                  <td className="p-3 text-[var(--color-text-muted)]">Kas Seharusnya</td>
+                  <td className="p-3 text-right font-mono font-bold text-[var(--color-text-primary)]">{formatRupiah(expectedCash)}</td>
+                </tr>
+                <tr>
+                  <td className="p-3 text-[var(--color-text-muted)]">QRIS Sistem</td>
+                  <td className="p-3 text-right font-mono">{formatRupiah(form.qris)}</td>
+                </tr>
+                <tr>
+                  <td className="p-3 text-[var(--color-text-muted)]">Transfer Sistem</td>
+                  <td className="p-3 text-right font-mono">{formatRupiah(form.transfer)}</td>
+                </tr>
               </tbody>
             </table>
           </div>
 
-          {/* Input Form */}
-          <div className="space-y-4 mb-6">
+          <div className="mb-6 space-y-4">
             <div>
-              <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1 block">Cash Fisik (Laci Kasir)</label>
-              <input type="number" disabled={status === 'closed'} value={form.cashActual} onChange={e => setForm({...form, cashActual: e.target.value})} placeholder="Rp 0" className="w-full p-3 rounded-xl border border-[var(--color-border)] font-mono focus:outline-none focus:border-[var(--color-band-1)] disabled:bg-gray-50" />
+              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">Cash Fisik (Laci Kasir)</label>
+              <input
+                type="number"
+                min="0"
+                disabled={status === 'closed'}
+                value={form.cashActual}
+                onChange={(event) => updateForm('cashActual', event.target.value)}
+                placeholder="Rp 0"
+                className="w-full rounded-xl border border-[var(--color-border)] p-3 font-mono focus:border-[var(--color-band-1)] focus:outline-none disabled:bg-gray-50"
+              />
             </div>
             <div>
-              <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1 block">Catatan Tambahan</label>
-              <input type="text" disabled={status === 'closed'} value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="Ada selisih atau kendala?" className="w-full p-3 rounded-xl border border-[var(--color-border)] text-sm focus:outline-none focus:border-[var(--color-band-1)] disabled:bg-gray-50" />
+              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">Catatan Tambahan</label>
+              <input
+                type="text"
+                disabled={status === 'closed'}
+                value={form.notes}
+                onChange={(event) => updateForm('notes', event.target.value)}
+                placeholder="Ada selisih atau kendala?"
+                className="w-full rounded-xl border border-[var(--color-border)] p-3 text-sm focus:border-[var(--color-band-1)] focus:outline-none disabled:bg-gray-50"
+              />
             </div>
           </div>
 
-          {/* Difference */}
-          {form.cashActual && difference !== 0 && status === 'ready' && (
-            <div className="mb-6 text-sm text-center font-medium">
+          {form.cashActual !== '' && difference !== 0 && status === 'ready' && (
+            <div className="mb-6 text-center text-sm font-medium">
               Selisih: <span className={`font-mono font-bold ${difference < 0 ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-accent-green)]'}`}>{formatRupiah(Math.abs(difference))}</span>
             </div>
           )}
 
-          <button 
-            onClick={handleSubmit} 
-            disabled={status === 'closed'} 
-            className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 flex justify-center items-center gap-2 ${
-              status === 'closed' 
-                ? 'bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)] cursor-not-allowed'
-                : 'bg-gradient-to-r from-[var(--color-band-1)] to-[var(--color-band-2)] text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+          <button
+            onClick={handleSubmit}
+            disabled={status === 'closed' || isSubmitting}
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold transition-all duration-200 ${
+              status === 'closed' || isSubmitting
+                ? 'cursor-not-allowed bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)]'
+                : 'bg-gradient-to-r from-[var(--color-band-1)] to-[var(--color-band-2)] text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl'
             }`}
           >
-            {status === 'closed' ? 'Kas Sudah Ditutup' : 'Konfirmasi Tutup Kas'}
+            {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+            {status === 'closed' ? 'Kas Sudah Ditutup' : isSubmitting ? 'Menutup Kas...' : 'Konfirmasi Tutup Kas'}
           </button>
         </>
       )}

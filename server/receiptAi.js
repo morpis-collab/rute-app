@@ -1,58 +1,3 @@
-const sampleItems = [
-  {
-    id: 1,
-    name: 'Susu UHT 1L',
-    category: 'bahan_baku',
-    qty: 12,
-    unit: 'pcs',
-    price: 18000,
-    total: 216000,
-    addsStock: true,
-    ingredientId: 2,
-    stockQty: 12,
-    stockUnit: 'pcs',
-  },
-  {
-    id: 2,
-    name: 'Gula Aren 1L',
-    category: 'bahan_baku',
-    qty: 2,
-    unit: 'botol',
-    price: 25000,
-    total: 50000,
-    addsStock: true,
-    ingredientId: 3,
-    stockQty: 2000,
-    stockUnit: 'ml',
-  },
-  {
-    id: 3,
-    name: 'Cup 16oz',
-    category: 'packaging',
-    qty: 100,
-    unit: 'pcs',
-    price: 750,
-    total: 75000,
-    addsStock: true,
-    ingredientId: 6,
-    stockQty: 100,
-    stockUnit: 'pcs',
-  },
-  {
-    id: 4,
-    name: 'Sedotan',
-    category: 'packaging',
-    qty: 100,
-    unit: 'pcs',
-    price: 150,
-    total: 15000,
-    addsStock: true,
-    ingredientId: 8,
-    stockQty: 100,
-    stockUnit: 'pcs',
-  },
-];
-
 const VALID_CATEGORIES = new Set(['bahan_baku', 'packaging', 'operasional', 'lainnya']);
 const MAX_INGREDIENT_OPTIONS = 40;
 
@@ -111,14 +56,15 @@ function normalizeItem(item, index, ingredients = []) {
 }
 
 function normalizeReceipt(payload, { file, upload, ingredients, source, providerError } = {}) {
-  const items = Array.isArray(payload?.items) && payload.items.length
+  const items = Array.isArray(payload?.items)
     ? payload.items.map((item, index) => normalizeItem(item, index, ingredients))
-    : sampleItems.map((item) => ({ ...item }));
-  const confidence = normalizeNumber(payload?.confidence, source === 'ai' ? 0.75 : 0.92);
+    : [];
+  const confidence = normalizeNumber(payload?.confidence, source === 'ai' ? 0.75 : 0);
+  const requiresManualReview = source !== 'ai' || !items.length || confidence < 0.6;
 
   return {
-    merchantName: String(payload?.merchantName || payload?.merchant || 'Supplier Malinau').trim(),
-    transactionDate: payload?.transactionDate || new Date().toISOString(),
+    merchantName: String(payload?.merchantName || payload?.merchant || '').trim(),
+    transactionDate: payload?.transactionDate || null,
     confidence: Math.min(confidence, 1),
     originalFileName: upload?.originalFileName || file?.originalname || 'foto-resi.jpg',
     fileSize: upload?.fileSize || file?.size || null,
@@ -126,13 +72,20 @@ function normalizeReceipt(payload, { file, upload, ingredients, source, provider
     upload,
     items,
     source,
-    providerError: providerError ? 'OCR AI gagal, memakai fallback lokal.' : undefined,
+    aiStatus: requiresManualReview ? 'manual_review_required' : 'parsed',
+    requiresManualReview,
+    providerError: providerError ? 'OCR AI gagal. Isi item secara manual sebelum konfirmasi.' : undefined,
   };
 }
 
 async function callOpenAiVision({ file, ingredients }) {
   const apiKey = process.env.RECEIPT_AI_API_KEY || process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
-  if (!apiKey || !file?.buffer?.length) return null;
+  if (!apiKey || !file?.buffer?.length) {
+    return {
+      payload: null,
+      providerError: !apiKey ? 'RECEIPT_AI_API_KEY belum diset.' : 'File resi kosong.',
+    };
+  }
 
   const model = process.env.RECEIPT_AI_MODEL || process.env.AI_VISION_MODEL || process.env.AI_MODEL || 'gpt-4o-mini';
   const baseUrl = process.env.AI_BASE_URL || 'https://api.openai.com/v1';
@@ -175,7 +128,10 @@ async function callOpenAiVision({ file, ingredients }) {
   }
 
   const data = await response.json();
-  return parseJsonObject(data.choices?.[0]?.message?.content);
+  return {
+    payload: parseJsonObject(data.choices?.[0]?.message?.content),
+    providerError: null,
+  };
 }
 
 export async function scanReceipt({ file, upload, ingredients = [] }) {
@@ -187,9 +143,11 @@ export async function scanReceipt({ file, upload, ingredients = [] }) {
   }
 
   let aiPayload = null;
-  let providerError = null;
+  let providerError;
   try {
-    aiPayload = await callOpenAiVision({ file, ingredients });
+    const aiResult = await callOpenAiVision({ file, ingredients });
+    aiPayload = aiResult?.payload || null;
+    providerError = aiResult?.providerError || null;
   } catch (error) {
     providerError = error.message;
   }

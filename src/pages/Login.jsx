@@ -17,7 +17,8 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!selectedRole) return;
-    if (!pin) {
+    const normalizedPin = pin.trim();
+    if (!normalizedPin) {
       setErrorMsg('PIN harus diisi');
       return;
     }
@@ -26,12 +27,12 @@ export default function Login() {
     setErrorMsg('');
 
     try {
-      const response = await postLogin({ role: selectedRole, pin });
+      const response = await postLogin({ role: selectedRole, pin: normalizedPin });
       login(response.user, response.token);
       addToast(`Berhasil masuk sebagai ${response.user.role === 'owner' ? 'Owner' : 'Partner'}`, 'success');
       navigate(selectedRole === 'owner' ? '/owner/dashboard' : '/partner/sales');
     } catch (error) {
-      setErrorMsg(error.response?.data?.message || 'Login gagal, periksa PIN Anda');
+      setErrorMsg(error.response?.data?.error || error.response?.data?.message || 'Login gagal, periksa PIN Anda');
     } finally {
       setLoading(false);
     }
@@ -112,16 +113,17 @@ export default function Login() {
               </div>
               <input
                 type="password"
+                inputMode="numeric"
                 maxLength={6}
                 value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                placeholder="• • • • • •"
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="PIN 6 digit"
                 className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-[var(--color-border)] bg-white text-lg tracking-[0.3em] font-bold focus:border-[var(--color-accent-primary)] focus:ring-0 outline-none transition-all placeholder:font-normal placeholder:tracking-normal"
               />
             </div>
             {errorMsg && (
               <p className="mt-2 text-sm text-[var(--color-accent-red)] flex items-center gap-1 slide-in">
-                <span>⚠️</span> {errorMsg}
+                <span>!</span> {errorMsg}
               </p>
             )}
           </div>

@@ -23,6 +23,13 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, ingredie
     onClose();
   };
 
+  const handleIngredientChange = (event) => {
+    const nextIngredientId = event.target.value;
+    setIngredientId(nextIngredientId);
+    const selectedIngredient = ingredients?.find((ingredient) => String(ingredient.id) === String(nextIngredientId));
+    if (selectedIngredient?.unit) setUnit(selectedIngredient.unit);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm slide-in">
       <div className="bg-white rounded-[var(--radius-xl)] w-full max-w-md shadow-[var(--shadow-lg)] overflow-hidden">
@@ -36,12 +43,15 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, ingredie
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Pilih Bahan Baku</label>
-            <select className="form-select text-sm p-2 w-full" value={ingredientId} onChange={(e) => setIngredientId(e.target.value)} required>
+            <select className="form-select text-sm p-2 w-full" value={ingredientId} onChange={handleIngredientChange} required>
               <option value="">-- Pilih Bahan --</option>
               {ingredients?.map(ing => (
                 <option key={ing.id} value={ing.id}>{ing.name}</option>
               ))}
             </select>
+            {!ingredients?.length && (
+              <p className="mt-2 text-xs text-[var(--color-text-muted)]">Belum ada bahan baku. Tambahkan bahan baru dulu dari halaman stok owner.</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

@@ -74,9 +74,15 @@ export async function patchExpenseStatus(expenseId, status) {
   return data;
 }
 
-export async function getCashExpected(date, openingCash = 100000) {
+export async function getCashExpected(date, openingCash) {
+  const params = {};
+  if (date) params.date = date;
+  if (openingCash !== undefined && openingCash !== null && openingCash !== '') {
+    params.openingCash = openingCash;
+  }
+
   const { data } = await api.get('/cash/expected', {
-    params: { date, openingCash }
+    params,
   });
   return data;
 }
@@ -118,6 +124,11 @@ export async function postProduct(payload) {
 
 export async function postStockAdjustment(payload) {
   const { data } = await api.post('/stock/adjust', payload);
+  return data;
+}
+
+export async function postIngredient(payload) {
+  const { data } = await api.post('/ingredients', payload);
   return data;
 }
 

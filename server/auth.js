@@ -85,8 +85,8 @@ function findUserByRole(db, role) {
 }
 
 function validPin(inputPin, expectedPin) {
-  const input = Buffer.from(String(inputPin || ''));
-  const expected = Buffer.from(String(expectedPin || ''));
+  const input = Buffer.from(String(inputPin || '').trim());
+  const expected = Buffer.from(String(expectedPin || '').trim());
   return input.length === expected.length && crypto.timingSafeEqual(input, expected);
 }
 

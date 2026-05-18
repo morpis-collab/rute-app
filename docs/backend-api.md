@@ -84,6 +84,7 @@ Dipakai frontend saat app start untuk mengambil data awal:
 - `stockMovements`
 - `activityLog`
 - `cashSessions`
+- `openingCapital`
 - `dailyNotes`
 - `receiptUploads`
 - `dashboard`
@@ -174,6 +175,25 @@ Response:
 ]
 ```
 
+`POST /ingredients`
+
+Khusus owner. Membuat master bahan baku baru agar bisa dipakai di stok, resi pembelian, dan recipe builder HPP.
+
+Request:
+```json
+{
+  "name": "Kopi Blend",
+  "category": "bahan_baku",
+  "unit": "gram",
+  "stock": 1000,
+  "minStock": 200,
+  "costPerUnit": 50,
+  "user": "Owner"
+}
+```
+
+Response berisi bahan baru, daftar stok terbaru, dan snapshot state. Nama bahan tidak boleh duplikat.
+
 `POST /stock/adjust`
 
 Dipakai owner/operator untuk koreksi stok manual, barang rusak, atau stok masuk non-resi.
@@ -238,6 +258,8 @@ Response berisi pengeluaran baru, stock movement bila item menambah stok, dan sn
 Multipart field:
 
 - `receipt`: file foto resi
+- Tipe file yang diterima: JPEG, PNG, WebP, HEIC, HEIF
+- Ukuran maksimal: 8MB
 
 Response:
 ```json
@@ -256,17 +278,77 @@ Response:
     "imageUrl": "/uploads/receipts/1716000000000-abcd1234.jpg"
   },
   "items": [],
-  "source": "ai"
+  "source": "ai",
+  "aiStatus": "parsed",
+  "requiresManualReview": false
 }
 ```
 
-Backend menyimpan file resi ke `RUTE_UPLOAD_DIR` lalu mencoba OCR memakai OpenAI-compatible Vision API. Pakai `RECEIPT_AI_API_KEY` atau fallback ke `AI_API_KEY`/`OPENAI_API_KEY`; model default `RECEIPT_AI_MODEL` lalu `AI_MODEL`. Jika API key belum ada atau provider gagal, response tetap dikembalikan dengan `source: "local"` agar demo dan input manual tetap bisa jalan.
+Backend menyimpan file resi ke `RUTE_UPLOAD_DIR` lalu mencoba OCR memakai OpenAI-compatible Vision API. Pakai `RECEIPT_AI_API_KEY` atau fallback ke `AI_API_KEY`/`OPENAI_API_KEY`; model default `RECEIPT_AI_MODEL` lalu `AI_MODEL`.
+
+Jika API key belum ada, provider gagal, confidence rendah, atau item tidak terbaca, backend tetap mengembalikan upload metadata tetapi tidak mengisi item palsu. Frontend harus menampilkan mode input/koreksi manual sebelum konfirmasi:
+
+```json
+{
+  "merchantName": "",
+  "transactionDate": null,
+  "confidence": 0,
+  "items": [],
+  "source": "local",
+  "aiStatus": "manual_review_required",
+  "requiresManualReview": true,
+  "providerError": "OCR AI gagal. Isi item secara manual sebelum konfirmasi."
+}
+```
 
 ## Receipt Expense Confirmation
 
 `POST /receipt-expenses`
 
 Dipanggil setelah operator mengonfirmasi preview AI. Backend menyimpan pengeluaran, receipt upload termasuk `imageUrl` file permanen, stock movement masuk, dan activity log.
+
+Kontrak penting:
+
+- `receipt.items` wajib berisi minimal satu item valid. Backend menolak item kosong agar hasil scan manual review tidak langsung menyimpan data palsu.
+- Untuk item `addsStock: true`, `ingredientId` harus cocok dengan bahan di database dan `stockQty` wajib lebih dari 0.
+- Backend menghitung ulang `total` dari item dan membangun stock movement sendiri. `stockMovements` dari client diabaikan untuk mencegah manipulasi stok.
+- `cashAccountId` opsional. Jika dikirim, backend mencatat kas keluar dari akun tersebut. Jika tidak dikirim, backend memakai akun kas tunai/default pertama.
+- Jika file/image resi yang sama sudah pernah dikonfirmasi, backend mengembalikan `409`.
+- Jika tanggal resi berada pada hari kas yang sudah ditutup, backend mengembalikan `403`.
+
+Request minimal setelah preview dikoreksi:
+
+```json
+{
+  "receipt": {
+    "merchantName": "Supplier Malinau",
+    "transactionDate": "2026-05-18T10:00:00.000Z",
+    "imageUrl": "/uploads/receipts/1716000000000-abcd1234.jpg",
+    "upload": {
+      "fileName": "1716000000000-abcd1234.jpg",
+      "imageUrl": "/uploads/receipts/1716000000000-abcd1234.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 245000
+    },
+    "items": [
+      {
+        "name": "Susu UHT 1L",
+        "category": "bahan_baku",
+        "qty": 12,
+        "unit": "pcs",
+        "price": 18000,
+        "total": 216000,
+        "addsStock": true,
+        "ingredientId": 2,
+        "stockQty": 12,
+        "stockUnit": "pcs"
+      }
+    ]
+  },
+  "cashAccountId": "kas-utama",
+  "user": "Partner"
+}
+```
 
 ## Expense Approval
 
@@ -283,6 +365,78 @@ Status valid:
 - `pending`
 - `approved`
 - `rejected`
+
+## Opening Capital
+
+`GET /opening-capital`
+
+Mengambil setup modal awal. Butuh token role `owner`.
+
+`PUT /opening-capital`
+
+Menyimpan modal awal usaha tanpa mencampur barang pribadi ke laporan bisnis. Butuh token role `owner`.
+
+Request:
+```json
+{
+  "businessStartDate": "2026-05-18",
+  "cashCapital": 1500000,
+  "assetContributions": [
+    {
+      "name": "Grinder",
+      "quantity": 1,
+      "unit": "unit",
+      "estimatedValue": 1200000,
+      "notes": "Disetor owner"
+    }
+  ],
+  "inventoryContributions": [
+    {
+      "name": "Kopi house blend",
+      "quantity": 2,
+      "unit": "kg",
+      "estimatedValue": 360000,
+      "notes": "Stok awal usaha"
+    }
+  ],
+  "personalExcludedItems": [
+    {
+      "name": "Laptop pribadi",
+      "estimatedValue": 8000000,
+      "reason": "Barang pribadi, tidak masuk usaha"
+    }
+  ],
+  "notes": "Barang pribadi hanya dicatat sebagai excluded."
+}
+```
+
+Response:
+```json
+{
+  "openingCapital": {
+    "businessStartDate": "2026-05-18",
+    "cashCapital": 1500000,
+    "assetContributions": [],
+    "inventoryContributions": [],
+    "personalExcludedItems": [],
+    "totals": {
+      "cashCapital": 1500000,
+      "assetContributions": 1200000,
+      "inventoryContributions": 360000,
+      "businessCapital": 3060000,
+      "personalExcluded": 8000000
+    }
+  },
+  "state": {}
+}
+```
+
+Catatan:
+
+- `cashCapital`, `assetContributions`, dan `inventoryContributions` dihitung sebagai modal usaha.
+- `personalExcludedItems` hanya catatan audit, tidak masuk modal, stok, aset, cash, laba, atau HPP.
+- `GET /bootstrap` hanya mengirim ringkasan modal awal tanpa detail `personalExcludedItems`; detail barang pribadi hanya tersedia via endpoint owner.
+- `cashCapital` otomatis menjadi default `openingCash` di `GET /cash/expected` hanya jika `businessStartDate` sama dengan tanggal tutup kas dan belum ada `cashSession` tanggal itu.
 
 ## Cash Closing
 
@@ -347,6 +501,7 @@ Validasi backend:
 - `description` wajib diisi.
 - Transfer tidak boleh ke akun yang sama.
 - Kas keluar/koreksi minus/transfer ditolak jika saldo tidak cukup.
+- Mutasi ditolak `403` jika tanggal transaksi sudah punya sesi kas berstatus `closed`.
 
 `GET /cash/expected?date=2026-05-17&openingCash=100000`
 
@@ -362,6 +517,7 @@ Response:
 {
   "date": "2026-05-17",
   "openingCash": 100000,
+  "openingCashSource": "query",
   "cashSales": 250000,
   "cashExpenses": 70000,
   "expectedCash": 280000,

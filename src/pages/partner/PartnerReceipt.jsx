@@ -1,79 +1,219 @@
-import { Fragment, useState } from 'react';
-import { AlertCircle, Camera, ImagePlus, Check, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle, Camera, Check, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
 import { scanReceiptImage } from '../../services/receiptService';
 import { formatRupiah } from '../../utils/formatters';
 
+function localDateInput(value) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return localDateInput();
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10);
+}
+
+function dateInputToIso(value) {
+  if (!value) return new Date().toISOString();
+  return new Date(value + 'T12:00:00').toISOString();
+}
+
+function blankItem() {
+  const id = Date.now() + Math.random();
+  return {
+    id,
+    name: '',
+    category: 'bahan_baku',
+    qty: 1,
+    unit: 'pcs',
+    price: 0,
+    total: 0,
+    addsStock: false,
+    ingredientId: '',
+    stockQty: 1,
+    stockUnit: 'pcs',
+  };
+}
+
+function normalizeItems(items = []) {
+  return items.map((item, index) => ({
+    id: item.id || index + 1,
+    name: item.name || '',
+    category: item.category || 'bahan_baku',
+    qty: Number(item.qty || 1),
+    unit: item.unit || 'pcs',
+    price: Number(item.price || 0),
+    total: Number(item.total || 0),
+    addsStock: Boolean(item.addsStock),
+    ingredientId: item.ingredientId || '',
+    stockQty: Number(item.stockQty || item.qty || 1),
+    stockUnit: item.stockUnit || item.unit || 'pcs',
+  }));
+}
+
+function sourceLabel(receipt) {
+  if (!receipt) return '';
+  if (receipt.source === 'ai' && !receipt.requiresManualReview) return 'OpenAI Vision';
+  if (receipt.source === 'ai') return 'OpenAI Vision, perlu koreksi';
+  return 'Input manual';
+}
+
+function receiptErrorMessage(error) {
+  const serverMessage = error.response?.data?.error || error.response?.data?.message;
+  if (error.response?.status === 409) return 'Resi ini sudah pernah dikonfirmasi.';
+  if (error.response?.status === 403) return 'Tanggal resi masuk periode kas yang sudah ditutup.';
+  if (error.response?.status === 400) return serverMessage || 'Item atau mapping stok belum valid.';
+  return serverMessage || 'Resi belum tersimpan. Periksa koneksi backend lalu coba lagi.';
+}
+
 export default function PartnerReceipt() {
   const [step, setStep] = useState('upload');
   const [items, setItems] = useState([]);
   const [imgPrev, setImgPrev] = useState(null);
   const [receipt, setReceipt] = useState(null);
+  const [merchantName, setMerchantName] = useState('');
+  const [transactionDate, setTransactionDate] = useState(localDateInput());
+  const [cashAccountId, setCashAccountId] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
   const saveReceiptExpense = useAppStore((state) => state.saveReceiptExpense);
   const ingredients = useAppStore((state) => state.ingredients);
+  const cashAccounts = useAppStore((state) => state.cashAccounts);
   const { user } = useAuthStore();
 
-  const onFile = async (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
+  const defaultCashAccount = cashAccounts.find((account) => (
+    ['cash', 'tunai'].includes(String(account.type || '').toLowerCase())
+  )) || cashAccounts[0];
+  const selectedCashAccountId = cashAccountId || defaultCashAccount?.id || '';
+  const total = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
+
+  const resetForm = () => {
+    setStep('upload');
+    setItems([]);
+    setImgPrev(null);
+    setReceipt(null);
+    setMerchantName('');
+    setTransactionDate(localDateInput());
+    setCashAccountId('');
     setError('');
-    setImgPrev(URL.createObjectURL(f));
+  };
+
+  const onFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setError('');
+    setImgPrev(URL.createObjectURL(file));
     setStep('scanning');
     try {
-      const aiResult = await scanReceiptImage(f);
-      setReceipt(aiResult);
-      setItems(aiResult.items.map(i => ({...i})));
+      const result = await scanReceiptImage(file);
+      setReceipt(result);
+      setItems(normalizeItems(result.items));
+      setMerchantName(result.merchantName || '');
+      setTransactionDate(localDateInput(result.transactionDate));
       setStep('preview');
     } catch (scanError) {
       console.warn('Gagal scan resi.', scanError);
-      setError('Resi gagal diproses. Coba foto ulang atau pilih gambar lain.');
+      const message = scanError.response?.data?.error || 'Resi gagal diproses. Coba foto ulang atau pilih gambar lain.';
+      setError(message);
       setStep('upload');
     }
-    e.target.value = '';
+    event.target.value = '';
   };
 
+  const addItem = () => {
+    setItems((current) => [...current, blankItem()]);
+  };
+
+  const removeItem = (id) => {
+    setItems((current) => current.filter((item) => item.id !== id));
+  };
+
+  const updateItem = (id, field, value) => {
+    setItems((current) => current.map((item) => {
+      if (item.id !== id) return item;
+
+      const next = { ...item, [field]: value };
+      if (field === 'qty' || field === 'price') {
+        next[field] = Number(value || 0);
+      }
+      if (field === 'addsStock') {
+        next.addsStock = Boolean(value);
+        if (next.addsStock && !next.stockQty) next.stockQty = next.qty || 1;
+      }
+      if (field === 'ingredientId') {
+        const ingredient = ingredients.find((candidate) => String(candidate.id) === String(value));
+        next.ingredientId = value;
+        next.stockUnit = ingredient?.unit || next.stockUnit || next.unit || 'pcs';
+      }
+      if (field === 'stockQty') {
+        next.stockQty = Number(value || 0);
+      }
+
+      const qty = Number(next.qty || 0);
+      const price = Number(next.price || 0);
+      next.total = qty * price;
+      return next;
+    }));
+  };
+
+  const validateItems = () => {
+    if (!items.length) return 'Minimal satu item resi wajib diisi.';
+    for (const [index, item] of items.entries()) {
+      const row = index + 1;
+      if (!String(item.name || '').trim()) return 'Nama item baris ' + row + ' wajib diisi.';
+      if (Number(item.qty || 0) <= 0) return 'Qty item baris ' + row + ' wajib lebih dari 0.';
+      if (Number(item.total || 0) <= 0) return 'Total item baris ' + row + ' wajib lebih dari 0.';
+      if (item.addsStock && !item.ingredientId) return 'Mapping stok item baris ' + row + ' wajib dipilih.';
+      if (item.addsStock && Number(item.stockQty || 0) <= 0) return 'Qty stok item baris ' + row + ' wajib lebih dari 0.';
+    }
+    if (cashAccounts.length && !selectedCashAccountId) return 'Sumber dana kas wajib dipilih.';
+    return '';
+  };
+
+  const confirmedItems = () => items.map((item) => ({
+    name: String(item.name || '').trim(),
+    category: item.category || 'lainnya',
+    qty: Number(item.qty || 0),
+    unit: item.unit || 'pcs',
+    price: Number(item.price || 0),
+    total: Number(item.total || 0),
+    addsStock: Boolean(item.addsStock),
+    ingredientId: item.addsStock ? Number(item.ingredientId) : null,
+    stockQty: item.addsStock ? Number(item.stockQty || 0) : 0,
+    stockUnit: item.addsStock ? item.stockUnit || item.unit || 'pcs' : null,
+  }));
+
   const onConfirm = async () => {
+    const validationError = validateItems();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setIsSaving(true);
     setError('');
     try {
       await saveReceiptExpense({
-        receipt: { ...receipt, items },
+        receipt: {
+          ...receipt,
+          merchantName: merchantName.trim(),
+          transactionDate: dateInputToIso(transactionDate),
+          items: confirmedItems(),
+        },
         imageUrl: receipt?.imageUrl || imgPrev,
+        cashAccountId: selectedCashAccountId,
         user: user?.name || 'Partner',
       });
       setStep('done');
-      setTimeout(() => { setStep('upload'); setItems([]); setImgPrev(null); setReceipt(null); }, 1500);
+      setTimeout(resetForm, 1500);
     } catch (saveError) {
       console.warn('Gagal simpan resi.', saveError);
-      setError('Resi belum tersimpan. Periksa koneksi backend lalu coba lagi.');
+      setError(receiptErrorMessage(saveError));
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const total = items.reduce((s, i) => s + i.total, 0);
-
-  const updateItem = (id, field, value) => {
-    setItems((prev) => prev.map((item) => {
-      if (item.id !== id) return item;
-
-      const next = { ...item, [field]: value };
-      const qty = Number(field === 'qty' ? value : next.qty) || 0;
-      const price = Number(field === 'price' ? value : next.price) || 0;
-      const stockRatio = item.qty ? item.stockQty / item.qty : 1;
-
-      return {
-        ...next,
-        qty,
-        price,
-        total: qty * price,
-        stockQty: item.addsStock ? qty * stockRatio : item.stockQty,
-      };
-    }));
   };
 
   return (
@@ -86,12 +226,12 @@ export default function PartnerReceipt() {
               <span>{error}</span>
             </div>
           )}
-          <label className="flex flex-col items-center justify-center gap-2 p-6 rounded border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] cursor-pointer hover:bg-[#F5F5F5] transition-colors h-32">
+          <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-6 transition-colors hover:bg-[#F5F5F5]">
             <Camera size={24} className="text-[var(--color-text-secondary)]" />
-            <p className="font-medium text-sm text-[var(--color-text-primary)]">Ambil Foto</p>
+            <p className="text-sm font-medium text-[var(--color-text-primary)]">Ambil Foto</p>
             <input type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
           </label>
-          <label className="flex items-center justify-center gap-2 p-3 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)] cursor-pointer hover:bg-[#F5F5F5] transition-colors">
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 transition-colors hover:bg-[#F5F5F5]">
             <ImagePlus size={18} className="text-[var(--color-text-secondary)]" />
             <span className="text-sm font-medium">Pilih Galeri</span>
             <input type="file" accept="image/*" onChange={onFile} className="hidden" />
@@ -101,145 +241,204 @@ export default function PartnerReceipt() {
 
       {step === 'scanning' && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <Loader2 size={24} className="text-[var(--color-text-primary)] animate-spin" />
+          <Loader2 size={24} className="animate-spin text-[var(--color-text-primary)]" />
           <p className="text-sm font-medium text-[var(--color-text-secondary)]">Memproses OCR...</p>
         </div>
       )}
 
       {step === 'preview' && (
         <div className="space-y-4 fade-in">
-          <div className="flex justify-between items-end">
+          <div className="flex items-end justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Cek & Konfirmasi AI</h3>
-              {receipt && (
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  {receipt.merchantName} · Confidence {Math.round(receipt.confidence * 100)}% · {receipt.source === 'ai' ? 'OpenAI Vision' : 'Fallback lokal'}
-                </p>
-              )}
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Cek & Konfirmasi Resi</h3>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Confidence {Math.round(Number(receipt?.confidence || 0) * 100)}% - {sourceLabel(receipt)}
+              </p>
             </div>
-            <button onClick={() => setStep('upload')} className="text-[11px] font-bold text-[var(--color-band-2)] hover:underline">Ulang Foto</button>
+            <button onClick={resetForm} className="text-[11px] font-bold text-[var(--color-band-2)] hover:underline">Ulang Foto</button>
           </div>
-          
-          {imgPrev && (
-            <div className="w-full h-40 bg-[var(--color-bg-secondary)] rounded-lg overflow-hidden border border-[var(--color-border)] mb-4">
-              <img src={imgPrev} alt="Resi Preview" className="w-full h-full object-contain" />
+
+          {receipt?.requiresManualReview && (
+            <div className="flex items-start gap-2 rounded border border-[#e6c56a] bg-[#fff8dc] p-3 text-xs text-[#806100]">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>OCR butuh koreksi manual. Isi merchant dan item sebelum simpan.</span>
             </div>
           )}
-          
-          <div className="glass-card p-0 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead className="bg-[#faf6ef]">
-                  <tr>
-                    <th className="w-1/3">Item di Resi</th>
-                    <th>Jml</th>
-                    <th>Harga (Rp)</th>
-                    <th className="text-right">Masuk Stok?</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map(item => (
-                    <Fragment key={item.id}>
+
+          {imgPrev && (
+            <div className="h-40 w-full overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+              <img src={imgPrev} alt="Preview resi" className="h-full w-full object-contain" />
+            </div>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-bold uppercase text-[var(--color-text-secondary)]">
+              Merchant
+              <input
+                type="text"
+                value={merchantName}
+                onChange={(event) => setMerchantName(event.target.value)}
+                placeholder="Nama supplier/toko"
+                className="mt-1 w-full rounded border border-[var(--color-coffee-latte)] px-3 py-2 text-sm font-normal normal-case"
+              />
+            </label>
+            <label className="text-xs font-bold uppercase text-[var(--color-text-secondary)]">
+              Tanggal Resi
+              <input
+                type="date"
+                value={transactionDate}
+                onChange={(event) => setTransactionDate(event.target.value)}
+                className="mt-1 w-full rounded border border-[var(--color-coffee-latte)] px-3 py-2 text-sm font-normal"
+              />
+            </label>
+          </div>
+
+          <div className="glass-card overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-[var(--color-coffee-latte)] bg-[#faf6ef] p-3">
+              <span className="text-xs font-bold uppercase text-[var(--color-text-secondary)]">Item Resi</span>
+              <button type="button" onClick={addItem} className="btn btn-secondary px-3 py-1 text-xs">
+                <Plus size={14} /> Tambah Item
+              </button>
+            </div>
+            {items.length === 0 ? (
+              <div className="p-4 text-center text-sm text-[var(--color-text-muted)]">
+                Belum ada item terbaca. Tambahkan item manual dari resi.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="data-table">
+                  <thead className="bg-[#faf6ef]">
                     <tr>
-                      <td>
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                          className="w-full text-xs p-1 border-b border-transparent hover:border-[var(--color-coffee-latte)] focus:border-[var(--color-band-2)] outline-none bg-transparent"
-                        />
-                      </td>
-                      <td>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            min="0"
-                            value={item.qty}
-                            onChange={(e) => updateItem(item.id, 'qty', e.target.value)}
-                            className="w-12 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-center font-mono text-xs"
-                          />
-                          <span className="text-[10px] text-[var(--color-text-muted)]">{item.unit}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          min="0"
-                          value={item.price}
-                          onChange={(e) => updateItem(item.id, 'price', e.target.value)}
-                          className="w-full rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-right font-mono text-xs"
-                        />
-                      </td>
-                      <td className="text-right">
-                        <label className="flex flex-col items-end gap-1 cursor-pointer">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px]">{item.addsStock ? 'Ya' : 'Tidak'}</span>
-                            <input
-                              type="checkbox"
-                              checked={item.addsStock}
-                              onChange={(e) => updateItem(item.id, 'addsStock', e.target.checked)}
-                              className="w-4 h-4 accent-[var(--color-band-1)]"
-                            />
-                          </div>
-                        </label>
-                      </td>
+                      <th className="min-w-44">Item</th>
+                      <th className="w-24">Jml</th>
+                      <th className="w-32">Harga</th>
+                      <th className="w-32">Kategori</th>
+                      <th className="w-36 text-right">Stok</th>
+                      <th className="w-10" />
                     </tr>
-                    {item.addsStock && (
-                      <tr key={`${item.id}-mapping`} className="bg-[var(--color-bg-secondary)] border-b border-[var(--color-coffee-latte)]">
-                        <td colSpan="4" className="p-2">
-                          <div className="flex items-center gap-2 justify-end">
-                            <span className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase">Mapping ke Stok:</span>
-                            <select 
-                              className="form-select text-xs p-1 w-48"
-                              value={item.ingredientId || ''}
-                              onChange={(e) => updateItem(item.id, 'ingredientId', Number(e.target.value))}
-                            >
-                              <option value="">-- Pilih Bahan Baku --</option>
-                              {ingredients.map(ing => (
-                                <option key={ing.id} value={ing.id}>{ing.name}</option>
-                              ))}
-                            </select>
+                  </thead>
+                  <tbody>
+                    {items.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(event) => updateItem(item.id, 'name', event.target.value)}
+                            className="w-full border-b border-transparent bg-transparent p-1 text-xs outline-none hover:border-[var(--color-coffee-latte)] focus:border-[var(--color-band-2)]"
+                          />
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-1">
                             <input
                               type="number"
                               min="0"
-                              placeholder="Qty Stok"
-                              value={item.stockQty || ''}
-                              onChange={(e) => updateItem(item.id, 'stockQty', Number(e.target.value))}
-                              className="w-16 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-center font-mono text-xs"
+                              value={item.qty}
+                              onChange={(event) => updateItem(item.id, 'qty', event.target.value)}
+                              className="w-14 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-center font-mono text-xs"
                             />
-                            <select 
-                              className="form-select text-xs p-1 w-16"
-                              value={item.stockUnit || 'gram'}
-                              onChange={(e) => updateItem(item.id, 'stockUnit', e.target.value)}
-                            >
-                              <option value="gram">g</option>
-                              <option value="kg">kg</option>
-                              <option value="ml">ml</option>
-                              <option value="l">L</option>
-                              <option value="pcs">pcs</option>
-                            </select>
+                            <input
+                              type="text"
+                              value={item.unit}
+                              onChange={(event) => updateItem(item.id, 'unit', event.target.value)}
+                              className="w-12 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-xs"
+                            />
                           </div>
                         </td>
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.price}
+                            onChange={(event) => updateItem(item.id, 'price', event.target.value)}
+                            className="w-full rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-right font-mono text-xs"
+                          />
+                        </td>
+                        <td>
+                          <select
+                            className="form-select p-1 text-xs"
+                            value={item.category}
+                            onChange={(event) => updateItem(item.id, 'category', event.target.value)}
+                          >
+                            <option value="bahan_baku">Bahan</option>
+                            <option value="packaging">Packaging</option>
+                            <option value="operasional">Operasional</option>
+                            <option value="lainnya">Lainnya</option>
+                          </select>
+                        </td>
+                        <td className="text-right">
+                          <div className="flex flex-col items-end gap-1">
+                            <label className="flex items-center gap-2 text-[10px]">
+                              <span>{item.addsStock ? 'Masuk stok' : 'Tidak'}</span>
+                              <input
+                                type="checkbox"
+                                checked={item.addsStock}
+                                onChange={(event) => updateItem(item.id, 'addsStock', event.target.checked)}
+                                className="h-4 w-4 accent-[var(--color-band-1)]"
+                              />
+                            </label>
+                            {item.addsStock && (
+                              <div className="flex flex-wrap justify-end gap-1">
+                                <select
+                                  className="form-select w-40 p-1 text-xs"
+                                  value={item.ingredientId || ''}
+                                  onChange={(event) => updateItem(item.id, 'ingredientId', event.target.value)}
+                                >
+                                  <option value="">Pilih bahan</option>
+                                  {ingredients.map((ingredient) => (
+                                    <option key={ingredient.id} value={ingredient.id}>{ingredient.name}</option>
+                                  ))}
+                                </select>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={item.stockQty || ''}
+                                  onChange={(event) => updateItem(item.id, 'stockQty', event.target.value)}
+                                  className="w-16 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-center font-mono text-xs"
+                                />
+                                <select
+                                  className="form-select w-16 p-1 text-xs"
+                                  value={item.stockUnit || 'pcs'}
+                                  onChange={(event) => updateItem(item.id, 'stockUnit', event.target.value)}
+                                >
+                                  <option value="gram">g</option>
+                                  <option value="kg">kg</option>
+                                  <option value="ml">ml</option>
+                                  <option value="l">L</option>
+                                  <option value="pcs">pcs</option>
+                                </select>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="text-right">
+                          <button type="button" onClick={() => removeItem(item.id)} className="rounded p-1 text-[var(--color-accent-red)] hover:bg-red-50" title="Hapus item">
+                            <Trash2 size={15} />
+                          </button>
+                        </td>
                       </tr>
-                    )}
-                    </Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="p-4 bg-[#faf6ef] flex justify-between items-center border-t border-[var(--color-coffee-latte)]">
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="flex items-center justify-between border-t border-[var(--color-coffee-latte)] bg-[#faf6ef] p-4">
               <span className="text-sm font-semibold">Total Pengeluaran</span>
-              <span className="text-lg font-bold font-mono text-[var(--color-accent-red)]">{formatRupiah(total)}</span>
+              <span className="font-mono text-lg font-bold text-[var(--color-accent-red)]">{formatRupiah(total)}</span>
             </div>
           </div>
 
           <div className="glass-card p-4">
-            <h4 className="text-[11px] font-bold uppercase text-[var(--color-text-secondary)] mb-2">Pilih Sumber Dana (Kas)</h4>
-            <select className="form-select text-sm p-2 mb-2">
-              <option value="kas_tunai">Kas Tunai Outlet (Rp 1.850.000)</option>
-              <option value="kas_operasional">Kas Operasional (Rp 850.000)</option>
-              <option value="qris">QRIS (Rp 4.250.000)</option>
-            </select>
+            <h4 className="mb-2 text-[11px] font-bold uppercase text-[var(--color-text-secondary)]">Sumber Dana Kas</h4>
+            {cashAccounts.length ? (
+              <select className="form-select mb-1 p-2 text-sm" value={selectedCashAccountId} onChange={(event) => setCashAccountId(event.target.value)}>
+                {cashAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>{account.name} ({formatRupiah(account.balance || 0)})</option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-xs text-[var(--color-text-muted)]">Akun kas belum dimuat. Backend akan memakai akun kas utama jika tersedia.</p>
+            )}
           </div>
 
           {error && (
@@ -249,14 +448,14 @@ export default function PartnerReceipt() {
             </div>
           )}
 
-          <button onClick={onConfirm} disabled={isSaving} className="w-full btn btn-primary mt-2 disabled:opacity-60">
+          <button onClick={onConfirm} disabled={isSaving} className="btn btn-primary mt-2 w-full disabled:opacity-60">
             {isSaving ? 'Menyimpan...' : 'Konfirmasi & Simpan Pengeluaran'}
           </button>
         </div>
       )}
 
       {step === 'done' && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[var(--color-success)] text-white px-4 py-2 rounded shadow-lg flex items-center gap-2 text-sm font-medium slide-in">
+        <div className="slide-in fixed left-1/2 top-16 z-50 flex -translate-x-1/2 items-center gap-2 rounded bg-[var(--color-success)] px-4 py-2 text-sm font-medium text-white shadow-lg">
           <Check size={16} /> Resi disimpan
         </div>
       )}

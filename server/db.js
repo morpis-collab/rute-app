@@ -18,11 +18,12 @@ const dataDir = path.dirname(dataFile);
 const clone = (value) => structuredClone(value);
 
 function seedData() {
+  const seededAt = new Date().toISOString();
   return {
     meta: {
       app: 'RUTE CoffeeOps',
       version: 1,
-      seededAt: new Date().toISOString(),
+      seededAt,
     },
     users: {
       owner: {
@@ -51,6 +52,18 @@ function seedData() {
     cashSessions: clone(cashSessions),
     cashAccounts: clone(cashAccounts),
     cashTransactions: clone(cashTransactions),
+    openingCapital: {
+      businessStartDate: null,
+      cashCapital: 0,
+      assetContributions: [],
+      inventoryContributions: [],
+      personalExcludedItems: [],
+      notes: '',
+      createdBy: 'System',
+      createdAt: seededAt,
+      updatedBy: 'System',
+      updatedAt: seededAt,
+    },
     dailyNotes: clone(dailyNotes),
     receiptUploads: [],
   };
@@ -84,9 +97,29 @@ function normalizeDb(db) {
   const existingIngredients = Array.isArray(db.ingredients) ? db.ingredients : [];
   const existingById = new Map(existingIngredients.map((ingredient) => [String(ingredient.id), ingredient]));
 
-  const normalizedIngredients = seed.ingredients.map((seedIngredient) => {
+  const normalizeIngredient = (ingredient) => {
+    const stock = Number(ingredient.stock ?? ingredient.stockCurrent ?? 0);
+    const minStock = Number(ingredient.minStock ?? 0);
+    const safeStock = Number.isFinite(stock) ? stock : 0;
+    const safeMinStock = Number.isFinite(minStock) ? minStock : 0;
+    return {
+      ...ingredient,
+      name: String(ingredient.name || '').trim(),
+      category: ingredient.category || 'bahan_baku',
+      unit: ingredient.unit || 'pcs',
+      stock: Number(safeStock.toFixed(3)),
+      minStock: Number(safeMinStock.toFixed(3)),
+      costPerUnit: Number(ingredient.costPerUnit || 0),
+      status: getIngredientStatus(safeStock, safeMinStock),
+      unitConversions: ingredient.unitConversions && typeof ingredient.unitConversions === 'object'
+        ? ingredient.unitConversions
+        : {},
+    };
+  };
+
+  const normalizedSeedIngredients = seed.ingredients.map((seedIngredient) => {
     const existing = existingById.get(String(seedIngredient.id));
-    if (!existing) return seedIngredient;
+    if (!existing) return normalizeIngredient(seedIngredient);
 
     const stock = existing.unit && existing.unit !== seedIngredient.unit
       ? convertQuantityToIngredientUnit(existing.stock, existing.unit, seedIngredient)
@@ -106,6 +139,12 @@ function normalizeDb(db) {
       status: getIngredientStatus(stock, minStock),
     };
   });
+  const seedIngredientIds = new Set(seed.ingredients.map((ingredient) => String(ingredient.id)));
+  const customIngredients = existingIngredients
+    .filter((ingredient) => !seedIngredientIds.has(String(ingredient.id)))
+    .map(normalizeIngredient)
+    .filter((ingredient) => ingredient.name);
+  const normalizedIngredients = [...normalizedSeedIngredients, ...customIngredients];
 
   return {
     ...seed,
@@ -120,6 +159,22 @@ function normalizeDb(db) {
     cashSessions: Array.isArray(db.cashSessions) ? db.cashSessions : seed.cashSessions,
     cashAccounts: Array.isArray(db.cashAccounts) ? db.cashAccounts : seed.cashAccounts,
     cashTransactions: Array.isArray(db.cashTransactions) ? db.cashTransactions : seed.cashTransactions,
+    openingCapital: db.openingCapital && typeof db.openingCapital === 'object'
+      ? {
+          ...seed.openingCapital,
+          ...db.openingCapital,
+          cashCapital: Number(db.openingCapital.cashCapital || 0),
+          assetContributions: Array.isArray(db.openingCapital.assetContributions)
+            ? db.openingCapital.assetContributions
+            : [],
+          inventoryContributions: Array.isArray(db.openingCapital.inventoryContributions)
+            ? db.openingCapital.inventoryContributions
+            : [],
+          personalExcludedItems: Array.isArray(db.openingCapital.personalExcludedItems)
+            ? db.openingCapital.personalExcludedItems
+            : [],
+        }
+      : seed.openingCapital,
     dailyNotes: Array.isArray(db.dailyNotes) ? db.dailyNotes : seed.dailyNotes,
     receiptUploads: Array.isArray(db.receiptUploads) ? db.receiptUploads : [],
   };
@@ -131,7 +186,8 @@ export function readDb() {
   const normalized = normalizeDb(db);
   if (
     JSON.stringify(normalized.ingredients) !== JSON.stringify(db.ingredients) ||
-    JSON.stringify(normalized.users) !== JSON.stringify(db.users)
+    JSON.stringify(normalized.users) !== JSON.stringify(db.users) ||
+    JSON.stringify(normalized.openingCapital) !== JSON.stringify(db.openingCapital)
   ) {
     fs.writeFileSync(dataFile, JSON.stringify(normalized, null, 2));
   }

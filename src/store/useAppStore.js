@@ -1,8 +1,5 @@
 import { create } from 'zustand';
 import {
-  applyStockMovements,
-  buildExpenseStockMovements,
-  calculateApprovalStatus,
   getCashExpected,
   getEstimatedHpp,
   getExpenseTotal,
@@ -21,7 +18,8 @@ import {
   postSale,
   postExpense,
   postStockAdjustment,
-  postProduct
+  postProduct,
+  postIngredient
 } from '../services/apiClient';
 import { getBusinessDate, isSameBusinessDate } from '../utils/businessDate';
 
@@ -33,6 +31,8 @@ const useAppStore = create((set, get) => ({
   stockMovements: [],
   activityLog: [],
   cashSessions: [],
+  cashAccounts: [],
+  cashTransactions: [],
   dailyNotes: [],
   receiptUploads: [],
   apiStatus: 'idle',
@@ -55,6 +55,8 @@ const useAppStore = create((set, get) => ({
         stockMovements: bootstrapData.stockMovements || [],
         activityLog: bootstrapData.activityLog || [],
         cashSessions: bootstrapData.cashSessions || [],
+        cashAccounts: bootstrapData.cashAccounts || [],
+        cashTransactions: bootstrapData.cashTransactions || [],
         dailyNotes: bootstrapData.dailyNotes || [],
         receiptUploads: bootstrapData.receiptUploads || [],
         apiStatus: 'connected',
@@ -99,57 +101,17 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-  saveReceiptExpense: async ({ receipt, imageUrl, user = 'Partner' }) => {
-    const total = receipt.items.reduce((sum, item) => sum + item.total, 0);
-    const expense = {
-      id: `EXP-${Date.now()}`,
-      date: receipt.transactionDate || new Date().toISOString(),
-      category: receipt.items.some((item) => item.category === 'packaging') ? 'packaging' : 'bahan_baku',
-      description: `Resi ${receipt.merchantName || 'pembelian'}`,
-      items: receipt.items.map((item) => ({ ...item })),
-      total,
-      status: calculateApprovalStatus(total),
-      photoUrl: imageUrl,
-      sourceType: 'receipt_ai',
-      user,
-    };
-    const stockMovements = buildExpenseStockMovements(expense).map((movement, index) => ({
-      ...movement,
-      id: `SM-${Date.now()}-${index}`,
-    }));
-    const upload = {
-      id: `RCPT-${Date.now()}`,
-      expenseId: expense.id,
-      originalFileName: receipt.originalFileName,
-      imageUrl: receipt.imageUrl || imageUrl,
-      fileName: receipt.upload?.fileName || null,
-      mimeType: receipt.upload?.mimeType || null,
-      fileSize: receipt.fileSize || receipt.upload?.fileSize || null,
-      aiStatus: 'confirmed',
-      aiRaw: receipt,
-      createdAt: new Date().toISOString(),
-      user,
-    };
-
-    const applyLocalState = () => set((state) => ({
-      expenses: [expense, ...state.expenses],
-      receiptUploads: [upload, ...state.receiptUploads],
-      stockMovements: [...state.stockMovements, ...stockMovements],
-      ingredients: applyStockMovements(state.ingredients, stockMovements),
-      activityLog: [
-        ...state.activityLog,
-        {
-          id: `ACT-${Date.now()}`,
-          time: expense.date,
-          action: `Upload resi ${expense.description} ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(expense.total)}`,
-          user,
-          type: 'pengeluaran',
-        },
-      ],
-    }));
-
+  saveReceiptExpense: async ({ receipt, imageUrl, cashAccountId, user = 'Partner' }) => {
     try {
-      const result = await postReceiptExpense({ expense, upload, stockMovements, receipt, imageUrl: upload.imageUrl, user });
+      const result = await postReceiptExpense({
+        receipt: {
+          ...receipt,
+          imageUrl: receipt.imageUrl || imageUrl,
+        },
+        imageUrl: receipt.imageUrl || imageUrl,
+        cashAccountId,
+        user,
+      });
       if (result?.state) {
         set({
           products: result.state.products || [],
@@ -159,18 +121,18 @@ const useAppStore = create((set, get) => ({
           stockMovements: result.state.stockMovements || [],
           activityLog: result.state.activityLog || [],
           cashSessions: result.state.cashSessions || [],
+          cashAccounts: result.state.cashAccounts || [],
+          cashTransactions: result.state.cashTransactions || [],
           dailyNotes: result.state.dailyNotes || [],
           receiptUploads: result.state.receiptUploads || [],
           apiStatus: 'connected',
         });
-      } else {
-        applyLocalState();
       }
-      return result?.expense || expense;
+      return result?.expense;
     } catch (error) {
       console.warn('Gagal sinkron resi ke RUTE API.', error);
-      applyLocalState();
-      return expense;
+      set({ apiStatus: 'offline' });
+      throw error;
     }
   },
 
@@ -216,6 +178,16 @@ const useAppStore = create((set, get) => ({
     }
   },
 
+  addIngredient: async (ingredientData) => {
+    try {
+      await postIngredient(ingredientData);
+      await get().loadRemoteData();
+    } catch (err) {
+      console.error('Failed to add ingredient', err);
+      throw err;
+    }
+  },
+
   addProduct: async (productData) => {
     try {
       await postProduct(productData);
@@ -228,11 +200,12 @@ const useAppStore = create((set, get) => ({
 
   closeCash: ({ actualCash, qris, transfer, notes, user = 'Partner' }) => {
     const businessDate = getBusinessDate();
+    const session = get().cashSessions.find((cash) => cash.date === businessDate);
     const expectedCash = get().getCashExpected(businessDate);
     const difference = Number(actualCash || 0) - expectedCash;
     const closedSession = {
       date: businessDate,
-      openingCash: 100000,
+      openingCash: session?.openingCash || 0,
       closingCash: Number(actualCash || 0),
       expectedCash,
       difference,
