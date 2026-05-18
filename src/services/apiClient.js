@@ -20,12 +20,18 @@ api.interceptors.request.use(
   }
 );
 
+let isLoggingOut = false;
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      useToastStore.getState().addToast('Sesi Anda telah berakhir, silakan login kembali.', 'error');
+      if (!isLoggingOut) {
+        isLoggingOut = true;
+        useAuthStore.getState().logout();
+        useToastStore.getState().addToast('Sesi Anda telah berakhir, silakan login kembali.', 'error');
+        setTimeout(() => { isLoggingOut = false; }, 3000);
+      }
     } else if (error.response?.status === 403) {
       const msg = error.response?.data?.error || error.response?.data?.message || 'Anda tidak memiliki akses ke fitur ini.';
       useToastStore.getState().addToast(msg, 'error');
