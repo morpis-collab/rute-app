@@ -19,7 +19,11 @@ import {
   getSales,
   getProducts,
   getExpenses,
-  getStock
+  getStock,
+  postSale,
+  postExpense,
+  postStockAdjustment,
+  postProduct
 } from '../services/apiClient';
 import { getBusinessDate, isSameBusinessDate } from '../utils/businessDate';
 
@@ -91,7 +95,6 @@ const useAppStore = create((set, get) => ({
 
   recordSale: async (payload) => {
     try {
-      const { postSale } = await import('../services/apiClient');
       await postSale(payload);
       await get().loadRemoteData();
     } catch (err) {
@@ -199,7 +202,6 @@ const useAppStore = create((set, get) => ({
 
   addExpense: async (expenseData) => {
     try {
-      const { postExpense } = await import('../services/apiClient');
       await postExpense(expenseData);
       await get().loadRemoteData();
     } catch (err) {
@@ -210,7 +212,6 @@ const useAppStore = create((set, get) => ({
 
   adjustStock: async (adjustmentData) => {
     try {
-      const { postStockAdjustment } = await import('../services/apiClient');
       await postStockAdjustment(adjustmentData);
       await get().loadRemoteData();
     } catch (err) {
@@ -221,7 +222,6 @@ const useAppStore = create((set, get) => ({
 
   addProduct: async (productData) => {
     try {
-      const { postProduct } = await import('../services/apiClient');
       await postProduct(productData);
       await get().loadRemoteData();
     } catch (err) {
