@@ -5,6 +5,7 @@ import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
 import { formatUnit } from '../../utils/formatters';
 import StockAdjustmentModal from '../../components/shared/StockAdjustmentModal';
+import useToastStore from '../../store/useToastStore';
 
 export default function OwnerStock() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,11 +14,16 @@ export default function OwnerStock() {
   const { user } = useAuthStore();
   const getPercent = (stock, min) => Math.min((stock / (min * 2)) * 100, 100);
 
-  const handleSaveStock = (data) => {
-    adjustStock({
-      ...data,
-      user: user?.name || 'Owner',
-    });
+  const handleSaveStock = async (data) => {
+    try {
+      await adjustStock({
+        ...data,
+        user: user?.name || 'Owner',
+      });
+      useToastStore.getState().addToast('Koreksi stok berhasil disimpan', 'success');
+    } catch {
+      // Error handled globally
+    }
   };
 
   return (

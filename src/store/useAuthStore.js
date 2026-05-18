@@ -1,28 +1,25 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-const useAuthStore = create((set) => ({
-  user: null,
-  isAuthenticated: false,
+const useAuthStore = create(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
 
-  login: (role) => {
-    const users = {
-      owner: { id: 1, name: 'Owner RUTE', email: 'owner@rute.coffee', role: 'owner' },
-      partner: { id: 2, name: 'Partner Malinau', email: 'partner@rute.coffee', role: 'partner' },
-    };
-    set({ user: users[role], isAuthenticated: true });
-  },
+      login: (user, token) => {
+        set({ user, token, isAuthenticated: true });
+      },
 
-  logout: () => {
-    set({ user: null, isAuthenticated: false });
-  },
-
-  switchRole: (role) => {
-    const users = {
-      owner: { id: 1, name: 'Owner RUTE', email: 'owner@rute.coffee', role: 'owner' },
-      partner: { id: 2, name: 'Partner Malinau', email: 'partner@rute.coffee', role: 'partner' },
-    };
-    set({ user: users[role] });
-  },
-}));
+      logout: () => {
+        set({ user: null, token: null, isAuthenticated: false });
+      },
+    }),
+    {
+      name: 'rute-auth-storage',
+    }
+  )
+);
 
 export default useAuthStore;

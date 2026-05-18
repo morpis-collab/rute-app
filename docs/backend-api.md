@@ -4,6 +4,64 @@ Base URL development: `http://localhost:4321/api`
 
 Frontend Vite proxy sudah mengarah dari `/api` ke backend lokal.
 
+## Environment
+
+Env penting untuk development/production:
+
+- `RUTE_API_PORT`: port API lokal.
+- `RUTE_BUSINESS_TZ`: timezone business date, default `Asia/Makassar`.
+- `RUTE_CORS_ORIGIN`: origin frontend yang diizinkan. Wajib diset eksplisit di production.
+- `RUTE_DATA_FILE`: path file JSON database. Set ke persistent disk saat deploy.
+- `JWT_SECRET`: secret JWT. Wajib panjang dan random di production.
+- `JWT_EXPIRES_SECONDS`: durasi token.
+- `RUTE_OWNER_PIN` dan `RUTE_PARTNER_PIN`: PIN login role.
+- `AI_API_KEY` atau `OPENAI_API_KEY`: key provider AI Copilot.
+- `AI_MODEL` dan `AI_BASE_URL`: opsional untuk model/provider kompatibel OpenAI chat completions.
+
+Mulai fase auth, semua endpoint `/api/*` membutuhkan header:
+
+```http
+Authorization: Bearer <token>
+```
+
+Endpoint publik:
+
+- `GET /health`
+- `POST /auth/login`
+
+## Auth
+
+`POST /auth/login`
+
+Request:
+```json
+{
+  "role": "owner",
+  "pin": "123456"
+}
+```
+
+Role valid: `owner` atau `partner`.
+
+Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1...",
+  "user": {
+    "id": 1,
+    "name": "Owner RUTE",
+    "email": "owner@rute.coffee",
+    "role": "owner",
+    "authMethod": "pin",
+    "active": true
+  }
+}
+```
+
+`GET /auth/me`
+
+Memvalidasi token aktif dan mengembalikan user saat ini.
+
 ## Health
 
 `GET /health`
@@ -31,6 +89,29 @@ Dipakai frontend saat app start untuk mengambil data awal:
 - `dashboard`
 
 ## Sales
+
+`GET /sales`
+
+Mengambil transaksi penjualan business date hari ini. Query opsional:
+
+- `date=YYYY-MM-DD`: ambil tanggal tertentu.
+- `all=true`: ambil semua transaksi.
+
+Response:
+```json
+[
+  {
+    "id": "TRX-001",
+    "date": "2026-05-18T09:15:00.000Z",
+    "items": [
+      { "productId": 1, "name": "Kopi Susu RUTE", "qty": 1, "price": 10000, "subtotal": 10000 }
+    ],
+    "total": 10000,
+    "paymentMethod": "cash",
+    "user": "Partner"
+  }
+]
+```
 
 `POST /sales`
 
@@ -71,7 +152,27 @@ Request minimal:
 
 Response berisi menu baru, HPP, margin, activity log, dan snapshot state terbaru.
 
-## Stock Adjustment
+## Stock
+
+`GET /stock`
+
+Mengambil daftar bahan baku dengan field kontrak frontend `stockCurrent`.
+
+Response:
+```json
+[
+  {
+    "id": 1,
+    "name": "Kopi Blend",
+    "category": "Bahan",
+    "unit": "gram",
+    "costPerUnit": 150,
+    "stockCurrent": 450,
+    "minStock": 500,
+    "emoji": "☕"
+  }
+]
+```
 
 `POST /stock/adjust`
 
@@ -81,17 +182,54 @@ Request:
 ```json
 {
   "ingredientId": 1,
-  "qty": 250,
-  "unit": "gram",
-  "type": "masuk",
-  "reason": "Stock opname",
-  "user": "Owner"
+  "type": "in",
+  "amount": 250,
+  "user": "Owner",
+  "notes": "Stock opname"
 }
 ```
 
-`type` valid saat ini: `masuk` atau `keluar`.
+`type` valid: `in`, `out`, atau `waste`. Alias lama `masuk` dan `keluar` tetap diterima.
 
 Response berisi stock movement adjustment dan snapshot state terbaru.
+
+## Expenses
+
+`GET /expenses`
+
+Mengambil pengeluaran business date hari ini. Query opsional:
+
+- `date=YYYY-MM-DD`: ambil tanggal tertentu.
+- `all=true`: ambil semua pengeluaran.
+
+Response:
+```json
+[
+  {
+    "id": "EXP-001",
+    "date": "2026-05-18T08:30:00.000Z",
+    "user": "Partner",
+    "items": [{ "name": "Susu UHT", "amount": 216000 }],
+    "total": 216000,
+    "status": "approved",
+    "proofUrl": null
+  }
+]
+```
+
+`POST /expenses`
+
+Request minimal:
+```json
+{
+  "items": [{ "name": "Susu UHT", "amount": 216000 }],
+  "total": 216000,
+  "user": "Partner",
+  "proofUrl": null
+}
+```
+
+Response berisi pengeluaran baru, stock movement bila item menambah stok, dan snapshot state terbaru.
 
 ## Receipt OCR
 
@@ -107,17 +245,28 @@ Response:
   "merchantName": "Supplier Malinau",
   "transactionDate": "2026-05-17T14:00:00.000Z",
   "confidence": 0.92,
-  "items": []
+  "originalFileName": "resi.jpg",
+  "fileSize": 245000,
+  "imageUrl": "/uploads/receipts/1716000000000-abcd1234.jpg",
+  "upload": {
+    "originalFileName": "resi.jpg",
+    "fileName": "1716000000000-abcd1234.jpg",
+    "mimeType": "image/jpeg",
+    "fileSize": 245000,
+    "imageUrl": "/uploads/receipts/1716000000000-abcd1234.jpg"
+  },
+  "items": [],
+  "source": "ai"
 }
 ```
 
-Saat ini OCR masih stub lokal agar flow frontend-backend siap. Nanti bisa diganti OpenAI Vision tanpa mengubah kontrak frontend.
+Backend menyimpan file resi ke `RUTE_UPLOAD_DIR` lalu mencoba OCR memakai OpenAI-compatible Vision API. Pakai `RECEIPT_AI_API_KEY` atau fallback ke `AI_API_KEY`/`OPENAI_API_KEY`; model default `RECEIPT_AI_MODEL` lalu `AI_MODEL`. Jika API key belum ada atau provider gagal, response tetap dikembalikan dengan `source: "local"` agar demo dan input manual tetap bisa jalan.
 
 ## Receipt Expense Confirmation
 
 `POST /receipt-expenses`
 
-Dipanggil setelah operator mengonfirmasi preview AI. Backend menyimpan pengeluaran, receipt upload, stock movement masuk, dan activity log.
+Dipanggil setelah operator mengonfirmasi preview AI. Backend menyimpan pengeluaran, receipt upload termasuk `imageUrl` file permanen, stock movement masuk, dan activity log.
 
 ## Expense Approval
 
@@ -137,6 +286,100 @@ Status valid:
 
 ## Cash Closing
 
+`GET /cash/owner`
+
+Endpoint agregat utama untuk halaman Owner Cash. Butuh token role `owner`.
+
+Query filter: `date`, `openingCash`, `limit` (default 50, maksimal 100), `type`, dan `accountId`.
+
+Response berisi `businessDate`, `cashAccounts`, `cashTransactions`, `totalCash`, `transactionCount`, `expectedCash`, `cashSession`, `summary`, dan `filters`.
+
+`GET /cash/accounts`
+
+Mengambil saldo semua akun kas dan riwayat mutasi kas. Butuh token role `owner`.
+
+Query filter yang didukung: `limit`, `type`, `accountId`, dan `date`.
+
+Response:
+```json
+{
+  "cashAccounts": [
+    { "id": "acc-01", "name": "Kas Tunai Outlet", "type": "tunai", "balance": 1850000 }
+  ],
+  "cashTransactions": [],
+  "totalCash": 1850000,
+  "transactionCount": 3
+}
+```
+
+`POST /cash/transactions`
+
+Mencatat mutasi kas manual dari halaman Owner Cash. Butuh token role `owner`.
+
+Request kas masuk/keluar/koreksi:
+```json
+{
+  "type": "in",
+  "accountId": "acc-01",
+  "amount": 500000,
+  "description": "Modal awal",
+  "adjustmentType": "plus",
+  "user": "Owner"
+}
+```
+
+Request transfer antar akun:
+```json
+{
+  "type": "transfer",
+  "fromAccountId": "acc-02",
+  "toAccountId": "acc-03",
+  "amount": 2000000,
+  "description": "Settlement QRIS",
+  "user": "Owner"
+}
+```
+
+Validasi backend:
+
+- `type` valid: `in`, `out`, `transfer`, `koreksi`.
+- `amount` wajib lebih dari 0.
+- `description` wajib diisi.
+- Transfer tidak boleh ke akun yang sama.
+- Kas keluar/koreksi minus/transfer ditolak jika saldo tidak cukup.
+
+`GET /cash/expected?date=2026-05-17&openingCash=100000`
+
+Mengambil angka kas seharusnya sebelum Partner menutup kas. Endpoint ini sudah memakai data transaksi backend, jadi frontend tidak perlu menghitung ulang.
+
+Query:
+
+- `date` opsional, format `YYYY-MM-DD`. Default: business date hari ini.
+- `openingCash` opsional. Jika tidak dikirim, backend memakai `openingCash` dari cash session tanggal tersebut atau `0`.
+
+Response:
+```json
+{
+  "date": "2026-05-17",
+  "openingCash": 100000,
+  "cashSales": 250000,
+  "cashExpenses": 70000,
+  "expectedCash": 280000,
+  "salesByMethod": {
+    "cash": 250000,
+    "qris": 120000,
+    "transfer": 0
+  },
+  "totalSales": 370000,
+  "totalExpenseCash": 70000,
+  "existingSession": {
+    "date": "2026-05-17",
+    "status": "open"
+  },
+  "canClose": true
+}
+```
+
 `POST /cash/close`
 
 Request:
@@ -148,6 +391,39 @@ Request:
   "transfer": 0,
   "notes": "Tidak ada kendala",
   "user": "Partner"
+}
+```
+
+Backend menghitung ulang `expectedCash` dari data transaksi dan menolak tutup kas ganda untuk tanggal yang sudah `closed`.
+
+Response sukses `201`:
+```json
+{
+  "cashSession": {
+    "date": "2026-05-17",
+    "openingCash": 100000,
+    "closingCash": 280000,
+    "expectedCash": 280000,
+    "difference": 0,
+    "differenceStatus": "balanced",
+    "qris": 120000,
+    "transfer": 0,
+    "totalExpenseCash": 70000,
+    "status": "closed",
+    "notes": "Tidak ada kendala",
+    "closedBy": "Partner",
+    "closedAt": "2026-05-18T02:25:00.000Z"
+  },
+  "state": {}
+}
+```
+
+Jika tanggal yang sama sudah ditutup, backend mengembalikan `409 Conflict`:
+```json
+{
+  "error": "Kas untuk tanggal ini sudah ditutup",
+  "statusCode": 409,
+  "cashSession": {}
 }
 ```
 
@@ -169,3 +445,76 @@ Request:
 `GET /reports/today?date=2026-05-17`
 
 Response berisi omzet, HPP, laba kotor, pengeluaran operasional, estimasi laba bersih, jumlah transaksi, total cup, dan menu terlaris.
+
+## AI Copilot
+
+Endpoint Copilot sudah protected JWT. Backend memakai ringkasan data finansial server-side, jadi frontend cukup mengirim prompt dan tidak perlu menyusun konteks finansial sendiri.
+
+`GET /copilot/insights?date=2026-05-17`
+
+Mengambil insight feed awal untuk kartu rekomendasi/actionable insight.
+
+Response:
+```json
+{
+  "insights": [
+    {
+      "id": "stock-1",
+      "type": "alert",
+      "title": "Stok kritis",
+      "text": "Susu UHT tersisa 2 liter, sudah di bawah batas minimum 5 liter.",
+      "action": "Cek stok",
+      "priority": "high"
+    }
+  ],
+  "context": {
+    "businessDate": "2026-05-17",
+    "role": "owner",
+    "summary": {},
+    "cash": {}
+  },
+  "source": "local"
+}
+```
+
+`POST /copilot/chat`
+
+Request:
+```json
+{
+  "prompt": "Berapa profit hari ini?",
+  "date": "2026-05-17",
+  "history": [
+    { "role": "user", "text": "Ringkas performa hari ini" },
+    { "role": "assistant", "text": "Omzet hari ini..." }
+  ]
+}
+```
+
+Field:
+
+- `prompt` wajib, maksimal 1200 karakter.
+- `date` opsional, format `YYYY-MM-DD`. Default business date hari ini.
+- `history` opsional, maksimal 8 pesan terakhir akan dipakai backend.
+
+Response:
+```json
+{
+  "message": {
+    "id": "COP-1760000000000",
+    "role": "assistant",
+    "text": "Estimasi laba bersih tanggal 2026-05-17 adalah Rp 180.000...",
+    "createdAt": "2026-05-18T02:45:00.000Z"
+  },
+  "insights": [],
+  "context": {
+    "businessDate": "2026-05-17",
+    "role": "owner",
+    "summary": {},
+    "cash": {}
+  },
+  "source": "ai"
+}
+```
+
+`source` bernilai `ai` jika `AI_API_KEY` atau `OPENAI_API_KEY` tersedia dan provider berhasil menjawab. Jika belum ada API key, atau provider AI sedang gagal, backend tetap mengembalikan jawaban lokal berbasis rule dengan `source: "local"` agar frontend bisa dikembangkan dan dites. Saat provider gagal, response juga dapat berisi `providerError` dengan pesan aman untuk UI/log.

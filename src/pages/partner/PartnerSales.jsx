@@ -10,9 +10,13 @@ export default function PartnerSales() {
   const { cart, paymentMethod, addToCart, removeFromCart, clearCart, setPaymentMethod, getCartTotal, getCartCount, confirmTransaction } = useSalesStore();
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleConfirm = () => {
-    const trx = confirmTransaction();
-    if (trx) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsSubmitting(true);
+    const success = await confirmTransaction();
+    setIsSubmitting(false);
+    if (success) {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 1500); // Faster feedback
     }
@@ -114,8 +118,8 @@ export default function PartnerSales() {
             ))}
           </div>
 
-          <button onClick={handleConfirm} className="w-full btn btn-primary py-3 text-base">
-            Simpan — {formatRupiah(getCartTotal())}
+          <button onClick={handleConfirm} disabled={isSubmitting} className="w-full btn btn-primary py-3 text-base disabled:opacity-50">
+            {isSubmitting ? 'Menyimpan...' : `Simpan — ${formatRupiah(getCartTotal())}`}
           </button>
         </div>
       )}

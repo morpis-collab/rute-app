@@ -69,26 +69,31 @@ const useSalesStore = create((set, get) => ({
     return get().cart.reduce((sum, item) => sum + item.qty, 0);
   },
 
-  // Confirm transaction (mock)
-  confirmTransaction: () => {
+  // Confirm transaction
+  confirmTransaction: async () => {
     const { cart, paymentMethod } = get();
-    if (cart.length === 0) return null;
+    if (cart.length === 0) return false;
 
-    const transaction = useAppStore.getState().recordSale({
-      items: cart.map(item => ({
-        productId: item.productId,
-        name: item.name,
-        qty: item.qty,
-        price: item.price,
-        subtotal: item.subtotal,
-      })),
-      total: get().getCartTotal(),
-      paymentMethod,
-      user: 'Partner',
-    });
+    try {
+      await useAppStore.getState().recordSale({
+        items: cart.map(item => ({
+          productId: item.productId,
+          name: item.name,
+          qty: item.qty,
+          price: item.price,
+          subtotal: item.subtotal,
+        })),
+        total: get().getCartTotal(),
+        paymentMethod,
+        user: 'Partner',
+      });
 
-    set({ cart: [], paymentMethod: 'cash' });
-    return transaction;
+      set({ cart: [], paymentMethod: 'cash' });
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
   },
 }));
 

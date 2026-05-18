@@ -1,20 +1,64 @@
-import { useState } from 'react';
-import { ArrowRightLeft, AlertTriangle, ArrowDown, ArrowUp } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { ArrowRightLeft, AlertTriangle, ArrowDown, ArrowUp, Loader2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
-import { cashAccounts, cashTransactions } from '../../data/mock/cashAccounts';
 import { formatRupiah, formatWaktu } from '../../utils/formatters';
 import CashModal from '../../components/owner/CashModal';
+import { getOwnerCash, postCashTransaction } from '../../services/apiClient';
+import useAuthStore from '../../store/useAuthStore';
+import useToastStore from '../../store/useToastStore';
 
 export default function OwnerCash() {
   const [activeModal, setActiveModal] = useState(null); // 'in', 'out', 'transfer', 'koreksi'
-  const txs = cashTransactions; // Using mock data directly for now
+  const [cashAccounts, setCashAccounts] = useState([]);
+  const [txs, setTxs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  
+  const { user } = useAuthStore();
+  const { addToast } = useToastStore();
 
   const totalCash = cashAccounts.reduce((acc, curr) => acc + curr.balance, 0);
 
-  const handleSimpan = (e) => {
-    e.preventDefault();
-    // Simulasi simpan data
-    setActiveModal(null);
+  const loadCash = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await getOwnerCash();
+      setCashAccounts(data.cashAccounts || []);
+      setTxs(data.cashTransactions || []);
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Gagal memuat data kas.';
+      setError(msg);
+      addToast(msg, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadCash();
+  }, [loadCash]);
+
+  const handleSimpan = async (payload) => {
+    try {
+      setSaving(true);
+      setError('');
+      await postCashTransaction({
+        ...payload,
+        user: user?.name || 'Owner',
+      });
+      addToast('Mutasi kas berhasil disimpan!', 'success');
+      setActiveModal(null);
+      await loadCash(); // Reload to get updated accounts and transactions
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Gagal menyimpan mutasi kas.';
+      setError(msg);
+      addToast(msg, 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -35,6 +79,18 @@ export default function OwnerCash() {
           <AlertTriangle size={16} /> Koreksi
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-4 py-3 text-sm text-[#a34f39]">
+          {error}
+        </div>
+      )}
+
+      {loading && (
+        <div className="mb-4 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+          <Loader2 size={16} className="animate-spin" /> Memuat data kas...
+        </div>
+      )}
 
       {/* Saldo Accounts */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -90,7 +146,7 @@ export default function OwnerCash() {
                         {cashAccounts.find(a => a.id === tx.fromAccountId)?.name} <ArrowRightLeft size={10} className="inline mx-1" /> {cashAccounts.find(a => a.id === tx.toAccountId)?.name}
                       </span>
                     ) : (
-                      cashAccounts.find(a => a.id === tx.accountId)?.name
+                      cashAccounts.find(a => a.id === tx.accountId)?.name || '-'
                     )}
                   </td>
                   <td className={`text-right font-mono font-bold ${tx.type === 'in' ? 'text-[var(--color-accent-green)]' : tx.type === 'out' ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-text-primary)]'}`}>
@@ -104,7 +160,14 @@ export default function OwnerCash() {
       </div>
 
       {/* MODALS */}
-      <CashModal activeModal={activeModal} setActiveModal={setActiveModal} handleSimpan={handleSimpan} />
+      <CashModal
+        activeModal={activeModal}
+        setActiveModal={setActiveModal}
+        handleSimpan={handleSimpan}
+        cashAccounts={cashAccounts}
+        saving={saving}
+        error={error}
+      />
     </PageWrapper>
   );
 }

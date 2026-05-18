@@ -9,13 +9,17 @@
       "id": 1,
       "name": "Owner RUTE",
       "email": "owner@rute.coffee",
-      "role": "owner"
+      "role": "owner",
+      "authMethod": "pin",
+      "active": true
     },
     "partner": {
       "id": 2,
       "name": "Partner Malinau",
       "email": "partner@rute.coffee",
-      "role": "partner"
+      "role": "partner",
+      "authMethod": "pin",
+      "active": true
     }
   },
   "products": [
@@ -524,6 +528,24 @@
       "total": 22000,
       "paymentMethod": "cash",
       "user": "Partner"
+    },
+    {
+      "id": "TRX-1779076074816",
+      "date": "2026-05-18T03:47:54.816Z",
+      "items": [
+        {
+          "productId": 1,
+          "name": "Kopi Susu RUTE",
+          "qty": 1,
+          "price": 10000,
+          "subtotal": 10000,
+          "estimatedHpp": 6235
+        }
+      ],
+      "total": 10000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 6235
     }
   ],
   "expenses": [
@@ -656,7 +678,7 @@
       "id": 1,
       "name": "Kopi Blend",
       "unit": "gram",
-      "stock": 533,
+      "stock": 515,
       "minStock": 500,
       "status": "aman",
       "costPerUnit": 150,
@@ -687,7 +709,7 @@
       "id": 3,
       "name": "Gula Aren",
       "unit": "ml",
-      "stock": 755,
+      "stock": 730,
       "minStock": 500,
       "status": "aman",
       "costPerUnit": 25,
@@ -732,7 +754,7 @@
       "id": 6,
       "name": "Cup 16oz",
       "unit": "pcs",
-      "stock": 43,
+      "stock": 42,
       "minStock": 50,
       "status": "kritis",
       "costPerUnit": 400,
@@ -745,7 +767,7 @@
       "id": 7,
       "name": "Lid",
       "unit": "pcs",
-      "stock": 118,
+      "stock": 117,
       "minStock": 50,
       "status": "aman",
       "costPerUnit": 100,
@@ -758,7 +780,7 @@
       "id": 8,
       "name": "Sedotan",
       "unit": "pcs",
-      "stock": 198,
+      "stock": 197,
       "minStock": 50,
       "status": "aman",
       "costPerUnit": 50,
@@ -784,7 +806,7 @@
       "id": 10,
       "name": "Es Batu",
       "unit": "porsi",
-      "stock": 13,
+      "stock": 12,
       "minStock": 10,
       "status": "aman",
       "costPerUnit": 200,
@@ -1047,6 +1069,97 @@
       "sourceId": null,
       "date": "2026-05-17T15:24:42.999Z",
       "user": "Owner RUTE"
+    },
+    {
+      "ingredientId": 1,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 18,
+      "unit": "gram",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779076074816",
+      "date": "2026-05-18T03:47:54.816Z",
+      "user": "Sistem",
+      "id": "SM-1779076074817-0"
+    },
+    {
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 120,
+      "unit": "ml",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779076074816",
+      "date": "2026-05-18T03:47:54.816Z",
+      "user": "Sistem",
+      "id": "SM-1779076074817-1"
+    },
+    {
+      "ingredientId": 3,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 25,
+      "unit": "ml",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779076074816",
+      "date": "2026-05-18T03:47:54.816Z",
+      "user": "Sistem",
+      "id": "SM-1779076074817-2"
+    },
+    {
+      "ingredientId": 6,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779076074816",
+      "date": "2026-05-18T03:47:54.816Z",
+      "user": "Sistem",
+      "id": "SM-1779076074817-3"
+    },
+    {
+      "ingredientId": 7,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779076074816",
+      "date": "2026-05-18T03:47:54.816Z",
+      "user": "Sistem",
+      "id": "SM-1779076074817-4"
+    },
+    {
+      "ingredientId": 8,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779076074816",
+      "date": "2026-05-18T03:47:54.816Z",
+      "user": "Sistem",
+      "id": "SM-1779076074817-5"
+    },
+    {
+      "ingredientId": 10,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "porsi",
+      "source": "Penjualan (1x Kopi Susu RUTE)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1779076074816",
+      "date": "2026-05-18T03:47:54.816Z",
+      "user": "Sistem",
+      "id": "SM-1779076074817-6"
     }
   ],
   "activityLog": [
@@ -1147,9 +1260,45 @@
       "action": "Menu baru ditambahkan: Kopi Morpis",
       "user": "Owner",
       "type": "menu"
+    },
+    {
+      "id": "ACT-1779075975616",
+      "time": "2026-05-18T03:46:15.616Z",
+      "action": "Mutasi kas in: testing",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779076058095",
+      "time": "2026-05-18T03:47:38.095Z",
+      "action": "Tutup kas harian dengan selisih Rp -85.000",
+      "user": "Partner Malinau",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779076074829",
+      "time": "2026-05-18T03:47:54.816Z",
+      "action": "Input penjualan: Kopi Susu RUTE 1x",
+      "user": "Partner",
+      "type": "penjualan"
     }
   ],
   "cashSessions": [
+    {
+      "date": "2026-05-18",
+      "openingCash": 100000,
+      "closingCash": 15000,
+      "expectedCash": 100000,
+      "difference": -85000,
+      "differenceStatus": "short",
+      "qris": 0,
+      "transfer": 0,
+      "totalExpenseCash": 0,
+      "status": "closed",
+      "notes": "",
+      "closedBy": "Partner Malinau",
+      "closedAt": "2026-05-18T03:47:38.095Z"
+    },
     {
       "date": "2026-05-16",
       "openingCash": 100000,
@@ -1173,6 +1322,79 @@
       "totalExpenseCash": null,
       "status": "open",
       "notes": null
+    }
+  ],
+  "cashAccounts": [
+    {
+      "id": "acc-01",
+      "name": "Kas Tunai Outlet",
+      "type": "tunai",
+      "balance": 1862000,
+      "description": "Uang tunai fisik di laci kasir"
+    },
+    {
+      "id": "acc-02",
+      "name": "QRIS BCA",
+      "type": "qris",
+      "balance": 4250000,
+      "description": "Penerimaan QRIS otomatis"
+    },
+    {
+      "id": "acc-03",
+      "name": "Bank Mandiri (Owner)",
+      "type": "bank",
+      "balance": 12500000,
+      "description": "Rekening utama usaha"
+    },
+    {
+      "id": "acc-04",
+      "name": "GoPay / OVO",
+      "type": "ewallet",
+      "balance": 850000,
+      "description": "Penerimaan E-Wallet online"
+    }
+  ],
+  "cashTransactions": [
+    {
+      "id": "CTX-1779075975616",
+      "date": "2026-05-18T03:46:15.616Z",
+      "type": "in",
+      "amount": 12000,
+      "category": "in",
+      "description": "testing",
+      "user": "Owner RUTE",
+      "accountId": "acc-01"
+    },
+    {
+      "id": "ctx-01",
+      "date": "2026-05-17T08:30:00Z",
+      "type": "in",
+      "accountId": "acc-01",
+      "amount": 500000,
+      "category": "modal",
+      "description": "Modal tunai awal hari",
+      "user": "Rute Owner"
+    },
+    {
+      "id": "ctx-02",
+      "date": "2026-05-17T10:15:00Z",
+      "type": "out",
+      "accountId": "acc-01",
+      "amount": 120000,
+      "category": "bahan",
+      "description": "Beli es batu kristal",
+      "user": "Kasir Malinau"
+    },
+    {
+      "id": "ctx-03",
+      "date": "2026-05-17T14:00:00Z",
+      "type": "transfer",
+      "fromAccountId": "acc-02",
+      "toAccountId": "acc-03",
+      "amount": 2000000,
+      "category": "transfer",
+      "description": "Settlement QRIS ke Bank",
+      "user": "Rute Owner"
     }
   ],
   "dailyNotes": [

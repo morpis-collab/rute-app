@@ -56,11 +56,13 @@ export default function OwnerMenuHPP() {
     setRecipe(recipe.filter(r => r.ingredientId !== id));
   };
 
-  const handleSave = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = async () => {
     if (!form.name || form.price <= 0) return;
     
-    addProduct({
-      id: Date.now(), // Fallback if API doesn't generate it quickly
+    setIsSubmitting(true);
+    await addProduct({
       name: form.name,
       category: form.category.toLowerCase().replace(' ', '_'),
       sellingPrice: form.price,
@@ -68,6 +70,7 @@ export default function OwnerMenuHPP() {
       recipe: recipe,
       emoji: '☕'
     });
+    setIsSubmitting(false);
 
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
@@ -211,10 +214,10 @@ export default function OwnerMenuHPP() {
             <div className="mt-8 relative z-10">
               <button 
                 onClick={handleSave}
-                disabled={!form.name || form.price <= 0}
+                disabled={!form.name || form.price <= 0 || isSubmitting}
                 className="w-full bg-white text-[var(--color-band-1)] font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:-translate-y-1 transition-transform disabled:opacity-50 disabled:hover:translate-y-0"
               >
-                <Save size={18} /> Simpan Menu Baru
+                {isSubmitting ? <><Save size={18} className="animate-spin" /> Menyimpan...</> : <><Save size={18} /> Simpan Menu Baru</>}
               </button>
             </div>
           </div>

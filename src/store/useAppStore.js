@@ -1,13 +1,9 @@
 import { create } from 'zustand';
-import { products as initialProducts } from '../data/mock/products';
-import { sales as initialSales } from '../data/mock/sales';
-import { expenses as initialExpenses } from '../data/mock/expenses';
-import { ingredients as initialIngredients, stockMovements as initialStockMovements } from '../data/mock/ingredients';
 import { activityLog as initialActivityLog, cashSessions as initialCashSessions, dailyNotes as initialDailyNotes } from '../data/mock/activity';
+import { stockMovements as initialStockMovements } from '../data/mock/ingredients';
 import {
   applyStockMovements,
   buildExpenseStockMovements,
-  buildSaleStockMovements,
   calculateApprovalStatus,
   getCashExpected,
   getEstimatedHpp,
@@ -20,17 +16,20 @@ import {
   postCashClose,
   postDailyNote,
   postReceiptExpense,
-  postSale,
+  getSales,
+  getProducts,
+  getExpenses,
+  getStock
 } from '../services/apiClient';
 import { getBusinessDate, isSameBusinessDate } from '../utils/businessDate';
 
 const clone = (value) => structuredClone(value);
 
 const useAppStore = create((set, get) => ({
-  products: clone(initialProducts),
-  sales: clone(initialSales),
-  expenses: clone(initialExpenses),
-  ingredients: clone(initialIngredients),
+  products: [],
+  sales: [],
+  expenses: [],
+  ingredients: [],
   stockMovements: clone(initialStockMovements),
   activityLog: clone(initialActivityLog),
   cashSessions: clone(initialCashSessions),
@@ -41,22 +40,28 @@ const useAppStore = create((set, get) => ({
   loadRemoteData: async () => {
     set({ apiStatus: 'loading' });
     try {
-      const data = await getBootstrap();
+      const [sales, products, expenses, stock, bootstrapData] = await Promise.all([
+        getSales(),
+        getProducts(),
+        getExpenses(),
+        getStock(),
+        getBootstrap().catch(() => ({}))
+      ]);
       set({
-        products: data.products || clone(initialProducts),
-        sales: data.sales || clone(initialSales),
-        expenses: data.expenses || clone(initialExpenses),
-        ingredients: data.ingredients || clone(initialIngredients),
-        stockMovements: data.stockMovements || clone(initialStockMovements),
-        activityLog: data.activityLog || clone(initialActivityLog),
-        cashSessions: data.cashSessions || clone(initialCashSessions),
-        dailyNotes: data.dailyNotes || clone(initialDailyNotes),
-        receiptUploads: data.receiptUploads || [],
+        products: products || [],
+        sales: sales || [],
+        expenses: expenses || [],
+        ingredients: stock || [],
+        stockMovements: bootstrapData.stockMovements || clone(initialStockMovements),
+        activityLog: bootstrapData.activityLog || clone(initialActivityLog),
+        cashSessions: bootstrapData.cashSessions || clone(initialCashSessions),
+        dailyNotes: bootstrapData.dailyNotes || clone(initialDailyNotes),
+        receiptUploads: bootstrapData.receiptUploads || [],
         apiStatus: 'connected',
       });
-      return data;
+      return { sales, products, expenses, stock };
     } catch (error) {
-      console.warn('RUTE API tidak aktif, memakai data lokal.', error);
+      console.warn('RUTE API tidak aktif atau error.', error);
       set({ apiStatus: 'offline' });
       return null;
     }
@@ -84,44 +89,18 @@ const useAppStore = create((set, get) => ({
     });
   },
 
-  recordSale: ({ items, total, paymentMethod, user = 'Partner' }) => {
-    const transaction = {
-      id: `TRX-${Date.now()}`,
-      date: new Date().toISOString(),
-      items: items.map((item) => ({ ...item })),
-      total,
-      paymentMethod,
-      user,
-    };
-    const movements = buildSaleStockMovements(transaction, get().products).map((movement, index) => ({
-      ...movement,
-      id: `SM-${Date.now()}-${index}`,
-    }));
-
-    set((state) => ({
-      sales: [...state.sales, transaction],
-      stockMovements: [...state.stockMovements, ...movements],
-      ingredients: applyStockMovements(state.ingredients, movements),
-      activityLog: [
-        ...state.activityLog,
-        {
-          id: `ACT-${Date.now()}`,
-          time: transaction.date,
-          action: `Input penjualan: ${transaction.items.map((item) => `${item.name} ${item.qty}x`).join(', ')}`,
-          user,
-          type: 'penjualan',
-        },
-      ],
-    }));
-
-    postSale({ transaction, stockMovements: movements }).catch((error) => {
-      console.warn('Gagal sinkron penjualan ke RUTE API.', error);
-    });
-
-    return transaction;
+  recordSale: async (payload) => {
+    try {
+      const { postSale } = await import('../services/apiClient');
+      await postSale(payload);
+      await get().loadRemoteData();
+    } catch (err) {
+      console.error('Failed to sync sale', err);
+      throw err;
+    }
   },
 
-  saveReceiptExpense: ({ receipt, imageUrl, user = 'Partner' }) => {
+  saveReceiptExpense: async ({ receipt, imageUrl, user = 'Partner' }) => {
     const total = receipt.items.reduce((sum, item) => sum + item.total, 0);
     const expense = {
       id: `EXP-${Date.now()}`,
@@ -143,14 +122,17 @@ const useAppStore = create((set, get) => ({
       id: `RCPT-${Date.now()}`,
       expenseId: expense.id,
       originalFileName: receipt.originalFileName,
-      imageUrl,
+      imageUrl: receipt.imageUrl || imageUrl,
+      fileName: receipt.upload?.fileName || null,
+      mimeType: receipt.upload?.mimeType || null,
+      fileSize: receipt.fileSize || receipt.upload?.fileSize || null,
       aiStatus: 'confirmed',
       aiRaw: receipt,
       createdAt: new Date().toISOString(),
       user,
     };
 
-    set((state) => ({
+    const applyLocalState = () => set((state) => ({
       expenses: [expense, ...state.expenses],
       receiptUploads: [upload, ...state.receiptUploads],
       stockMovements: [...state.stockMovements, ...stockMovements],
@@ -167,11 +149,30 @@ const useAppStore = create((set, get) => ({
       ],
     }));
 
-    postReceiptExpense({ expense, upload, stockMovements, receipt, imageUrl, user }).catch((error) => {
+    try {
+      const result = await postReceiptExpense({ expense, upload, stockMovements, receipt, imageUrl: upload.imageUrl, user });
+      if (result?.state) {
+        set({
+          products: result.state.products || [],
+          sales: result.state.sales || [],
+          expenses: result.state.expenses || [],
+          ingredients: result.state.ingredients || [],
+          stockMovements: result.state.stockMovements || [],
+          activityLog: result.state.activityLog || [],
+          cashSessions: result.state.cashSessions || [],
+          dailyNotes: result.state.dailyNotes || [],
+          receiptUploads: result.state.receiptUploads || [],
+          apiStatus: 'connected',
+        });
+      } else {
+        applyLocalState();
+      }
+      return result?.expense || expense;
+    } catch (error) {
       console.warn('Gagal sinkron resi ke RUTE API.', error);
-    });
-
-    return expense;
+      applyLocalState();
+      return expense;
+    }
   },
 
   updateExpenseStatus: (expenseId, status) => {
@@ -199,75 +200,33 @@ const useAppStore = create((set, get) => ({
   addExpense: async (expenseData) => {
     try {
       const { postExpense } = await import('../services/apiClient');
-      const response = await postExpense(expenseData);
-      if (response && response.expense) {
-        set((state) => ({
-          expenses: [response.expense, ...state.expenses],
-          stockMovements: [...state.stockMovements, ...(response.movements || [])],
-          ingredients: applyStockMovements(state.ingredients, response.movements || []),
-          activityLog: [
-            ...state.activityLog,
-            {
-              id: `ACT-${Date.now()}`,
-              time: response.expense.date,
-              action: `Input pengeluaran: ${response.expense.description}`,
-              user: response.expense.user,
-              type: 'pengeluaran',
-            },
-          ]
-        }));
-      }
+      await postExpense(expenseData);
+      await get().loadRemoteData();
     } catch (err) {
       console.error('Failed to add expense', err);
+      throw err;
     }
   },
 
   adjustStock: async (adjustmentData) => {
     try {
       const { postStockAdjustment } = await import('../services/apiClient');
-      const response = await postStockAdjustment(adjustmentData);
-      if (response && response.movements) {
-        set((state) => ({
-          stockMovements: [...state.stockMovements, ...(response.movements || [])],
-          ingredients: applyStockMovements(state.ingredients, response.movements || []),
-          activityLog: [
-            ...state.activityLog,
-            {
-              id: `ACT-${Date.now()}`,
-              time: new Date().toISOString(),
-              action: `Koreksi stok: ${adjustmentData.reason}`,
-              user: adjustmentData.user || 'Owner',
-              type: 'stok',
-            },
-          ]
-        }));
-      }
+      await postStockAdjustment(adjustmentData);
+      await get().loadRemoteData();
     } catch (err) {
       console.error('Failed to adjust stock', err);
+      throw err;
     }
   },
 
   addProduct: async (productData) => {
     try {
       const { postProduct } = await import('../services/apiClient');
-      const response = await postProduct(productData);
-      if (response && response.product) {
-        set((state) => ({
-          products: [...state.products, response.product],
-          activityLog: [
-            ...state.activityLog,
-            {
-              id: `ACT-${Date.now()}`,
-              time: new Date().toISOString(),
-              action: `Menu baru ditambahkan: ${response.product.name}`,
-              user: 'Owner',
-              type: 'menu',
-            },
-          ]
-        }));
-      }
+      await postProduct(productData);
+      await get().loadRemoteData();
     } catch (err) {
       console.error('Failed to add product', err);
+      throw err;
     }
   },
 

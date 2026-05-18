@@ -6,6 +6,7 @@ import useAppStore from './store/useAppStore';
 // Layout
 import Sidebar from './components/layout/Sidebar';
 import BottomNav from './components/layout/BottomNav';
+import ToastContainer from './components/common/ToastContainer';
 
 // Pages
 import Login from './pages/Login';
@@ -48,6 +49,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ToastContainer />
       {isAuthenticated && <Sidebar />}
       {isAuthenticated && <BottomNav />}
 

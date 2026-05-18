@@ -69,6 +69,9 @@ export async function scanReceiptImage(file) {
     transactionDate: new Date().toISOString(),
     confidence: 0.92,
     originalFileName: file?.name || 'foto-resi.jpg',
+    imageUrl: null,
+    upload: null,
+    source: 'local',
     items: receiptItems.map((item) => ({ ...item })),
   };
 }

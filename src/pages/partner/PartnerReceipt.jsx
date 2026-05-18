@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react';
-import { Camera, ImagePlus, Check, Loader2 } from 'lucide-react';
+import { AlertCircle, Camera, ImagePlus, Check, Loader2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -11,28 +11,48 @@ export default function PartnerReceipt() {
   const [items, setItems] = useState([]);
   const [imgPrev, setImgPrev] = useState(null);
   const [receipt, setReceipt] = useState(null);
+  const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const saveReceiptExpense = useAppStore((state) => state.saveReceiptExpense);
+  const ingredients = useAppStore((state) => state.ingredients);
   const { user } = useAuthStore();
 
   const onFile = async (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
+    setError('');
     setImgPrev(URL.createObjectURL(f));
     setStep('scanning');
-    const aiResult = await scanReceiptImage(f);
-    setReceipt(aiResult);
-    setItems(aiResult.items.map(i => ({...i})));
-    setStep('preview');
+    try {
+      const aiResult = await scanReceiptImage(f);
+      setReceipt(aiResult);
+      setItems(aiResult.items.map(i => ({...i})));
+      setStep('preview');
+    } catch (scanError) {
+      console.warn('Gagal scan resi.', scanError);
+      setError('Resi gagal diproses. Coba foto ulang atau pilih gambar lain.');
+      setStep('upload');
+    }
+    e.target.value = '';
   };
 
-  const onConfirm = () => {
-    saveReceiptExpense({
-      receipt: { ...receipt, items },
-      imageUrl: imgPrev,
-      user: user?.name || 'Partner',
-    });
-    setStep('done');
-    setTimeout(() => { setStep('upload'); setItems([]); setImgPrev(null); setReceipt(null); }, 1500);
+  const onConfirm = async () => {
+    setIsSaving(true);
+    setError('');
+    try {
+      await saveReceiptExpense({
+        receipt: { ...receipt, items },
+        imageUrl: receipt?.imageUrl || imgPrev,
+        user: user?.name || 'Partner',
+      });
+      setStep('done');
+      setTimeout(() => { setStep('upload'); setItems([]); setImgPrev(null); setReceipt(null); }, 1500);
+    } catch (saveError) {
+      console.warn('Gagal simpan resi.', saveError);
+      setError('Resi belum tersimpan. Periksa koneksi backend lalu coba lagi.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const total = items.reduce((s, i) => s + i.total, 0);
@@ -60,6 +80,12 @@ export default function PartnerReceipt() {
     <PageWrapper title="Upload Resi" subtitle="Foto resi diproses AI, lalu konfirmasi sebelum masuk data">
       {step === 'upload' && (
         <div className="flex flex-col gap-3 py-4">
+          {error && (
+            <div className="flex items-start gap-2 rounded border border-[var(--color-accent-red)] bg-red-50 p-3 text-xs text-[var(--color-accent-red)]">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
           <label className="flex flex-col items-center justify-center gap-2 p-6 rounded border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] cursor-pointer hover:bg-[#F5F5F5] transition-colors h-32">
             <Camera size={24} className="text-[var(--color-text-secondary)]" />
             <p className="font-medium text-sm text-[var(--color-text-primary)]">Ambil Foto</p>
@@ -85,7 +111,11 @@ export default function PartnerReceipt() {
           <div className="flex justify-between items-end">
             <div>
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Cek & Konfirmasi AI</h3>
-              {receipt && <p className="text-xs text-[var(--color-text-muted)]">{receipt.merchantName} · Confidence {Math.round(receipt.confidence * 100)}%</p>}
+              {receipt && (
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  {receipt.merchantName} · Confidence {Math.round(receipt.confidence * 100)}% · {receipt.source === 'ai' ? 'OpenAI Vision' : 'Fallback lokal'}
+                </p>
+              )}
             </div>
             <button onClick={() => setStep('upload')} className="text-[11px] font-bold text-[var(--color-band-2)] hover:underline">Ulang Foto</button>
           </div>
@@ -165,7 +195,7 @@ export default function PartnerReceipt() {
                               onChange={(e) => updateItem(item.id, 'ingredientId', Number(e.target.value))}
                             >
                               <option value="">-- Pilih Bahan Baku --</option>
-                              {useAppStore.getState().ingredients.map(ing => (
+                              {ingredients.map(ing => (
                                 <option key={ing.id} value={ing.id}>{ing.name}</option>
                               ))}
                             </select>
@@ -212,7 +242,16 @@ export default function PartnerReceipt() {
             </select>
           </div>
 
-          <button onClick={onConfirm} className="w-full btn btn-primary mt-2">Konfirmasi & Simpan Pengeluaran</button>
+          {error && (
+            <div className="flex items-start gap-2 rounded border border-[var(--color-accent-red)] bg-red-50 p-3 text-xs text-[var(--color-accent-red)]">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <button onClick={onConfirm} disabled={isSaving} className="w-full btn btn-primary mt-2 disabled:opacity-60">
+            {isSaving ? 'Menyimpan...' : 'Konfirmasi & Simpan Pengeluaran'}
+          </button>
         </div>
       )}
 

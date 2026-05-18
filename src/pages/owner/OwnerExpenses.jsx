@@ -7,6 +7,8 @@ import { formatRupiah, formatTanggalSingkat } from '../../utils/formatters';
 import { APPROVAL_STATUS } from '../../utils/constants';
 import ExpenseModal from '../../components/shared/ExpenseModal';
 
+import useToastStore from '../../store/useToastStore';
+
 export default function OwnerExpenses() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const expenses = useAppStore((state) => state.expenses);
@@ -14,17 +16,22 @@ export default function OwnerExpenses() {
   const addExpense = useAppStore((state) => state.addExpense);
   const { user } = useAuthStore();
 
-  const handleSaveExpense = (data) => {
-    addExpense({
-      expense: {
-        date: new Date().toISOString(), // Owner records actual time
-        description: data.description,
-        total: data.total,
-        category: data.category,
-        items: data.items,
-        user: user?.name || 'Owner',
-      }
-    });
+  const handleSaveExpense = async (data) => {
+    try {
+      await addExpense({
+        expense: {
+          date: new Date().toISOString(), // Owner records actual time
+          description: data.description,
+          total: data.total,
+          category: data.category,
+          items: data.items,
+          user: user?.name || 'Owner',
+        }
+      });
+      useToastStore.getState().addToast('Pengeluaran berhasil disimpan', 'success');
+    } catch {
+      // Error handled globally
+    }
   };
 
   return (

@@ -1,17 +1,40 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Users } from 'lucide-react';
+import { User, Users, Lock, Loader2 } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
+import useToastStore from '../store/useToastStore';
+import { postLogin } from '../services/apiClient';
 
 export default function Login() {
   const [selectedRole, setSelectedRole] = useState(null);
+  const [pin, setPin] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  
   const { login } = useAuthStore();
+  const { addToast } = useToastStore();
   const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!selectedRole) return;
-    login(selectedRole);
-    navigate(selectedRole === 'owner' ? '/owner/dashboard' : '/partner/sales');
+    if (!pin) {
+      setErrorMsg('PIN harus diisi');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      const response = await postLogin({ role: selectedRole, pin });
+      login(response.user, response.token);
+      addToast(`Berhasil masuk sebagai ${response.user.role === 'owner' ? 'Owner' : 'Partner'}`, 'success');
+      navigate(selectedRole === 'owner' ? '/owner/dashboard' : '/partner/sales');
+    } catch (error) {
+      setErrorMsg(error.response?.data?.message || 'Login gagal, periksa PIN Anda');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,21 +100,55 @@ export default function Login() {
           </button>
         </div>
 
+        {/* PIN Input (Shows after selecting role) */}
+        {selectedRole && (
+          <div className="mb-6 fade-in">
+            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+              Masukkan PIN
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--color-text-muted)]">
+                <Lock size={18} />
+              </div>
+              <input
+                type="password"
+                maxLength={6}
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                placeholder="• • • • • •"
+                className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-[var(--color-border)] bg-white text-lg tracking-[0.3em] font-bold focus:border-[var(--color-accent-primary)] focus:ring-0 outline-none transition-all placeholder:font-normal placeholder:tracking-normal"
+              />
+            </div>
+            {errorMsg && (
+              <p className="mt-2 text-sm text-[var(--color-accent-red)] flex items-center gap-1 slide-in">
+                <span>⚠️</span> {errorMsg}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Login Button */}
         <button
           onClick={handleLogin}
-          disabled={!selectedRole}
-          className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 ${
-            selectedRole
+          disabled={!selectedRole || loading}
+          className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+            selectedRole && !loading
               ? 'bg-gradient-to-r from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5'
               : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)] cursor-not-allowed'
           }`}
         >
-          Masuk sebagai {selectedRole === 'owner' ? 'Owner' : selectedRole === 'partner' ? 'Partner' : '...'}
+          {loading ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Memverifikasi...
+            </>
+          ) : (
+            `Masuk sebagai ${selectedRole === 'owner' ? 'Owner' : selectedRole === 'partner' ? 'Partner' : '...'}`
+          )}
         </button>
 
         <p className="text-center text-xs text-[var(--color-text-muted)] mt-6">
-          Prototype v1.0 · Mock Authentication
+          RUTE Coffee System · Authenticated
         </p>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { formatRupiah } from '../../utils/formatters';
 import { APPROVAL_STATUS } from '../../utils/constants';
 import { getBusinessDate } from '../../utils/businessDate';
 import ExpenseModal from '../../components/shared/ExpenseModal';
+import useToastStore from '../../store/useToastStore';
 
 export default function PartnerExpenses() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,17 +19,22 @@ export default function PartnerExpenses() {
   const businessDate = getBusinessDate();
   const todayExpenses = expenses.filter(e => e.date?.startsWith(businessDate));
 
-  const handleSaveExpense = (data) => {
-    addExpense({
-      expense: {
-        date: businessDate,
-        description: data.description,
-        total: data.total,
-        category: data.category,
-        items: data.items,
-        user: user?.name || 'Partner',
-      }
-    });
+  const handleSaveExpense = async (data) => {
+    try {
+      await addExpense({
+        expense: {
+          date: businessDate,
+          description: data.description,
+          total: data.total,
+          category: data.category,
+          items: data.items,
+          user: user?.name || 'Partner',
+        }
+      });
+      useToastStore.getState().addToast('Pengeluaran berhasil disimpan', 'success');
+    } catch {
+      // Error handled by global interceptor
+    }
   };
 
   return (
