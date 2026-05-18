@@ -134,6 +134,73 @@ async function callOpenAiVision({ file, ingredients }) {
   };
 }
 
+async function callGeminiVision({ file, ingredients }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || !file?.buffer?.length) {
+    return {
+      payload: null,
+      providerError: !apiKey ? 'GEMINI_API_KEY belum diset.' : 'File resi kosong.',
+    };
+  }
+
+  const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+  
+  const system = [
+    'Kamu adalah OCR dan expense parser untuk RUTE Cash Tracer.',
+    'Ekstrak foto resi belanja menjadi JSON valid saja, tanpa markdown.',
+    'Gunakan rupiah sebagai angka integer. Jika item tidak jelas, tetap buat estimasi konservatif dan turunkan confidence.',
+    'Kategori item harus salah satu: bahan_baku, packaging, operasional, lainnya.',
+    'Jika cocok dengan bahan baku yang tersedia, isi ingredientId, stockQty, stockUnit, dan addsStock=true.',
+    `Bahan baku tersedia: ${JSON.stringify(ingredientOptions(ingredients))}`,
+    'Format JSON: {"merchantName":"string","transactionDate":"ISO string atau null","confidence":0.0,"items":[{"name":"string","category":"bahan_baku|packaging|operasional|lainnya","qty":1,"unit":"pcs","price":1000,"total":1000,"addsStock":true,"ingredientId":1,"stockQty":1,"stockUnit":"pcs"}]}',
+  ].join('\n');
+
+  const base64Image = file.buffer.toString('base64');
+  const mimeType = file.mimetype || 'image/jpeg';
+
+  const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: system },
+            { text: '\nBaca resi ini dan ekstrak semua item pembelian.' },
+            {
+              inline_data: {
+                mime_type: mimeType,
+                data: base64Image
+              }
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        responseMimeType: 'application/json'
+      }
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Gemini provider error ${response.status}: ${body.slice(0, 300)}`);
+  }
+
+  const data = await response.json();
+  const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  
+  return {
+    payload: parseJsonObject(textContent),
+    providerError: null,
+  };
+}
+
 export async function scanReceipt({ file, upload, ingredients = [] }) {
   if (!file) {
     return {
@@ -145,7 +212,12 @@ export async function scanReceipt({ file, upload, ingredients = [] }) {
   let aiPayload = null;
   let providerError;
   try {
-    const aiResult = await callOpenAiVision({ file, ingredients });
+    let aiResult;
+    if (process.env.GEMINI_API_KEY) {
+      aiResult = await callGeminiVision({ file, ingredients });
+    } else {
+      aiResult = await callOpenAiVision({ file, ingredients });
+    }
     aiPayload = aiResult?.payload || null;
     providerError = aiResult?.providerError || null;
   } catch (error) {
