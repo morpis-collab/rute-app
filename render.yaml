@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: rute-api
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    disk:
+      name: rute-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RUTE_BUSINESS_TZ
+        value: Asia/Makassar
+      - key: RUTE_DATA_FILE
+        value: /data/rute-db.json
+      - key: RUTE_UPLOAD_DIR
+        value: /data/uploads
+      - key: JWT_EXPIRES_SECONDS
+        value: 43200
+      - key: AI_MODEL
+        value: gpt-4o-mini
+      - key: AI_BASE_URL
+        value: https://api.openai.com/v1
+      - key: RECEIPT_AI_MODEL
+        value: gpt-4o-mini
+      - key: RUTE_CORS_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RUTE_OWNER_PIN
+        sync: false
+      - key: RUTE_PARTNER_PIN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: RECEIPT_AI_API_KEY
+        sync: false

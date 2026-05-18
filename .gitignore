@@ -23,3 +23,5 @@ server/.data/uploads/
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
