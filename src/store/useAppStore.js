@@ -1,6 +1,4 @@
 import { create } from 'zustand';
-import { activityLog as initialActivityLog, cashSessions as initialCashSessions, dailyNotes as initialDailyNotes } from '../data/mock/activity';
-import { stockMovements as initialStockMovements } from '../data/mock/ingredients';
 import {
   applyStockMovements,
   buildExpenseStockMovements,
@@ -27,17 +25,15 @@ import {
 } from '../services/apiClient';
 import { getBusinessDate, isSameBusinessDate } from '../utils/businessDate';
 
-const clone = (value) => structuredClone(value);
-
 const useAppStore = create((set, get) => ({
   products: [],
   sales: [],
   expenses: [],
   ingredients: [],
-  stockMovements: clone(initialStockMovements),
-  activityLog: clone(initialActivityLog),
-  cashSessions: clone(initialCashSessions),
-  dailyNotes: clone(initialDailyNotes),
+  stockMovements: [],
+  activityLog: [],
+  cashSessions: [],
+  dailyNotes: [],
   receiptUploads: [],
   apiStatus: 'idle',
 
@@ -56,10 +52,10 @@ const useAppStore = create((set, get) => ({
         sales: sales || [],
         expenses: expenses || [],
         ingredients: stock || [],
-        stockMovements: bootstrapData.stockMovements || clone(initialStockMovements),
-        activityLog: bootstrapData.activityLog || clone(initialActivityLog),
-        cashSessions: bootstrapData.cashSessions || clone(initialCashSessions),
-        dailyNotes: bootstrapData.dailyNotes || clone(initialDailyNotes),
+        stockMovements: bootstrapData.stockMovements || [],
+        activityLog: bootstrapData.activityLog || [],
+        cashSessions: bootstrapData.cashSessions || [],
+        dailyNotes: bootstrapData.dailyNotes || [],
         receiptUploads: bootstrapData.receiptUploads || [],
         apiStatus: 'connected',
       });
