@@ -6,7 +6,13 @@ import { formatRupiah, formatWaktu } from '../../utils/formatters';
 import { getBusinessDate } from '../../utils/businessDate';
 
 export default function OwnerDashboard() {
-  const { expenses, ingredients, activityLog, dailyNotes, getSalesSummary, getEstimatedHpp, getTodaySales } = useAppStore();
+  const expenses = useAppStore((state) => state.expenses);
+  const ingredients = useAppStore((state) => state.ingredients);
+  const activityLog = useAppStore((state) => state.activityLog);
+  const dailyNotes = useAppStore((state) => state.dailyNotes);
+  const getSalesSummary = useAppStore((state) => state.getSalesSummary);
+  const getEstimatedHpp = useAppStore((state) => state.getEstimatedHpp);
+  const getTodaySales = useAppStore((state) => state.getTodaySales);
   const businessDate = getBusinessDate();
   const summary = getSalesSummary(businessDate);
   const criticalStock = ingredients.filter(i => i.status === 'kritis');

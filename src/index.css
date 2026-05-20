@@ -294,31 +294,69 @@
     background: var(--color-bg-primary);
   }
 
-  /* Animations */
+  /* Animations & Polish */
   .fade-in {
-    animation: fadeIn 0.4s ease;
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   .slide-in {
-    animation: slideIn 0.3s ease;
+    animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
   .animate-pulse-custom {
-    animation: pulseCustom 2s infinite;
+    animation: pulseCustom 2s infinite ease-in-out;
   }
 
   @keyframes pulseCustom {
     0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 0.95; }
+  }
+
+  /* Premium Shimmer Skeleton Loader */
+  .skeleton {
+    background: linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-coffee-latte) 50%, var(--color-bg-secondary) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite linear;
+    border-radius: 8px;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Active Touch / Click Feedbacks */
+  .btn:active {
+    transform: scale(0.96) translateY(0) !important;
+    transition: transform 0.08s ease;
+  }
+
+  .menu-btn:active {
+    transform: scale(0.95) !important;
+    transition: transform 0.08s ease;
+  }
+
+  /* Micro-interactions for Cards */
+  .glass-card {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s;
+  }
+  .glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-band-3);
   }
 }

@@ -31,12 +31,17 @@ const ActivityLog = lazy(() => import('./pages/shared/ActivityLog'));
 
 function PageLoader() {
   return (
-    <main className="min-h-screen bg-[#faf6ef] px-4 py-6 md:pl-72 md:pr-8">
-      <div className="h-3 w-32 rounded-full bg-stone-200" />
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <div className="h-28 rounded-lg bg-white shadow-sm" />
-        <div className="h-28 rounded-lg bg-white shadow-sm" />
-        <div className="h-28 rounded-lg bg-white shadow-sm" />
+    <main className="min-h-screen bg-[#faf6ef] px-4 py-6 md:pl-72 md:pr-8 space-y-6">
+      <div className="h-8 w-48 skeleton" />
+      <div className="grid gap-4 md:grid-cols-4">
+        <div className="h-24 rounded-2xl skeleton" />
+        <div className="h-24 rounded-2xl skeleton" />
+        <div className="h-24 rounded-2xl skeleton" />
+        <div className="h-24 rounded-2xl skeleton" />
+      </div>
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="h-64 rounded-2xl md:col-span-2 skeleton" />
+        <div className="h-64 rounded-2xl skeleton" />
       </div>
     </main>
   );

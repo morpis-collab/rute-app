@@ -7,7 +7,15 @@ import { formatRupiah } from '../../utils/formatters';
 
 export default function PartnerSales() {
   const products = useAppStore((state) => state.products);
-  const { cart, paymentMethod, addToCart, removeFromCart, clearCart, setPaymentMethod, getCartTotal, getCartCount, confirmTransaction } = useSalesStore();
+  const cart = useSalesStore((state) => state.cart);
+  const paymentMethod = useSalesStore((state) => state.paymentMethod);
+  const addToCart = useSalesStore((state) => state.addToCart);
+  const removeFromCart = useSalesStore((state) => state.removeFromCart);
+  const clearCart = useSalesStore((state) => state.clearCart);
+  const setPaymentMethod = useSalesStore((state) => state.setPaymentMethod);
+  const getCartTotal = useSalesStore((state) => state.getCartTotal);
+  const getCartCount = useSalesStore((state) => state.getCartCount);
+  const confirmTransaction = useSalesStore((state) => state.confirmTransaction);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);

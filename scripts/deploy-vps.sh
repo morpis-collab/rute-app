@@ -54,10 +54,14 @@ apt-get install -y git nginx
 
 # ---- 5. Clone / pull repo ----
 echo "[5/8] Clone/update repo..."
-if [ -d "$APP_DIR/.git" ]; then
-  cd $APP_DIR && git pull origin main
+if [ "${SKIP_GIT:-0}" = "1" ]; then
+  echo "Skipping Git clone/pull as SKIP_GIT is set."
 else
-  git clone $REPO_URL $APP_DIR
+  if [ -d "$APP_DIR/.git" ]; then
+    cd $APP_DIR && git pull origin main
+  else
+    git clone $REPO_URL $APP_DIR
+  fi
 fi
 cd $APP_DIR
 
@@ -71,7 +75,7 @@ if [ ! -f "$APP_ENV" ]; then
   else
     cat > "$APP_ENV" << ENVEOF
 NODE_ENV=production
-PORT=4321
+PORT=4322
 VITE_API_URL=/api
 RUTE_BUSINESS_TZ=Asia/Makassar
 RUTE_CORS_ORIGIN=$PUBLIC_ORIGIN
@@ -99,7 +103,7 @@ else
 fi
 
 set_env_var NODE_ENV production
-set_env_var PORT 4321
+set_env_var PORT 4322
 set_env_var VITE_API_URL /api
 set_env_var RUTE_BUSINESS_TZ Asia/Makassar
 set_env_var RUTE_CORS_ORIGIN "$PUBLIC_ORIGIN"
@@ -134,6 +138,6 @@ pm2 startup | tail -1 | bash 2>/dev/null || true
 
 echo ""
 echo "Backend berjalan. Test:"
-echo "  curl http://localhost:4321/api/health"
+echo "  curl http://localhost:4322/api/health"
 echo "  curl $PUBLIC_ORIGIN/api/health"
 echo ""
