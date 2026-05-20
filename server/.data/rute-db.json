@@ -1351,10 +1351,10 @@
     },
     {
       "id": "acc-03",
-      "name": "Bank Mandiri (Owner)",
-      "type": "bank",
+      "name": "QRIS BNI",
+      "type": "qris",
       "balance": 12500000,
-      "description": "Rekening utama usaha"
+      "description": "Penerimaan QRIS BNI"
     },
     {
       "id": "acc-04",
