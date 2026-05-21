@@ -553,8 +553,47 @@ app.post('/api/ingredients', requireRole('owner'), (req, res) => {
   });
 
   if (result?.error) return res.status(result.statusCode || 400).json(result);
-  return res.status(201).json(result);
 });
+
+app.delete('/api/ingredients/:id', requireRole('owner'), (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const ingredientId = Number(id);
+    const ingredient = db.ingredients.find((candidate) => Number(candidate.id) === ingredientId);
+    if (!ingredient) {
+      return { error: 'Bahan baku tidak ditemukan', statusCode: 404 };
+    }
+
+    const usedInProducts = db.products.filter((product) =>
+      product.recipe?.some((recipe) => Number(recipe.ingredientId) === ingredientId)
+    );
+    if (usedInProducts.length > 0) {
+      const productNames = usedInProducts.map((p) => p.name).join(', ');
+      return {
+        error: `Bahan baku tidak bisa dihapus karena digunakan di resep: ${productNames}`,
+        statusCode: 400,
+      };
+    }
+
+    db.ingredients = db.ingredients.filter((candidate) => Number(candidate.id) !== ingredientId);
+    db.stockMovements = db.stockMovements.filter((movement) => Number(movement.ingredientId) !== ingredientId);
+
+    const now = new Date().toISOString();
+    db.activityLog.push({
+      id: 'ACT-' + Date.now(),
+      time: now,
+      action: 'Bahan baku dihapus: ' + ingredient.name,
+      user: req.auth?.name || 'Owner',
+      type: 'stok',
+    });
+
+    return { success: true, state: bootstrapPayload(db) };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json(result);
+  return res.json(result);
+});
+
 
 app.get('/api/sales', (req, res) => {
   const { date, all } = req.query;

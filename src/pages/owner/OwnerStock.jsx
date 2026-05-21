@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, AlertTriangle, Plus } from 'lucide-react';
+import { Package, AlertTriangle, Plus, Trash2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -14,6 +14,7 @@ export default function OwnerStock() {
   const ingredients = useAppStore((state) => state.ingredients);
   const adjustStock = useAppStore((state) => state.adjustStock);
   const addIngredient = useAppStore((state) => state.addIngredient);
+  const removeIngredient = useAppStore((state) => state.removeIngredient);
   const { user } = useAuthStore();
   const getPercent = (stock, min) => {
     if (Number(min || 0) <= 0) return Number(stock || 0) > 0 ? 100 : 0;
@@ -43,6 +44,18 @@ export default function OwnerStock() {
       const message = error.response?.data?.error || 'Bahan baku gagal ditambahkan';
       useToastStore.getState().addToast(message, 'error');
       throw error;
+    }
+  };
+
+  const handleDeleteIngredient = async (id, name) => {
+    if (window.confirm(`Apakah Anda yakin ingin menghapus bahan baku "${name}"?`)) {
+      try {
+        await removeIngredient(id);
+        useToastStore.getState().addToast(`Bahan baku "${name}" berhasil dihapus`, 'success');
+      } catch (error) {
+        const message = error.response?.data?.error || 'Bahan baku gagal dihapus';
+        useToastStore.getState().addToast(message, 'error');
+      }
     }
   };
 
@@ -79,7 +92,16 @@ export default function OwnerStock() {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium">{item.name}</span>
-                <span className={`badge badge-${item.status === 'kritis' ? 'danger' : 'success'}`}>{item.status === 'kritis' ? 'Kritis' : 'Aman'}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`badge badge-${item.status === 'kritis' ? 'danger' : 'success'}`}>{item.status === 'kritis' ? 'Kritis' : 'Aman'}</span>
+                  <button
+                    onClick={() => handleDeleteIngredient(item.id, item.name)}
+                    className="p-1 rounded text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 hover:scale-105 transition-all"
+                    title="Hapus Bahan Baku"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
                 <span className="font-mono font-semibold text-[var(--color-text-primary)]">{formatUnit(item.stock, item.unit)}</span>

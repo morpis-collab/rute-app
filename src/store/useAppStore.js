@@ -19,7 +19,8 @@ import {
   postExpense,
   postStockAdjustment,
   postProduct,
-  postIngredient
+  postIngredient,
+  deleteIngredient
 } from '../services/apiClient';
 import { getBusinessDate, isSameBusinessDate } from '../utils/businessDate';
 
@@ -184,6 +185,16 @@ const useAppStore = create((set, get) => ({
       await get().loadRemoteData();
     } catch (err) {
       console.error('Failed to add ingredient', err);
+      throw err;
+    }
+  },
+
+  removeIngredient: async (id) => {
+    try {
+      await deleteIngredient(id);
+      await get().loadRemoteData();
+    } catch (err) {
+      console.error('Failed to delete ingredient', err);
       throw err;
     }
   },

@@ -132,6 +132,12 @@ export async function postIngredient(payload) {
   return data;
 }
 
+export async function deleteIngredient(id) {
+  const { data } = await api.delete(`/ingredients/${id}`);
+  return data;
+}
+
+
 export async function getCopilotInsights(date) {
   const { data } = await api.get('/copilot/insights', {
     params: date ? { date } : {},
