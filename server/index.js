@@ -553,6 +553,7 @@ app.post('/api/ingredients', requireRole('owner'), (req, res) => {
   });
 
   if (result?.error) return res.status(result.statusCode || 400).json(result);
+  return res.status(201).json(result);
 });
 
 app.delete('/api/ingredients/:id', requireRole('owner'), (req, res) => {

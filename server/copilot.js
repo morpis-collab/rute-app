@@ -192,6 +192,54 @@ function sanitizeHistory(history = []) {
   })).filter((item) => item.content.trim());
 }
 
+async function callGeminiCopilot({ prompt, history, context }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+  const systemInstruction = [
+    'Kamu adalah RUTE Business Copilot untuk operasional coffee shop.',
+    'Jawab dalam Bahasa Indonesia, ringkas, langsung actionable, dan hanya gunakan data finansial yang diberikan.',
+    'Jika data tidak cukup, katakan data belum cukup dan sarankan data apa yang perlu dicek.',
+    `Data finansial JSON: ${JSON.stringify(context)}`,
+  ].join('\n');
+
+  const geminiContents = sanitizeHistory(history).map((item) => ({
+    role: item.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: item.content }],
+  }));
+
+  geminiContents.push({
+    role: 'user',
+    parts: [{ text: prompt }],
+  });
+
+  const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: geminiContents,
+      systemInstruction: {
+        parts: [{ text: systemInstruction }],
+      },
+      generationConfig: {
+        temperature: 0.2,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Gemini Copilot error ${response.status}: ${body.slice(0, 300)}`);
+  }
+
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+}
+
 async function callOpenAi({ prompt, history, context }) {
   const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
@@ -244,7 +292,11 @@ export async function answerCopilot({ db, prompt, history, date, user }) {
   let aiText = null;
   let providerError = null;
   try {
-    aiText = await callOpenAi({ prompt: cleanPrompt, history, context });
+    if (process.env.GEMINI_API_KEY) {
+      aiText = await callGeminiCopilot({ prompt: cleanPrompt, history, context });
+    } else {
+      aiText = await callOpenAi({ prompt: cleanPrompt, history, context });
+    }
   } catch (error) {
     providerError = error.message;
   }
