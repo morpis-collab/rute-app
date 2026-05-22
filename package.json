@@ -10,7 +10,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:smoke": "node scripts/smoke-test.mjs"
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "deploy": "node scripts/deploy-via-ssh.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",

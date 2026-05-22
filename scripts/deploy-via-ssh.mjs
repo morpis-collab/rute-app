@@ -1,4 +1,15 @@
 import { Client } from 'ssh2';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const geminiApiKey = process.env.GEMINI_API_KEY;
+const geminiModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+
+if (!geminiApiKey) {
+  console.error('Error: GEMINI_API_KEY not found in local .env file. Please add it before deploying.');
+  process.exit(1);
+}
 
 const config = {
   host: '202.10.34.42',
@@ -24,8 +35,20 @@ conn.on('ready', () => {
     git pull origin main
     
     echo "=== [2.5/6] Injecting Gemini environment variables to .env ==="
-    grep -q "^GEMINI_API_KEY=" /opt/rute-app/.env || echo "GEMINI_API_KEY=AIzaSyDE7Xa7wb3jo9jcOoswWNiOcdaWZUiiqNk" >> /opt/rute-app/.env
-    grep -q "^GEMINI_MODEL=" /opt/rute-app/.env || echo "GEMINI_MODEL=gemini-3.5-flash" >> /opt/rute-app/.env
+    update_env_var() {
+      local key=$1
+      local value=$2
+      local file="/opt/rute-app/.env"
+      if grep -q "^$key=" "$file"; then
+        sed -i "s|^$key=.*|$key=$value|" "$file"
+      else
+        echo "$key=$value" >> "$file"
+      fi
+    }
+    
+    update_env_var "GEMINI_API_KEY" "${geminiApiKey}"
+    update_env_var "GEMINI_MODEL" "${geminiModel}"
+
     
     echo "=== [3/6] Updating database file /data/rute-db.json ==="
     node -e "
