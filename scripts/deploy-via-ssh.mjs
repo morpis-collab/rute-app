@@ -87,7 +87,7 @@ conn.on('ready', () => {
     npm run build
     
     echo "=== [6/6] Restarting PM2 process 'rute-api' ==="
-    pm2 restart rute-api
+    pm2 restart rute-api --update-env
     
     echo "=== Deployment Finished Successfully ==="
     pm2 status rute-api
