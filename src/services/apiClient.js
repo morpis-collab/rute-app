@@ -60,6 +60,7 @@ export async function postReceiptScan(file) {
   formData.append('receipt', file);
   const { data } = await api.post('/receipts/scan', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000, // 60 seconds timeout for OCR processing
   });
   return data;
 }
@@ -146,7 +147,9 @@ export async function getCopilotInsights(date) {
 }
 
 export async function postCopilotChat(payload) {
-  const { data } = await api.post('/copilot/chat', payload);
+  const { data } = await api.post('/copilot/chat', payload, {
+    timeout: 60000, // 60 seconds timeout for Gemini AI generation
+  });
   return data;
 }
 
