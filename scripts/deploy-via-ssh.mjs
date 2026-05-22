@@ -23,6 +23,10 @@ conn.on('ready', () => {
     echo "=== [2/6] Pulling latest code from GitHub ==="
     git pull origin main
     
+    echo "=== [2.5/6] Injecting Gemini environment variables to .env ==="
+    grep -q "^GEMINI_API_KEY=" /opt/rute-app/.env || echo "GEMINI_API_KEY=AIzaSyDE7Xa7wb3jo9jcOoswWNiOcdaWZUiiqNk" >> /opt/rute-app/.env
+    grep -q "^GEMINI_MODEL=" /opt/rute-app/.env || echo "GEMINI_MODEL=gemini-3.5-flash" >> /opt/rute-app/.env
+    
     echo "=== [3/6] Updating database file /data/rute-db.json ==="
     node -e "
       const fs = require('fs');
