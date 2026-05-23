@@ -755,11 +755,89 @@ app.patch('/api/expenses/:id/status', (req, res) => {
   const result = updateDb((db) => {
     const expense = db.expenses.find((candidate) => String(candidate.id) === String(id));
     if (!expense) return null;
-    expense.status = status;
+
+    const oldStatus = expense.status;
+    const newStatus = status;
+
+    if (oldStatus === newStatus) return { expense, state: bootstrapPayload(db) };
+
+    expense.status = newStatus;
+    const now = new Date().toISOString();
+
+    // 1. Transition to 'rejected' -> Restore cash and reverse stock movements
+    if (newStatus === 'rejected') {
+      const txId = expense.cashTransactionId;
+      const tx = db.cashTransactions.find(t => String(t.id) === String(txId)) || 
+                 db.cashTransactions.find(t => t.sourceType === 'receipt_expense' && String(t.sourceId) === String(expense.id));
+      
+      const cashAccountId = expense.cashAccountId || tx?.accountId;
+      if (cashAccountId) {
+        const cashAccount = db.cashAccounts.find(a => String(a.id) === String(cashAccountId));
+        if (cashAccount) {
+          cashAccount.balance = Number(cashAccount.balance || 0) + expense.total;
+        }
+      }
+      
+      if (tx || txId) {
+        db.cashTransactions = db.cashTransactions.filter(
+          t => String(t.id) !== String(txId) && !(t.sourceType === 'receipt_expense' && String(t.sourceId) === String(expense.id))
+        );
+        expense.cashTransactionId = null;
+      }
+
+      // Reverse stock movements
+      const movements = db.stockMovements.filter(m => String(m.sourceId) === String(expense.id));
+      movements.forEach((m) => {
+        const ingredient = db.ingredients.find(i => String(i.id) === String(m.ingredientId));
+        if (ingredient) {
+          const { getIngredientStatus } = require('./rules.js');
+          ingredient.stock = Math.max(0, Number((Number(ingredient.stock || 0) - m.qty).toFixed(3)));
+          ingredient.status = getIngredientStatus(ingredient.stock, ingredient.minStock);
+        }
+      });
+      db.stockMovements = db.stockMovements.filter(m => String(m.sourceId) !== String(expense.id));
+    }
+
+    // 2. Transition from 'rejected' back to active -> Re-deduct cash and apply stock movements
+    if (oldStatus === 'rejected' && ['approved', 'pending', 'auto_approved'].includes(newStatus)) {
+      const defaultCashAccountId = db.cashAccounts.find((account) => (
+        ['cash', 'tunai'].includes(String(account.type || '').toLowerCase())
+      ))?.id || db.cashAccounts[0]?.id || null;
+      const cashAccountId = expense.cashAccountId || defaultCashAccountId;
+      const cashAccount = cashAccountId
+        ? db.cashAccounts.find((account) => String(account.id) === String(cashAccountId))
+        : null;
+
+      if (cashAccount) {
+        const cashTransaction = {
+          id: `CTX-${Date.now()}-${expense.id}`,
+          date: expense.date,
+          type: 'out',
+          amount: expense.total,
+          category: 'pengeluaran',
+          description: expense.description,
+          accountId: cashAccount.id,
+          sourceType: 'receipt_expense',
+          sourceId: expense.id,
+          user: expense.user,
+        };
+        cashAccount.balance = Number(cashAccount.balance || 0) - expense.total;
+        expense.cashTransactionId = cashTransaction.id;
+        expense.cashAccountId = cashAccount.id;
+        db.cashTransactions = [cashTransaction, ...db.cashTransactions];
+      }
+
+      // Recreate stock movements
+      const movements = buildExpenseStockMovements(expense);
+      db.stockMovements.push(...movements);
+      db.ingredients = applyPurchaseCosts(db.ingredients, expense.items || []);
+      db.ingredients = applyStockMovements(db.ingredients, movements);
+    }
+
     db.activityLog.push({
       id: `ACT-${Date.now()}`,
-      time: new Date().toISOString(),
-      action: `Pengeluaran ${expense.id} ${status === 'approved' ? 'disetujui' : 'ditolak'}`,
+      time: now,
+      action: `Pengeluaran ${expense.id} ${newStatus === 'approved' ? 'disetujui' : newStatus === 'rejected' ? 'ditolak' : 'diubah status ke ' + newStatus}`,
       user,
       type: 'approval',
     });
