@@ -16,6 +16,7 @@ const OwnerStock = lazy(() => import('./pages/owner/OwnerStock'));
 const OwnerCash = lazy(() => import('./pages/owner/OwnerCash'));
 const OwnerMenuHPP = lazy(() => import('./pages/owner/OwnerMenuHPP'));
 const OwnerApproval = lazy(() => import('./pages/owner/OwnerApproval'));
+const OwnerReports = lazy(() => import('./pages/owner/OwnerReports'));
 const OwnerSettings = lazy(() => import('./pages/owner/OwnerSettings'));
 const OwnerOpeningCapital = lazy(() => import('./pages/owner/OwnerOpeningCapital'));
 
