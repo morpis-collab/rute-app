@@ -7,6 +7,7 @@ export const EXPENSE_CATEGORIES = [
   { value: 'promosi', label: 'Promosi', addsStock: false },
   { value: 'peralatan', label: 'Peralatan', addsStock: false },
   { value: 'maintenance', label: 'Maintenance', addsStock: false },
+  { value: 'pra_operasional', label: 'Pra-Operasional / Persiapan Usaha', addsStock: false, ownerOnly: true },
   { value: 'lainnya', label: 'Lain-lain', addsStock: false },
 ];
 

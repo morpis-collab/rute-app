@@ -5,6 +5,7 @@ import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
 import { scanReceiptImage } from '../../services/receiptService';
 import { formatRupiah } from '../../utils/formatters';
+import { EXPENSE_CATEGORIES } from '../../utils/constants';
 
 function localDateInput(value) {
   const date = value ? new Date(value) : new Date();
@@ -360,10 +361,9 @@ export default function PartnerReceipt() {
                             value={item.category}
                             onChange={(event) => updateItem(item.id, 'category', event.target.value)}
                           >
-                            <option value="bahan_baku">Bahan</option>
-                            <option value="packaging">Packaging</option>
-                            <option value="operasional">Operasional</option>
-                            <option value="lainnya">Lainnya</option>
+                            {EXPENSE_CATEGORIES.filter(cat => !cat.ownerOnly || user?.role === 'owner').map(cat => (
+                              <option key={cat.value} value={cat.value}>{cat.label}</option>
+                            ))}
                           </select>
                         </td>
                         <td className="text-right">

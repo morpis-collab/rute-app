@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import useAuthStore from '../../store/useAuthStore';
+import { EXPENSE_CATEGORIES } from '../../utils/constants';
 
 export default function ExpenseModal({ isOpen, onClose, onSave, ingredients }) {
+  const { user } = useAuthStore();
   const [description, setDescription] = useState('');
   const [total, setTotal] = useState('');
   const [category, setCategory] = useState('lainnya');
@@ -73,10 +76,9 @@ export default function ExpenseModal({ isOpen, onClose, onSave, ingredients }) {
           <div>
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Kategori</label>
             <select className="form-select text-sm p-2 w-full" value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="bahan_baku">Bahan Baku</option>
-              <option value="packaging">Packaging</option>
-              <option value="operasional">Operasional (Listrik, Air)</option>
-              <option value="lainnya">Lainnya</option>
+              {EXPENSE_CATEGORIES.filter(cat => !cat.ownerOnly || user?.role === 'owner').map(cat => (
+                <option key={cat.value} value={cat.value}>{cat.label}</option>
+              ))}
             </select>
           </div>
 

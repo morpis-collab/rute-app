@@ -17,10 +17,10 @@ import {
   getStock,
   postSale,
   postExpense,
-  postStockAdjustment,
   postProduct,
   postIngredient,
-  deleteIngredient
+  deleteIngredient,
+  updateOpeningCapital
 } from '../services/apiClient';
 import { getBusinessDate, isSameBusinessDate } from '../utils/businessDate';
 
@@ -36,6 +36,7 @@ const useAppStore = create((set, get) => ({
   cashTransactions: [],
   dailyNotes: [],
   receiptUploads: [],
+  openingCapital: null,
   apiStatus: 'idle',
 
   loadRemoteData: async () => {
@@ -60,6 +61,7 @@ const useAppStore = create((set, get) => ({
         cashTransactions: bootstrapData.cashTransactions || [],
         dailyNotes: bootstrapData.dailyNotes || [],
         receiptUploads: bootstrapData.receiptUploads || [],
+        openingCapital: bootstrapData.openingCapital || null,
         apiStatus: 'connected',
       });
       return { sales, products, expenses, stock };
@@ -288,6 +290,34 @@ const useAppStore = create((set, get) => ({
     });
 
     return entry;
+  },
+
+  saveOpeningCapital: async (payload) => {
+    try {
+      const result = await updateOpeningCapital(payload);
+      if (result) {
+        set((state) => ({
+          openingCapital: result.openingCapital || state.openingCapital,
+          ...(result.state ? {
+            products: result.state.products || state.products,
+            sales: result.state.sales || state.sales,
+            expenses: result.state.expenses || state.expenses,
+            ingredients: result.state.ingredients || state.ingredients,
+            stockMovements: result.state.stockMovements || state.stockMovements,
+            activityLog: result.state.activityLog || state.activityLog,
+            cashSessions: result.state.cashSessions || state.cashSessions,
+            cashAccounts: result.state.cashAccounts || state.cashAccounts,
+            cashTransactions: result.state.cashTransactions || state.cashTransactions,
+            dailyNotes: result.state.dailyNotes || state.dailyNotes,
+            receiptUploads: result.state.receiptUploads || state.receiptUploads,
+          } : {})
+        }));
+      }
+      return result;
+    } catch (err) {
+      console.error('Failed to save opening capital', err);
+      throw err;
+    }
   },
 }));
 

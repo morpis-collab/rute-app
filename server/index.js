@@ -29,7 +29,7 @@ const RECEIPT_ALLOWED_MIME_TYPES = new Set([
   'image/heic',
   'image/heif',
 ]);
-const RECEIPT_CATEGORIES = new Set(['bahan_baku', 'packaging', 'operasional', 'lainnya']);
+const RECEIPT_CATEGORIES = new Set(['bahan_baku', 'packaging', 'operasional', 'pra_operasional', 'lainnya']);
 const EXPENSE_STATUSES = new Set(['auto_approved', 'pending', 'approved', 'rejected']);
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -1009,6 +1009,27 @@ app.put('/api/opening-capital', requireRole('owner'), (req, res) => {
       updatedBy: user,
       updatedAt: now,
     };
+
+    // Update ingredients starting stock and unit cost based on inventory contributions
+    db.ingredients = db.ingredients.map((ingredient) => {
+      const contribution = inventoryContributions.find(
+        (c) => String(c.ingredientId) === String(ingredient.id)
+      );
+      if (contribution) {
+        const qty = Number(contribution.quantity || 0);
+        const val = Number(contribution.estimatedValue || 0);
+        const cost = qty > 0 ? Number((val / qty).toFixed(3)) : 0;
+        return {
+          ...ingredient,
+          stock: qty,
+          costPerUnit: cost,
+          status: qty <= (ingredient.minStock || 0) ? 'kritis' : 'aman',
+          updatedAt: now,
+        };
+      }
+      return ingredient;
+    });
+
     db.activityLog.push({
       id: `ACT-${Date.now()}`,
       time: now,

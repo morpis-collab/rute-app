@@ -173,4 +173,14 @@ export async function getExpenses() {
   return data;
 }
 
+export async function getOpeningCapital() {
+  const { data } = await api.get('/opening-capital');
+  return data;
+}
+
+export async function updateOpeningCapital(payload) {
+  const { data } = await api.put('/opening-capital', payload);
+  return data;
+}
+
 export default api;

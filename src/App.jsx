@@ -16,8 +16,8 @@ const OwnerStock = lazy(() => import('./pages/owner/OwnerStock'));
 const OwnerCash = lazy(() => import('./pages/owner/OwnerCash'));
 const OwnerMenuHPP = lazy(() => import('./pages/owner/OwnerMenuHPP'));
 const OwnerApproval = lazy(() => import('./pages/owner/OwnerApproval'));
-const OwnerReports = lazy(() => import('./pages/owner/OwnerReports'));
 const OwnerSettings = lazy(() => import('./pages/owner/OwnerSettings'));
+const OwnerOpeningCapital = lazy(() => import('./pages/owner/OwnerOpeningCapital'));
 
 const PartnerSales = lazy(() => import('./pages/partner/PartnerSales'));
 const PartnerReceipt = lazy(() => import('./pages/partner/PartnerReceipt'));
@@ -93,6 +93,7 @@ export default function App() {
           <Route path="/owner/activity" element={<ProtectedRoute allowedRole="owner"><ActivityLog /></ProtectedRoute>} />
           <Route path="/owner/ai" element={<ProtectedRoute allowedRole="owner"><AIAssistant /></ProtectedRoute>} />
           <Route path="/owner/settings" element={<ProtectedRoute allowedRole="owner"><OwnerSettings /></ProtectedRoute>} />
+          <Route path="/owner/opening-capital" element={<ProtectedRoute allowedRole="owner"><OwnerOpeningCapital /></ProtectedRoute>} />
 
           {/* Partner Routes */}
           <Route path="/partner/sales" element={<ProtectedRoute allowedRole="partner"><PartnerSales /></ProtectedRoute>} />
