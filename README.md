@@ -1,6 +1,6 @@
 # RUTE Coffee Management System
 
-Sistem manajemen operasional RUTE Coffee yang dirancang untuk menjembatani operasional harian di Malinau dan pemantauan pemilik (*owner*) dari Tarakan. Aplikasi ini bukan sekadar *landing page*, melainkan **dashboard operasional** lengkap dengan pencatatan kas, penjualan, inventaris, hingga kecerdasan buatan (*AI Copilot*).
+Sistem manajemen operasional RUTE Coffee yang dirancang untuk menjembatani operasional harian dan pemantauan pemilik (*owner*). Aplikasi ini bukan sekadar *landing page*, melainkan **dashboard operasional** lengkap dengan pencatatan kas, penjualan, inventaris, hingga kecerdasan buatan (*AI Copilot*).
 
 ## Tech Stack (Frontend)
 - **Framework**: React 19 + Vite

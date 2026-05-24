@@ -254,7 +254,7 @@ try {
   const closeRes1 = await axios.post(`${apiUrl}/cash/close`, {
     actualCash: 150000,
     notes: 'Tutup kas aman',
-    user: 'Partner Malinau'
+    user: 'Partner RUTE'
   }, {
     headers: { Authorization: `Bearer ${partnerToken}` }
   });
@@ -269,7 +269,7 @@ try {
     await axios.post(`${apiUrl}/cash/close`, {
       actualCash: 160000,
       notes: 'Mencoba tutup kas kedua kali',
-      user: 'Partner Malinau'
+      user: 'Partner RUTE'
     }, {
       headers: { Authorization: `Bearer ${partnerToken}` }
     });

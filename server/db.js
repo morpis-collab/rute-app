@@ -36,7 +36,7 @@ function seedData() {
       },
       partner: {
         id: 2,
-        name: 'Partner Malinau',
+        name: 'Partner RUTE',
         email: 'partner@rute.coffee',
         role: 'partner',
         authMethod: 'pin',

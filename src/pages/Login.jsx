@@ -74,7 +74,7 @@ export default function Login() {
             </div>
             <div>
               <h3 className="font-semibold text-[var(--color-text-primary)]">Owner</h3>
-              <p className="text-xs text-[var(--color-text-muted)]">Dashboard lengkap · Tarakan</p>
+              <p className="text-xs text-[var(--color-text-muted)]">Dashboard lengkap</p>
             </div>
           </button>
 
@@ -96,7 +96,7 @@ export default function Login() {
             </div>
             <div>
               <h3 className="font-semibold text-[var(--color-text-primary)]">Partner</h3>
-              <p className="text-xs text-[var(--color-text-muted)]">Input operasional · Malinau</p>
+              <p className="text-xs text-[var(--color-text-muted)]">Input operasional</p>
             </div>
           </button>
         </div>

@@ -18,7 +18,7 @@ export default function OwnerSettings() {
           <h3 className="text-sm font-semibold mb-3">Info Usaha</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-[var(--color-text-muted)]">Nama Usaha</span><span>Ruang Tengah Coffee</span></div>
-            <div className="flex justify-between"><span className="text-[var(--color-text-muted)]">Lokasi</span><span>Malinau, Kaltara</span></div>
+            <div className="flex justify-between"><span className="text-[var(--color-text-muted)]">Lokasi</span><span>Kaltara</span></div>
           </div>
         </div>
         <button onClick={logout} className="w-full btn btn-danger">Keluar dari Akun</button>

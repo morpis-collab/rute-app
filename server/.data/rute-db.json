@@ -15,7 +15,7 @@
     },
     "partner": {
       "id": 2,
-      "name": "Partner Malinau",
+      "name": "Partner RUTE",
       "email": "partner@rute.coffee",
       "role": "partner",
       "authMethod": "pin",
@@ -1282,7 +1282,7 @@
       "id": "ACT-1779076058095",
       "time": "2026-05-18T03:47:38.095Z",
       "action": "Tutup kas harian dengan selisih Rp -85.000",
-      "user": "Partner Malinau",
+      "user": "Partner RUTE",
       "type": "kas"
     },
     {
@@ -1306,7 +1306,7 @@
       "totalExpenseCash": 0,
       "status": "closed",
       "notes": "",
-      "closedBy": "Partner Malinau",
+      "closedBy": "Partner RUTE",
       "closedAt": "2026-05-18T03:47:38.095Z"
     },
     {
@@ -1393,7 +1393,7 @@
       "amount": 120000,
       "category": "bahan",
       "description": "Beli es batu kristal",
-      "user": "Kasir Malinau"
+      "user": "Kasir"
     },
     {
       "id": "ctx-03",

@@ -264,7 +264,7 @@ Multipart field:
 Response:
 ```json
 {
-  "merchantName": "Supplier Malinau",
+  "merchantName": "Supplier",
   "transactionDate": "2026-05-17T14:00:00.000Z",
   "confidence": 0.92,
   "originalFileName": "resi.jpg",
@@ -321,7 +321,7 @@ Request minimal setelah preview dikoreksi:
 ```json
 {
   "receipt": {
-    "merchantName": "Supplier Malinau",
+    "merchantName": "Supplier",
     "transactionDate": "2026-05-18T10:00:00.000Z",
     "imageUrl": "/uploads/receipts/1716000000000-abcd1234.jpg",
     "upload": {

@@ -102,7 +102,7 @@ export default function OwnerDashboard() {
                 <AlertTriangle size={16} className="shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold">Operator belum tutup kas</p>
-                  <p className="text-xs mt-0.5 opacity-80">Kasir Malinau belum rekonsiliasi</p>
+                  <p className="text-xs mt-0.5 opacity-80">Kasir belum rekonsiliasi</p>
                 </div>
               </div>
               {criticalStock.map(item => (
