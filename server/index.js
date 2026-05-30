@@ -488,6 +488,87 @@ app.post('/api/products', (req, res) => {
   return res.status(201).json(result);
 });
 
+app.put('/api/products/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const body = req.body || {};
+    const productIndex = db.products.findIndex((candidate) => String(candidate.id) === String(id));
+    if (productIndex === -1) return { error: 'Menu tidak ditemukan', statusCode: 404 };
+
+    const product = db.products[productIndex];
+    const sellingPrice = Number(body.sellingPrice ?? body.price ?? product.sellingPrice ?? 0);
+    const recipe = Array.isArray(body.recipe) ? body.recipe : product.recipe || [];
+
+    const draft = {
+      ...product,
+      name: String(body.name || product.name || '').trim(),
+      category: body.category || product.category || 'Menu',
+      sellingPrice,
+      active: body.active ?? product.active ?? true,
+      emoji: body.emoji || product.emoji || '☕',
+      recipe,
+    };
+
+    if (!draft.name || sellingPrice <= 0) return { error: 'Nama menu dan harga jual wajib diisi' };
+
+    const hpp = Math.round(calculateProductHpp(draft, db.ingredients));
+    const updatedProduct = {
+      ...draft,
+      hpp,
+      margin: sellingPrice > 0 ? Math.round(((sellingPrice - hpp) / sellingPrice) * 100) : 0,
+      updatedAt: new Date().toISOString(),
+    };
+
+    db.products[productIndex] = updatedProduct;
+    db.activityLog.push({
+      id: 'ACT-' + Date.now(),
+      time: updatedProduct.updatedAt,
+      action: 'Menu diperbarui: ' + updatedProduct.name,
+      user: body.user || 'Owner',
+      type: 'menu',
+    });
+
+    return { product: updatedProduct, state: bootstrapPayload(db) };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
+  return res.json(result);
+});
+
+app.delete('/api/products/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const product = db.products.find((candidate) => String(candidate.id) === String(id));
+    if (!product) return { error: 'Menu tidak ditemukan', statusCode: 404 };
+
+    const usedInSales = db.sales.some((sale) =>
+      sale.items?.some((item) => String(item.productId) === String(id))
+    );
+    if (usedInSales) {
+      return {
+        error: 'Menu tidak bisa dihapus karena sudah memiliki riwayat transaksi penjualan. Silakan nonaktifkan menu ini.',
+        statusCode: 400,
+      };
+    }
+
+    db.products = db.products.filter((candidate) => String(candidate.id) !== String(id));
+    
+    const now = new Date().toISOString();
+    db.activityLog.push({
+      id: 'ACT-' + Date.now(),
+      time: now,
+      action: 'Menu dihapus: ' + product.name,
+      user: req.query.user || req.body?.user || 'Owner',
+      type: 'menu',
+    });
+
+    return { success: true, state: bootstrapPayload(db) };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
+  return res.json(result);
+});
+
 app.get('/api/ingredients', (req, res) => {
   res.json(readDb().ingredients);
 });

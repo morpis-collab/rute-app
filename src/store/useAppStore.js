@@ -18,6 +18,8 @@ import {
   postSale,
   postExpense,
   postProduct,
+  putProduct,
+  deleteProduct,
   postIngredient,
   deleteIngredient,
   updateOpeningCapital
@@ -207,6 +209,26 @@ const useAppStore = create((set, get) => ({
       await get().loadRemoteData();
     } catch (err) {
       console.error('Failed to add product', err);
+      throw err;
+    }
+  },
+
+  updateProduct: async (id, productData) => {
+    try {
+      await putProduct(id, productData);
+      await get().loadRemoteData();
+    } catch (err) {
+      console.error('Failed to update product', err);
+      throw err;
+    }
+  },
+
+  deleteProduct: async (id) => {
+    try {
+      await deleteProduct(id);
+      await get().loadRemoteData();
+    } catch (err) {
+      console.error('Failed to delete product', err);
       throw err;
     }
   },

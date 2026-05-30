@@ -123,6 +123,16 @@ export async function postProduct(payload) {
   return data;
 }
 
+export async function putProduct(id, payload) {
+  const { data } = await api.put(`/products/${id}`, payload);
+  return data;
+}
+
+export async function deleteProduct(id) {
+  const { data } = await api.delete(`/products/${id}`);
+  return data;
+}
+
 export async function postStockAdjustment(payload) {
   const { data } = await api.post('/stock/adjust', payload);
   return data;
