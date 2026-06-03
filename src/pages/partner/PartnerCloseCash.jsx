@@ -13,6 +13,19 @@ const cashSourceLabel = {
 };
 
 export default function PartnerCloseCash() {
+  const getPastDates = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      dates.push(d.toLocaleDateString('en-CA'));
+    }
+    return dates;
+  };
+
+  const pastDates = getPastDates();
+  const [selectedDate, setSelectedDate] = useState(pastDates[0]);
   const [form, setForm] = useState({ cashActual: '', qris: '0', transfer: '0', notes: '' });
   const [status, setStatus] = useState('loading');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,18 +38,21 @@ export default function PartnerCloseCash() {
     async function fetchExpected() {
       try {
         setStatus('loading');
-        const data = await getCashExpected();
+        setMessage('');
+        const data = await getCashExpected(selectedDate);
 
         setExpectedData(data);
         setForm((prev) => ({
           ...prev,
-          qris: data.salesByMethod?.qris || 0,
-          transfer: data.salesByMethod?.transfer || 0,
+          cashActual: data.existingSession?.closingCash != null ? String(data.existingSession.closingCash) : '',
+          qris: data.existingSession != null ? data.existingSession.qris : (data.salesByMethod?.qris || 0),
+          transfer: data.existingSession != null ? data.existingSession.transfer : (data.salesByMethod?.transfer || 0),
+          notes: data.existingSession?.notes || '',
         }));
 
         if (!data.canClose && data.existingSession) {
           setStatus('closed');
-          setMessage('Kas untuk hari ini sudah ditutup.');
+          setMessage(`Kas untuk tanggal ${selectedDate} sudah ditutup.`);
           return;
         }
 
@@ -48,7 +64,7 @@ export default function PartnerCloseCash() {
     }
 
     fetchExpected();
-  }, []);
+  }, [selectedDate]);
 
   const expectedCash = Number(expectedData?.expectedCash || 0);
   const cashActual = Number(form.cashActual || 0);
@@ -112,6 +128,22 @@ export default function PartnerCloseCash() {
 
   return (
     <PageWrapper title="Kas" subtitle="Tutup kas harian">
+      <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[#faf6ef] p-4 flex flex-col gap-2">
+        <label className="text-xs font-bold uppercase text-[var(--color-text-secondary)]">Pilih Tanggal Kas</label>
+        <select
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          disabled={isSubmitting}
+          className="w-full rounded-lg border border-[var(--color-border)] p-2.5 text-sm bg-white focus:outline-none focus:border-[var(--color-band-1)]"
+        >
+          {pastDates.map((date, idx) => (
+            <option key={date} value={date}>
+              {idx === 0 ? `Hari Ini (${date})` : idx === 1 ? `Kemarin (${date})` : `${date}`}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {(status === 'closed' || status === 'error') && (
         <div className={`mb-6 flex items-start gap-3 rounded-xl border p-4 ${
           status === 'closed'

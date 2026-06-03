@@ -37,7 +37,7 @@ export default function OwnerOpeningCapital() {
             businessStartDate: res.businessStartDate || '',
             cashCapital: res.cashCapital || 0,
             assetContributions: res.assetContributions || [],
-            inventoryContributions: res.inventoryContributions || [],
+            inventoryContributions: [],
             personalExcludedItems: res.personalExcludedItems || [],
             notes: res.notes || '',
           });
@@ -59,8 +59,7 @@ export default function OwnerOpeningCapital() {
 
   // Totals calculations
   const totalAssets = form.assetContributions.reduce((sum, item) => sum + Number(item.estimatedValue || 0), 0);
-  const totalInventory = form.inventoryContributions.reduce((sum, item) => sum + Number(item.estimatedValue || 0), 0);
-  const grandTotalCapital = Number(form.cashCapital) + totalAssets + totalInventory;
+  const grandTotalCapital = Number(form.cashCapital) + totalAssets;
   const totalExcluded = form.personalExcludedItems.reduce((sum, item) => sum + Number(item.estimatedValue || 0), 0);
 
   const handleSave = async (e) => {
@@ -121,38 +120,7 @@ export default function OwnerOpeningCapital() {
     }));
   };
 
-  const addInventoryRow = () => {
-    setForm(prev => ({
-      ...prev,
-      inventoryContributions: [
-        ...prev.inventoryContributions,
-        { id: `INV-${Date.now()}-${Math.random()}`, name: '', quantity: 1, unit: 'pcs', estimatedValue: 0, notes: '', ingredientId: '' }
-      ]
-    }));
-  };
 
-  const updateInventoryRow = (id, field, value) => {
-    setForm(prev => ({
-      ...prev,
-      inventoryContributions: prev.inventoryContributions.map(item => {
-        if (item.id !== id) return item;
-        const updated = { ...item, [field]: field === 'quantity' || field === 'estimatedValue' ? Number(value) : value };
-        if (field === 'ingredientId') {
-          const selected = ingredients.find(i => String(i.id) === String(value));
-          updated.name = selected ? selected.name : updated.name;
-          updated.unit = selected ? selected.unit : updated.unit;
-        }
-        return updated;
-      })
-    }));
-  };
-
-  const removeInventoryRow = (id) => {
-    setForm(prev => ({
-      ...prev,
-      inventoryContributions: prev.inventoryContributions.filter(item => item.id !== id)
-    }));
-  };
 
   const addExcludedRow = () => {
     setForm(prev => ({
@@ -195,7 +163,7 @@ export default function OwnerOpeningCapital() {
     <PageWrapper title="Modal Awal & Pra-Op" subtitle="Pendataan Investasi Awal & Biaya Pra-Pembukaan">
       
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="kpi-card bg-[linear-gradient(135deg,var(--color-band-1),var(--color-band-2))] text-white border-none col-span-2 lg:col-span-1">
           <p className="text-[10px] uppercase tracking-wider font-semibold mb-1 opacity-80">Total Modal Awal</p>
           <p className="text-xl lg:text-2xl font-mono font-bold">{formatRupiah(grandTotalCapital)}</p>
@@ -216,13 +184,6 @@ export default function OwnerOpeningCapital() {
         </div>
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-[var(--color-text-secondary)] mb-1">
-            <Package size={14} className="text-[var(--color-accent-primary)]" />
-            <p className="text-[10px] uppercase tracking-wider font-semibold">Total Stok Awal</p>
-          </div>
-          <p className="text-lg font-mono text-[var(--color-text-primary)] font-bold">{formatRupiah(totalInventory)}</p>
-        </div>
-        <div className="kpi-card">
-          <div className="flex items-center gap-2 text-[var(--color-text-secondary)] mb-1">
             <Wallet size={14} className="text-[var(--color-accent-red)]" />
             <p className="text-[10px] uppercase tracking-wider font-semibold">Biaya Pra-Op</p>
           </div>
@@ -234,7 +195,7 @@ export default function OwnerOpeningCapital() {
         <Info size={16} className="shrink-0 text-[var(--color-accent-primary)]" />
         <div className="space-y-1">
           <p className="font-semibold text-[var(--color-text-primary)]">Mengapa memisahkan Modal Awal dan Pengeluaran?</p>
-          <p>Dengan mendata modal awal berupa <strong>Kas</strong>, <strong>Aset Alat</strong>, dan <strong>Stok Awal</strong> secara terpisah, sistem tidak menganggap belanja persiapan usaha sebagai kerugian bersih operasional laci kasir saat baru buka. Biaya pra-operasional habis pakai (bensin, spanduk, dll) dapat diinput di menu <strong>Pengeluaran</strong> dengan kategori <strong>Pra-Operasional / Persiapan Usaha</strong> agar terhitung terpisah.</p>
+          <p>Dengan mendata modal awal berupa <strong>Kas</strong> dan <strong>Aset Alat</strong> secara terpisah, sistem tidak menganggap belanja persiapan usaha sebagai kerugian bersih operasional laci kasir saat baru buka. Biaya pra-operasional habis pakai (bensin, spanduk, dll) dapat diinput di menu <strong>Pengeluaran</strong> dengan kategori <strong>Pra-Operasional / Persiapan Usaha</strong> agar terhitung terpisah.</p>
         </div>
       </div>
 
@@ -372,106 +333,11 @@ export default function OwnerOpeningCapital() {
           </div>
         </div>
 
-        {/* 2. Persediaan Awal / Stok Awal */}
+        {/* 2. Barang Pribadi Excluded */}
         <div className="glass-card p-0 overflow-hidden">
           <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-[#faf6ef]">
             <div>
-              <h3 className="font-bold text-[var(--color-text-primary)]">2. Persediaan Awal / Stok Awal</h3>
-              <p className="text-[10px] text-[var(--color-text-muted)]">Kopi, susu, packaging, aren, gula cair, es batu, dll.</p>
-            </div>
-            <button type="button" onClick={addInventoryRow} className="btn btn-secondary py-1.5 px-3 text-xs flex items-center gap-1">
-              <Plus size={14} /> Tambah Stok Awal
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-[var(--color-text-primary)]">
-              <thead>
-                <tr className="bg-[#faf6ef]/50 border-b border-[var(--color-border)]">
-                  <th className="p-3 font-semibold">Hubungkan ke Bahan Baku</th>
-                  <th className="p-3 font-semibold w-24 text-center">Qty Awal</th>
-                  <th className="p-3 font-semibold w-20">Satuan</th>
-                  <th className="p-3 font-semibold w-36">Total Nilai Beli (Rp)</th>
-                  <th className="p-3 font-semibold">Keterangan / Supplier</th>
-                  <th className="p-3 w-12 text-center" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--color-border)]">
-                {form.inventoryContributions.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="p-4 text-center text-[var(--color-text-muted)]">Belum ada stok awal yang didata. Klik "+ Tambah Stok Awal".</td>
-                  </tr>
-                ) : (
-                  form.inventoryContributions.map((item) => (
-                    <tr key={item.id}>
-                      <td className="p-2">
-                        <select 
-                          required
-                          value={item.ingredientId || ''} 
-                          onChange={e => updateInventoryRow(item.id, 'ingredientId', e.target.value)}
-                          className="w-full bg-transparent p-1 outline-none border-b border-transparent focus:border-[var(--color-band-1)]"
-                        >
-                          <option value="">-- Pilih Bahan Baku --</option>
-                          {ingredients.map(ing => (
-                            <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="p-2">
-                        <input 
-                          type="number" 
-                          min="0.001"
-                          step="any"
-                          required
-                          value={item.quantity} 
-                          onChange={e => updateInventoryRow(item.id, 'quantity', e.target.value)}
-                          className="w-full bg-transparent border-b border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-band-1)] p-1 outline-none text-center font-mono"
-                        />
-                      </td>
-                      <td className="p-2 font-mono text-[var(--color-text-secondary)] pl-3">
-                        {item.unit}
-                      </td>
-                      <td className="p-2">
-                        <input 
-                          type="number" 
-                          min="0"
-                          required
-                          value={item.estimatedValue} 
-                          onChange={e => updateInventoryRow(item.id, 'estimatedValue', e.target.value)}
-                          className="w-full bg-transparent border-b border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-band-1)] p-1 outline-none font-mono text-right"
-                          placeholder="0"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input 
-                          type="text" 
-                          value={item.notes} 
-                          onChange={e => updateInventoryRow(item.id, 'notes', e.target.value)}
-                          placeholder="Keterangan atau persediaan persiapan" 
-                          className="w-full bg-transparent border-b border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-band-1)] p-1 outline-none"
-                        />
-                      </td>
-                      <td className="p-2 text-center">
-                        <button type="button" onClick={() => removeInventoryRow(item.id)} className="text-[var(--color-accent-red)] hover:bg-red-50 p-1 rounded">
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="p-3 bg-[#faf6ef]/30 border-t border-[var(--color-border)] flex justify-between text-xs font-semibold text-[var(--color-text-secondary)]">
-            <span>Total Nilai Stok Awal</span>
-            <span className="font-mono text-[var(--color-text-primary)]">{formatRupiah(totalInventory)}</span>
-          </div>
-        </div>
-
-        {/* 3. Barang Pribadi Excluded */}
-        <div className="glass-card p-0 overflow-hidden">
-          <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-[#faf6ef]">
-            <div>
-              <h3 className="font-bold text-[var(--color-text-primary)]">3. Barang Pribadi (Dikecualikan dari Modal Usaha)</h3>
+              <h3 className="font-bold text-[var(--color-text-primary)]">2. Barang Pribadi (Dikecualikan dari Modal Usaha)</h3>
               <p className="text-[10px] text-[var(--color-text-muted)]">Laptop pribadi owner, HP operasional pribadi. Hanya untuk catatan audit (tidak dihitung dalam kas/stok/laba).</p>
             </div>
             <button type="button" onClick={addExcludedRow} className="btn btn-secondary py-1.5 px-3 text-xs flex items-center gap-1">
@@ -544,9 +410,9 @@ export default function OwnerOpeningCapital() {
           </div>
         </div>
 
-        {/* 4. Monitoring Biaya Pra-Operasional */}
+        {/* 3. Monitoring Biaya Pra-Operasional */}
         <div className="glass-card">
-          <h3 className="font-bold text-[var(--color-text-primary)] mb-1">4. Biaya Pra-Operasional (Habis Pakai)</h3>
+          <h3 className="font-bold text-[var(--color-text-primary)] mb-1">3. Biaya Pra-Operasional (Habis Pakai)</h3>
           <p className="text-xs text-[var(--color-text-secondary)] mb-4">Biaya persiapan sebelum buka yang diinput secara dinamis di menu <strong>Pengeluaran</strong> berkategori <strong>Pra-Operasional / Persiapan Usaha</strong>.</p>
           
           {preOpExpenses.length === 0 ? (

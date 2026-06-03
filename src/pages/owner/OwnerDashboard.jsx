@@ -15,7 +15,6 @@ export default function OwnerDashboard() {
   const getTodaySales = useAppStore((state) => state.getTodaySales);
   const businessDate = getBusinessDate();
   const summary = getSalesSummary(businessDate);
-  const criticalStock = ingredients.filter(i => i.status === 'kritis');
   const recentActivity = activityLog.slice(-4).reverse();
   const todayNote = dailyNotes.find((note) => note.date === businessDate) || dailyNotes[0];
   const estimasiHPP = getEstimatedHpp(businessDate);
@@ -105,12 +104,7 @@ export default function OwnerDashboard() {
                   <p className="text-xs mt-0.5 opacity-80">Kasir belum rekonsiliasi</p>
                 </div>
               </div>
-              {criticalStock.map(item => (
-                <div key={item.id} className="flex justify-between items-center p-3 bg-white border border-[var(--color-border)] rounded text-sm">
-                  <span className="text-[var(--color-text-secondary)]">{item.name}</span>
-                  <span className="font-mono text-[var(--color-danger)] font-medium text-xs">{item.stock} {item.unit}</span>
-                </div>
-              ))}
+
             </div>
           </div>
 

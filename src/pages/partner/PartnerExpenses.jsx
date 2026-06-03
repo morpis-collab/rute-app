@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Camera } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -15,6 +16,7 @@ export default function PartnerExpenses() {
   const ingredients = useAppStore((state) => state.ingredients);
   const addExpense = useAppStore((state) => state.addExpense);
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   
   const businessDate = getBusinessDate();
   const todayExpenses = expenses.filter(e => e.date?.startsWith(businessDate));
@@ -39,13 +41,29 @@ export default function PartnerExpenses() {
 
   return (
     <PageWrapper title="Pengeluaran" subtitle="Catat pengeluaran hari ini">
-      <button 
-        onClick={() => setIsModalOpen(true)}
-        className="w-full p-4 rounded-xl border-2 border-dashed border-[var(--color-accent-warm)] bg-[var(--color-accent-light)]/20 flex items-center justify-center gap-2 mb-4 hover:bg-[var(--color-accent-light)]/40 transition-colors"
-      >
-        <Plus size={18} className="text-[var(--color-accent-primary)]" />
-        <span className="text-sm font-medium text-[var(--color-accent-primary)]">Tambah Pengeluaran</span>
-      </button>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <button
+          onClick={() => navigate('/partner/receipt')}
+          className="p-4 rounded-xl border border-[var(--color-border)] bg-white flex flex-col items-center justify-center gap-2 shadow-sm hover:shadow-md hover:bg-gray-50/50 transition-all text-center"
+        >
+          <div className="w-10 h-10 rounded-full bg-[var(--color-accent-light)]/30 flex items-center justify-center text-[var(--color-accent-primary)]">
+            <Camera size={20} />
+          </div>
+          <span className="text-sm font-semibold text-[var(--color-text-primary)]">Scan Resi AI</span>
+          <span className="text-[10px] text-[var(--color-text-muted)]">Upload foto resi otomatis</span>
+        </button>
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="p-4 rounded-xl border border-[var(--color-border)] bg-white flex flex-col items-center justify-center gap-2 shadow-sm hover:shadow-md hover:bg-gray-50/50 transition-all text-center"
+        >
+          <div className="w-10 h-10 rounded-full bg-[var(--color-band-4)]/30 flex items-center justify-center text-[var(--color-band-1)]">
+            <Plus size={20} />
+          </div>
+          <span className="text-sm font-semibold text-[var(--color-text-primary)]">Catat Manual</span>
+          <span className="text-[10px] text-[var(--color-text-muted)]">Input tanpa resi fisik</span>
+        </button>
+      </div>
 
       <h3 className="text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Pengeluaran Hari Ini</h3>
       <div className="space-y-2">

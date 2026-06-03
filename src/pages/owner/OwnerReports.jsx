@@ -3,14 +3,16 @@ import { BarChart3 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import { formatRupiah } from '../../utils/formatters';
+import { getBusinessDate } from '../../utils/businessDate';
 
 export default function OwnerReports() {
   const [showToast, setShowToast] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(getBusinessDate());
   const { getSalesSummary, getEstimatedHpp, getExpenseTotal } = useAppStore();
   
-  const summary = getSalesSummary();
-  const totalHpp = getEstimatedHpp();
-  const totalExpense = getExpenseTotal();
+  const summary = getSalesSummary(selectedDate);
+  const totalHpp = getEstimatedHpp(selectedDate);
+  const totalExpense = getExpenseTotal(selectedDate);
   const rows = [
     { label: 'Total Omzet', value: formatRupiah(summary.totalOmzet) },
     { label: 'Total HPP', value: formatRupiah(totalHpp) },
@@ -25,17 +27,19 @@ export default function OwnerReports() {
 
   const handleExport = (type) => {
     if (type === 'csv' || type === 'excel') {
+      const filteredSales = sales.filter(s => s.date?.startsWith(selectedDate));
+      const filteredExpenses = expenses.filter(e => e.date?.startsWith(selectedDate));
       const csvContent = [
         ['Type', 'ID', 'Date', 'Category/Method', 'Description', 'Total (Rp)'],
-        ...sales.map(s => ['Sale', s.id, s.date, s.paymentMethod, `Penjualan ${s.items.length} item`, s.total]),
-        ...expenses.map(e => ['Expense', e.id, e.date, e.category, e.description, e.total])
+        ...filteredSales.map(s => ['Sale', s.id, s.date, s.paymentMethod, `Penjualan ${s.items.length} item`, s.total]),
+        ...filteredExpenses.map(e => ['Expense', e.id, e.date, e.category, e.description, e.total])
       ].map(e => e.join(",")).join("\n");
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", `laporan_rute_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute("download", `laporan_rute_${selectedDate}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -54,6 +58,22 @@ export default function OwnerReports() {
           ✓ File laporan berhasil di-export!
         </div>
       )}
+
+      {/* Date Filter */}
+      <div className="glass-card mb-6 flex flex-wrap gap-4 items-center justify-between">
+        <div>
+          <h3 className="font-bold text-[var(--color-text-primary)] text-sm mb-1">Pilih Tanggal Laporan</h3>
+          <p className="text-xs text-[var(--color-text-secondary)]">Menampilkan data performa berdasarkan tanggal terpilih.</p>
+        </div>
+        <div>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="form-input text-sm p-2 w-48 font-mono bg-white border border-[var(--color-border)] rounded-xl focus:border-[var(--color-band-1)] focus:outline-none"
+          />
+        </div>
+      </div>
 
       {/* Export Actions */}
       <div className="glass-card mb-6 flex flex-wrap gap-3 items-center justify-between">
@@ -75,7 +95,7 @@ export default function OwnerReports() {
         <div className="glass-card">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 size={18} className="text-[var(--color-band-1)]" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Laporan Hari Ini</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Laporan Tanggal {selectedDate}</h3>
           </div>
           <div className="space-y-3">
             {rows.map(r => (

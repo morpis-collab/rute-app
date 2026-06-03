@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Camera, Check, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
@@ -77,6 +78,7 @@ export default function PartnerReceipt() {
   const [cashAccountId, setCashAccountId] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const navigate = useNavigate();
 
   const saveReceiptExpense = useAppStore((state) => state.saveReceiptExpense);
   const ingredients = useAppStore((state) => state.ingredients);
@@ -208,7 +210,10 @@ export default function PartnerReceipt() {
         user: user?.name || 'Partner',
       });
       setStep('done');
-      setTimeout(resetForm, 1500);
+      setTimeout(() => {
+        resetForm();
+        navigate('/partner/expenses');
+      }, 1500);
     } catch (saveError) {
       console.warn('Gagal simpan resi.', saveError);
       setError(receiptErrorMessage(saveError));
@@ -314,7 +319,6 @@ export default function PartnerReceipt() {
                       <th className="w-24">Jml</th>
                       <th className="w-32">Harga</th>
                       <th className="w-32">Kategori</th>
-                      <th className="w-36 text-right">Stok</th>
                       <th className="w-10" />
                     </tr>
                   </thead>
@@ -365,51 +369,6 @@ export default function PartnerReceipt() {
                               <option key={cat.value} value={cat.value}>{cat.label}</option>
                             ))}
                           </select>
-                        </td>
-                        <td className="text-right">
-                          <div className="flex flex-col items-end gap-1">
-                            <label className="flex items-center gap-2 text-[10px]">
-                              <span>{item.addsStock ? 'Masuk stok' : 'Tidak'}</span>
-                              <input
-                                type="checkbox"
-                                checked={item.addsStock}
-                                onChange={(event) => updateItem(item.id, 'addsStock', event.target.checked)}
-                                className="h-4 w-4 accent-[var(--color-band-1)]"
-                              />
-                            </label>
-                            {item.addsStock && (
-                              <div className="flex flex-wrap justify-end gap-1">
-                                <select
-                                  className="form-select w-40 p-1 text-xs"
-                                  value={item.ingredientId || ''}
-                                  onChange={(event) => updateItem(item.id, 'ingredientId', event.target.value)}
-                                >
-                                  <option value="">Pilih bahan</option>
-                                  {ingredients.map((ingredient) => (
-                                    <option key={ingredient.id} value={ingredient.id}>{ingredient.name}</option>
-                                  ))}
-                                </select>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={item.stockQty || ''}
-                                  onChange={(event) => updateItem(item.id, 'stockQty', event.target.value)}
-                                  className="w-16 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-center font-mono text-xs"
-                                />
-                                <select
-                                  className="form-select w-16 p-1 text-xs"
-                                  value={item.stockUnit || 'pcs'}
-                                  onChange={(event) => updateItem(item.id, 'stockUnit', event.target.value)}
-                                >
-                                  <option value="gram">g</option>
-                                  <option value="kg">kg</option>
-                                  <option value="ml">ml</option>
-                                  <option value="l">L</option>
-                                  <option value="pcs">pcs</option>
-                                </select>
-                              </div>
-                            )}
-                          </div>
                         </td>
                         <td className="text-right">
                           <button type="button" onClick={() => removeItem(item.id)} className="rounded p-1 text-[var(--color-accent-red)] hover:bg-red-50" title="Hapus item">

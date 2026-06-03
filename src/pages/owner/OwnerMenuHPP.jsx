@@ -16,23 +16,15 @@ export default function OwnerMenuHPP() {
     name: '',
     category: 'Espresso Based',
     price: 0,
+    hpp: 0,
     description: '',
     active: true,
   });
 
-  const [recipe, setRecipe] = useState([]);
-  const [selectedIngredient, setSelectedIngredient] = useState('');
-  const [qty, setQty] = useState('');
   const [editingId, setEditingId] = useState(null);
 
   // Calculate HPP
-  const totalHPP = useMemo(() => {
-    return recipe.reduce((total, item) => {
-      const ing = ingredients.find(i => i.id === parseInt(item.ingredientId));
-      if (!ing) return total;
-      return total + (ing.costPerUnit * item.qty);
-    }, 0);
-  }, [recipe, ingredients]);
+  const totalHPP = Number(form.hpp || 0);
 
   const grossProfit = form.price - totalHPP;
   const margin = form.price > 0 ? ((grossProfit / form.price) * 100).toFixed(1) : 0;
@@ -43,23 +35,6 @@ export default function OwnerMenuHPP() {
     return { label: 'Rugi/Kecil', color: 'text-[var(--color-accent-red)] bg-[#fae8e0]' };
   };
   const status = getMarginStatus(margin);
-
-  const addRecipeItem = () => {
-    if (!selectedIngredient || !qty) return;
-    const ing = ingredients.find(i => i.id === parseInt(selectedIngredient));
-    if (!ing) return;
-    
-    // Check if exists
-    if (recipe.find(r => r.ingredientId === parseInt(selectedIngredient))) return;
-
-    setRecipe([...recipe, { ingredientId: parseInt(selectedIngredient), qty: parseFloat(qty), unit: ing.unit, cost: ing.costPerUnit }]);
-    setSelectedIngredient('');
-    setQty('');
-  };
-
-  const removeRecipeItem = (id) => {
-    setRecipe(recipe.filter(r => r.ingredientId !== id));
-  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,7 +50,7 @@ export default function OwnerMenuHPP() {
           sellingPrice: form.price,
           active: form.active,
           hpp: totalHPP,
-          recipe: recipe,
+          recipe: [],
           emoji: '☕'
         });
         useToastStore.getState().addToast('Menu berhasil diperbarui', 'success');
@@ -86,15 +61,14 @@ export default function OwnerMenuHPP() {
           sellingPrice: form.price,
           active: form.active,
           hpp: totalHPP,
-          recipe: recipe,
+          recipe: [],
           emoji: '☕'
         });
         useToastStore.getState().addToast('Menu baru berhasil ditambahkan', 'success');
       }
       
       // Reset form
-      setForm({ name: '', category: 'Espresso Based', price: 0, description: '', active: true });
-      setRecipe([]);
+      setForm({ name: '', category: 'Espresso Based', price: 0, hpp: 0, description: '', active: true });
       setEditingId(null);
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'Gagal menyimpan menu';
@@ -119,10 +93,10 @@ export default function OwnerMenuHPP() {
       name: product.name,
       category: mappedCategory,
       price: product.sellingPrice,
+      hpp: product.hpp || 0,
       description: product.description || '',
       active: product.active ?? true,
     });
-    setRecipe(product.recipe ? [...product.recipe] : []);
     setEditingId(product.id);
     
     // Smooth scroll to top of form
@@ -130,8 +104,7 @@ export default function OwnerMenuHPP() {
   };
 
   const handleCancelEdit = () => {
-    setForm({ name: '', category: 'Espresso Based', price: 0, description: '', active: true });
-    setRecipe([]);
+    setForm({ name: '', category: 'Espresso Based', price: 0, hpp: 0, description: '', active: true });
     setEditingId(null);
   };
 
@@ -161,7 +134,7 @@ export default function OwnerMenuHPP() {
                 <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Nama Menu</label>
                 <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="form-input" placeholder="Contoh: Kopi Susu Gula Aren" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Kategori</label>
                   <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="form-select">
@@ -176,6 +149,10 @@ export default function OwnerMenuHPP() {
                   <input type="number" value={form.price} onChange={e => setForm({...form, price: parseFloat(e.target.value) || 0})} className="form-input font-mono" placeholder="0" />
                 </div>
                 <div>
+                  <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">HPP / Modal (Rp)</label>
+                  <input type="number" value={form.hpp} onChange={e => setForm({...form, hpp: parseFloat(e.target.value) || 0})} className="form-input font-mono" placeholder="0" />
+                </div>
+                <div>
                   <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Status Menu</label>
                   <select value={form.active ? 'true' : 'false'} onChange={e => setForm({...form, active: e.target.value === 'true'})} className="form-select">
                     <option value="true">Aktif</option>
@@ -184,68 +161,6 @@ export default function OwnerMenuHPP() {
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="glass-card p-5">
-            <h3 className="font-bold text-[var(--color-text-primary)] mb-4">Recipe Builder (Bahan Baku)</h3>
-            
-            {/* Add ingredient form */}
-            <div className="flex gap-2 mb-4 items-end">
-              <div className="flex-1">
-                <label className="block text-[10px] uppercase text-[var(--color-text-secondary)] font-bold mb-1">Pilih Bahan</label>
-                <select value={selectedIngredient} onChange={e => setSelectedIngredient(e.target.value)} className="form-select p-2 text-sm">
-                  <option value="">- Pilih Bahan -</option>
-                  {ingredients.map(i => (
-                    <option key={i.id} value={i.id}>{i.name} ({formatRupiah(i.costPerUnit)}/{i.unit})</option>
-                  ))}
-                </select>
-              </div>
-              <div className="w-24">
-                <label className="block text-[10px] uppercase text-[var(--color-text-secondary)] font-bold mb-1">Jumlah</label>
-                <input type="number" value={qty} onChange={e => setQty(e.target.value)} className="form-input p-2 text-sm" placeholder="0" />
-              </div>
-              <button onClick={addRecipeItem} className="btn btn-secondary px-3 py-2 shrink-0">
-                <Plus size={16} />
-              </button>
-            </div>
-
-            {/* Recipe List */}
-            {recipe.length === 0 ? (
-              <div className="text-center p-6 bg-[var(--color-bg-primary)] border border-dashed border-[var(--color-coffee-latte)] rounded-lg text-[var(--color-text-muted)] text-sm">
-                Belum ada bahan dalam resep ini.
-              </div>
-            ) : (
-              <div className="border border-[var(--color-coffee-latte)] rounded-lg overflow-hidden">
-                <table className="data-table">
-                  <thead className="bg-[#faf6ef]">
-                    <tr>
-                      <th>Bahan</th>
-                      <th>Takaran</th>
-                      <th className="text-right">Biaya (Rp)</th>
-                      <th className="w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recipe.map((item, idx) => {
-                      const ing = ingredients.find(i => i.id === item.ingredientId);
-                      const cost = item.qty * item.cost;
-                      return (
-                        <tr key={idx}>
-                          <td className="font-medium text-[var(--color-text-primary)]">{ing?.name}</td>
-                          <td className="text-[var(--color-text-secondary)]">{item.qty} {item.unit}</td>
-                          <td className="text-right font-mono font-medium">{formatRupiah(cost)}</td>
-                          <td className="text-center">
-                            <button onClick={() => removeRecipeItem(item.ingredientId)} className="text-[var(--color-accent-red)] hover:scale-110 transition-transform">
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         </div>
 
@@ -321,7 +236,7 @@ export default function OwnerMenuHPP() {
       {/* Daftar Menu Section */}
       <div className="mt-8 glass-card p-5">
         <h3 className="font-bold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-          <span>Daftar Menu & Resep</span>
+          <span>Daftar Menu & HPP</span>
           <span className="text-xs bg-[var(--color-coffee-latte)] px-2 py-0.5 rounded-full text-[var(--color-text-secondary)] font-mono font-medium">
             {products.length} Menu
           </span>
@@ -384,7 +299,7 @@ export default function OwnerMenuHPP() {
                           <button
                             onClick={() => handleEditClick(prod)}
                             className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent-primary)] hover:scale-110 transition-all"
-                            title="Edit Menu & Resep"
+                            title="Edit Menu"
                           >
                             <Edit size={14} />
                           </button>

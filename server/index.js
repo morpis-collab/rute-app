@@ -740,11 +740,30 @@ app.post('/api/sales', (req, res) => {
       (sum, item) => sum + Number(item.estimatedHpp || 0),
       0,
     );
-    const movements = body.stockMovements || buildSaleStockMovements(transaction, products);
-
     db.sales.push(transaction);
-    db.stockMovements.push(...movements);
-    db.ingredients = applyStockMovements(db.ingredients, movements);
+
+    // Update cash account balance
+    const cashAccount = db.cashAccounts.find(a => 
+      paymentMethod === 'cash' ? a.type === 'cash' :
+      paymentMethod === 'qris' ? a.type === 'qris' : a.type === 'bank'
+    ) || db.cashAccounts[0];
+
+    if (cashAccount) {
+      cashAccount.balance = Number(cashAccount.balance || 0) + transaction.total;
+      db.cashTransactions.unshift({
+        id: `CTX-SALE-${Date.now()}-${transaction.id}`,
+        date: transaction.date,
+        type: 'in',
+        amount: transaction.total,
+        category: 'penjualan',
+        description: `Penjualan ${paymentMethod.toUpperCase()}: ${transaction.items.map((item) => `${item.name} ${item.qty}x`).join(', ')}`,
+        accountId: cashAccount.id,
+        sourceType: 'sale',
+        sourceId: transaction.id,
+        user: transaction.user || 'Partner',
+      });
+    }
+
     db.activityLog.push({
       id: `ACT-${Date.now()}`,
       time: transaction.date,
@@ -753,7 +772,7 @@ app.post('/api/sales', (req, res) => {
       type: 'penjualan',
     });
 
-    return { transaction, movements, state: bootstrapPayload(db) };
+    return { transaction, movements: [], state: bootstrapPayload(db) };
   });
 
   if (result?.error) return res.status(result.statusCode || 400).json(result);
@@ -788,6 +807,14 @@ app.post('/api/expenses', (req, res) => {
     if (!Number.isFinite(total) || total <= 0) {
       return { error: 'Total pengeluaran wajib lebih dari 0', statusCode: 400 };
     }
+    const defaultCashAccountId = db.cashAccounts.find((account) => (
+      ['cash', 'tunai'].includes(String(account.type || '').toLowerCase())
+    ))?.id || db.cashAccounts[0]?.id || null;
+    const cashAccountId = body.cashAccountId || body.expense?.cashAccountId || defaultCashAccountId;
+    const cashAccount = cashAccountId
+      ? db.cashAccounts.find((account) => String(account.id) === String(cashAccountId))
+      : null;
+
     const expense = body.expense || {
       id: `EXP-${Date.now()}`,
       date: body.date || new Date().toISOString(),
@@ -798,27 +825,40 @@ app.post('/api/expenses', (req, res) => {
         amount: Number(item.amount ?? item.total ?? 0),
       })),
       total,
-      status: body.status || calculateApprovalStatus(total),
+      status: 'approved',
       photoUrl: body.proofUrl || body.photoUrl || null,
       proofUrl: body.proofUrl || body.photoUrl || null,
       sourceType: 'manual',
+      cashAccountId: cashAccount?.id || null,
       user: body.user || 'Partner',
     };
-    const movements = body.stockMovements || buildExpenseStockMovements(expense);
+
+    if (cashAccount) {
+      cashAccount.balance = Number(cashAccount.balance || 0) - expense.total;
+      db.cashTransactions.unshift({
+        id: `CTX-EXP-${Date.now()}-${expense.id}`,
+        date: expense.date,
+        type: 'out',
+        amount: expense.total,
+        category: 'pengeluaran',
+        description: expense.description,
+        accountId: cashAccount.id,
+        sourceType: 'expense',
+        sourceId: expense.id,
+        user: expense.user,
+      });
+    }
 
     db.expenses.unshift(expense);
-    db.stockMovements.push(...movements);
-    db.ingredients = applyPurchaseCosts(db.ingredients, expense.items || []);
-    db.ingredients = applyStockMovements(db.ingredients, movements);
     db.activityLog.push({
       id: `ACT-${Date.now()}`,
       time: expense.date,
-      action: `Input pengeluaran: ${expense.description}`,
+      action: `Input pengeluaran: ${expense.description} Rp ${Number(expense.total || 0).toLocaleString('id-ID')}`,
       user: expense.user || 'Partner',
       type: 'pengeluaran',
     });
 
-    return { expense, movements, state: bootstrapPayload(db) };
+    return { expense, movements: [], state: bootstrapPayload(db) };
   });
 
   if (result?.error) return res.status(result.statusCode || 400).json(result);
@@ -1010,7 +1050,7 @@ app.post('/api/receipt-expenses', (req, res) => {
       description: body.expense?.description || `Resi ${merchantName || 'pembelian'}`,
       items,
       total,
-      status: requestedStatus || calculateApprovalStatus(total),
+      status: 'approved',
       photoUrl: uploadRecord.imageUrl,
       proofUrl: uploadRecord.imageUrl,
       sourceType: 'receipt_ai',
@@ -1018,7 +1058,6 @@ app.post('/api/receipt-expenses', (req, res) => {
       receiptUploadId: uploadRecord.id,
       user: uploadRecord.user,
     };
-    const movements = buildExpenseStockMovements(expense);
     uploadRecord.expenseId = expense.id;
 
     const cashTransaction = cashAccount ? {
@@ -1041,9 +1080,6 @@ app.post('/api/receipt-expenses', (req, res) => {
     db.expenses.unshift(expense);
     db.receiptUploads.unshift(uploadRecord);
     if (cashTransaction) db.cashTransactions = [cashTransaction, ...db.cashTransactions];
-    db.stockMovements.push(...movements);
-    db.ingredients = applyPurchaseCosts(db.ingredients, expense.items || []);
-    db.ingredients = applyStockMovements(db.ingredients, movements);
     db.activityLog.push({
       id: `ACT-${Date.now()}`,
       time: expense.date,
@@ -1052,7 +1088,7 @@ app.post('/api/receipt-expenses', (req, res) => {
       type: 'pengeluaran',
     });
 
-    return { expense, upload: uploadRecord, cashTransaction, movements, state: bootstrapPayload(db) };
+    return { expense, upload: uploadRecord, cashTransaction, movements: [], state: bootstrapPayload(db) };
   });
 
   if (result?.error) return res.status(result.statusCode || 400).json(result);
@@ -1381,6 +1417,25 @@ app.post('/api/cash/close', (req, res) => {
     };
 
     db.cashSessions = [closedSession, ...db.cashSessions.filter((session) => session.date !== businessDate)];
+
+    const cashAccount = db.cashAccounts.find(a => a.type === 'cash');
+    if (cashAccount) {
+      cashAccount.balance = actualCash;
+      if (difference !== 0) {
+        db.cashTransactions.unshift({
+          id: `CTX-DIFF-${Date.now()}`,
+          date: new Date().toISOString(),
+          type: 'koreksi',
+          amount: Math.abs(difference),
+          category: 'koreksi',
+          description: `Koreksi selisih tutup kas tanggal ${businessDate}: ${body.notes || 'Selisih kas'}`,
+          accountId: cashAccount.id,
+          adjustmentType: difference < 0 ? 'minus' : 'plus',
+          user: closedBy,
+        });
+      }
+    }
+
     db.activityLog.push({
       id: `ACT-${Date.now()}`,
       time: new Date().toISOString(),

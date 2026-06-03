@@ -1,11 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { ShoppingCart, Camera, Package, Wallet, Bot } from 'lucide-react';
+import { ShoppingCart, Camera, Receipt, Wallet, Bot } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 
 const partnerMenu = [
   { to: '/partner/sales', icon: ShoppingCart, label: 'Jual' },
-  { to: '/partner/receipt', icon: Camera, label: 'Resi' },
-  { to: '/partner/stock', icon: Package, label: 'Stok' },
+  { to: '/partner/expenses', icon: Receipt, label: 'Pengeluaran' },
   { to: '/partner/close-cash', icon: Wallet, label: 'Kas' },
   { to: '/partner/ai', icon: Bot, label: 'Copilot' },
 ];
@@ -13,7 +12,6 @@ const partnerMenu = [
 const ownerMobileMenu = [
   { to: '/owner/dashboard', icon: ShoppingCart, label: 'Dash' },
   { to: '/owner/receipt', icon: Camera, label: 'Resi' },
-  { to: '/owner/stock', icon: Package, label: 'Stok' },
   { to: '/owner/reports', icon: Wallet, label: 'Report' },
   { to: '/owner/ai', icon: Bot, label: 'Copilot' },
 ];

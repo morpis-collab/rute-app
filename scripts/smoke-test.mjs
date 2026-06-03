@@ -6,13 +6,13 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testDbFile = path.resolve(__dirname, '..', 'server', '.data', 'rute-test-db.json');
-const apiUrl = 'http://localhost:54321/api';
+const apiUrl = 'http://127.0.0.1:54500/api';
 
 console.log('=== RUTE Coffee API Smoke Test ===');
 
 // Setup temporary test database configuration
-process.env.PORT = '54321';
-process.env.RUTE_API_PORT = '54321';
+process.env.PORT = '54500';
+process.env.RUTE_API_PORT = '54500';
 process.env.RUTE_DATA_FILE = testDbFile;
 process.env.JWT_SECRET = 'test-jwt-secret-key-123456';
 process.env.NODE_ENV = 'development';
@@ -23,7 +23,7 @@ if (fs.existsSync(testDbFile)) {
 }
 
 // 2. Start server
-console.log('Starting RUTE API server on port 54321...');
+console.log('Starting RUTE API server on port 54500...');
 const serverProcess = fork(path.join(__dirname, '..', 'server', 'index.js'), [], {
   env: process.env,
   silent: true // suppress logs to keep output clean
@@ -60,6 +60,7 @@ while (retries > 0) {
     isServerReady = true;
     break;
   } catch (err) {
+    console.log(`Polling error: ${err.message} (code: ${err.code})`);
     if (err.response) {
       // Server responded with error, but it is active
       isServerReady = true;
@@ -201,7 +202,7 @@ try {
   // --- CASE 4: Expenses Approval Workflow ---
   console.log('\nTest Case 4: Expenses Approval Gate');
   
-  // Submit manual expense under 300,000 (auto_approved)
+  // Submit manual expense under 300,000 (directly approved)
   const expenseRes1 = await axios.post(`${apiUrl}/expenses`, {
     category: 'operasional',
     description: 'Sapu lidi baru',
@@ -210,13 +211,13 @@ try {
   }, {
     headers: { Authorization: `Bearer ${partnerToken}` }
   });
-  if (expenseRes1.status === 201 && expenseRes1.data.expense.status === 'auto_approved') {
-    console.log('✅ Under Limit Expense: SUCCESS (Status auto_approved)');
+  if (expenseRes1.status === 201 && expenseRes1.data.expense.status === 'approved') {
+    console.log('✅ Under Limit Expense: SUCCESS (Status approved directly)');
   } else {
     throw new Error('Small expense auto approval failed');
   }
 
-  // Submit manual expense above 300,000 (pending approval)
+  // Submit manual expense above 300,000 (also directly approved now)
   const expenseRes2 = await axios.post(`${apiUrl}/expenses`, {
     category: 'maintenance',
     description: 'Servis mesin Espresso',
@@ -226,25 +227,25 @@ try {
     headers: { Authorization: `Bearer ${partnerToken}` }
   });
   
-  let pendingExpenseId = '';
-  if (expenseRes2.status === 201 && expenseRes2.data.expense.status === 'pending') {
-    pendingExpenseId = expenseRes2.data.expense.id;
-    console.log(`✅ Over Limit Expense: SUCCESS (Status pending, id: ${pendingExpenseId})`);
+  let expense2Id = '';
+  if (expenseRes2.status === 201 && expenseRes2.data.expense.status === 'approved') {
+    expense2Id = expenseRes2.data.expense.id;
+    console.log(`✅ Over Limit Expense: SUCCESS (Status approved directly, id: ${expense2Id})`);
   } else {
-    throw new Error('Large expense pending status failed');
+    throw new Error('Large expense direct approval failed');
   }
 
-  // Approve expense using Owner account
-  const approveRes = await axios.patch(`${apiUrl}/expenses/${pendingExpenseId}/status`, {
-    status: 'approved',
+  // Reject the expense using Owner account to test status updates
+  const rejectRes = await axios.patch(`${apiUrl}/expenses/${expense2Id}/status`, {
+    status: 'rejected',
     user: 'Owner RUTE'
   }, {
     headers: { Authorization: `Bearer ${ownerToken}` }
   });
-  if (approveRes.status === 200 && approveRes.data.expense.status === 'approved') {
-    console.log('✅ Expense Approval: SUCCESS (Status updated to approved)');
+  if (rejectRes.status === 200 && rejectRes.data.expense.status === 'rejected') {
+    console.log('✅ Expense Rejection: SUCCESS (Status updated to rejected)');
   } else {
-    throw new Error('Expense approval failed');
+    throw new Error('Expense rejection failed');
   }
 
   // --- CASE 5: Close Cash & Multi-Closing Conflict ---
