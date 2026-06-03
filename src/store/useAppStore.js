@@ -17,6 +17,7 @@ import {
   getStock,
   postSale,
   postExpense,
+  putExpense,
   postProduct,
   putProduct,
   deleteProduct,
@@ -169,6 +170,16 @@ const useAppStore = create((set, get) => ({
       await get().loadRemoteData();
     } catch (err) {
       console.error('Failed to add expense', err);
+      throw err;
+    }
+  },
+
+  updateExpense: async (id, expenseData) => {
+    try {
+      await putExpense(id, expenseData);
+      await get().loadRemoteData();
+    } catch (err) {
+      console.error('Failed to update expense', err);
       throw err;
     }
   },

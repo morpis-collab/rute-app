@@ -970,6 +970,94 @@ app.patch('/api/expenses/:id/status', (req, res) => {
   return res.json(result);
 });
 
+app.put('/api/expenses/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const body = req.body || {};
+    const expenseIndex = db.expenses.findIndex((candidate) => String(candidate.id) === String(id));
+    if (expenseIndex === -1) return { error: 'Pengeluaran tidak ditemukan', statusCode: 404 };
+
+    const oldExpense = db.expenses[expenseIndex];
+    
+    // Check lock for old date
+    const oldLockError = checkCashLock(db, oldExpense.date.substring(0, 10));
+    if (oldLockError) return oldLockError;
+
+    // Determine new date
+    const newDate = body.date || oldExpense.date;
+    
+    // Check lock for new date
+    const newLockError = checkCashLock(db, newDate.substring(0, 10));
+    if (newLockError) return newLockError;
+
+    const description = String(body.description || oldExpense.description || '').trim();
+    const total = Number(body.total ?? oldExpense.total ?? 0);
+    const category = body.category || oldExpense.category || 'lainnya';
+
+    if (!description || total <= 0) {
+      return { error: 'Deskripsi dan nominal wajib diisi', statusCode: 400 };
+    }
+
+    const priceDiff = total - oldExpense.total;
+    const cashAccountId = body.cashAccountId || oldExpense.cashAccountId;
+    const cashAccount = cashAccountId
+      ? db.cashAccounts.find((account) => String(account.id) === String(cashAccountId))
+      : null;
+
+    // Update Cash Account Balance
+    if (cashAccount) {
+      cashAccount.balance = Number(cashAccount.balance || 0) - priceDiff;
+      
+      // Update corresponding cash transactions
+      db.cashTransactions = db.cashTransactions.map(tx => {
+        if ((tx.sourceType === 'expense' || tx.sourceType === 'receipt_expense') && String(tx.sourceId) === String(id)) {
+          return {
+            ...tx,
+            amount: total,
+            description,
+            date: newDate,
+          };
+        }
+        return tx;
+      });
+    }
+
+    // Update expense in db
+    const updatedExpense = {
+      ...oldExpense,
+      description,
+      total,
+      date: newDate,
+      category,
+      items: [{
+        name: description,
+        qty: 1,
+        unit: 'pcs',
+        price: total,
+        total: total,
+        addsStock: false,
+      }],
+      updatedAt: new Date().toISOString(),
+    };
+
+    db.expenses[expenseIndex] = updatedExpense;
+
+    db.activityLog.push({
+      id: `ACT-${Date.now()}`,
+      time: new Date().toISOString(),
+      action: `Perbarui pengeluaran: ${oldExpense.description} (Rp ${oldExpense.total}) menjadi ${description} (Rp ${total}) tanggal ${newDate.substring(0, 10)}`,
+      user: body.user || 'Owner',
+      type: 'pengeluaran',
+    });
+
+    return { expense: updatedExpense, state: bootstrapPayload(db) };
+  });
+
+  if (!result) return notFound(res, 'Pengeluaran');
+  if (result.error) return res.status(result.statusCode || 400).json(result);
+  return res.json(result);
+});
+
 app.post('/api/receipts/scan', upload.single('receipt'), async (req, res, next) => {
   try {
     if (!req.file) {

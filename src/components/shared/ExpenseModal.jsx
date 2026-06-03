@@ -1,15 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import useAuthStore from '../../store/useAuthStore';
 import { EXPENSE_CATEGORIES } from '../../utils/constants';
 import { getBusinessDate } from '../../utils/businessDate';
 
-export default function ExpenseModal({ isOpen, onClose, onSave }) {
+export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
   const { user } = useAuthStore();
   const [description, setDescription] = useState('');
   const [total, setTotal] = useState('');
   const [category, setCategory] = useState('lainnya');
   const [date, setDate] = useState(getBusinessDate());
+
+  useEffect(() => {
+    if (expense) {
+      setDescription(expense.description || '');
+      setTotal(expense.total || '');
+      setCategory(expense.category || 'lainnya');
+      setDate(expense.date ? expense.date.substring(0, 10) : getBusinessDate());
+    } else {
+      setDescription('');
+      setTotal('');
+      setCategory('lainnya');
+      setDate(getBusinessDate());
+    }
+  }, [expense, isOpen]);
 
   if (!isOpen) return null;
 
@@ -41,7 +55,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm slide-in">
       <div className="bg-white rounded-[var(--radius-xl)] w-full max-w-md shadow-[var(--shadow-lg)] overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg-primary)] shrink-0">
-          <h3 className="font-bold text-[var(--color-text-primary)]">Tambah Pengeluaran</h3>
+          <h3 className="font-bold text-[var(--color-text-primary)]">{expense ? 'Ubah Pengeluaran' : 'Tambah Pengeluaran'}</h3>
           <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer">
             ✕
           </button>
