@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import useAuthStore from '../../store/useAuthStore';
 import { EXPENSE_CATEGORIES } from '../../utils/constants';
 
@@ -33,12 +34,12 @@ export default function ExpenseModal({ isOpen, onClose, onSave }) {
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm slide-in">
       <div className="bg-white rounded-[var(--radius-xl)] w-full max-w-md shadow-[var(--shadow-lg)] overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg-primary)] shrink-0">
           <h3 className="font-bold text-[var(--color-text-primary)]">Tambah Pengeluaran</h3>
-          <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
+          <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer">
             ✕
           </button>
         </div>
@@ -75,13 +76,12 @@ export default function ExpenseModal({ isOpen, onClose, onSave }) {
             </select>
           </div>
 
-
-
           <div className="pt-4 pb-2">
             <button type="submit" className="btn btn-primary w-full shadow-md">Simpan Pengeluaran</button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
