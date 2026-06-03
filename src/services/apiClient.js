@@ -178,8 +178,8 @@ export async function getStock() {
   return data;
 }
 
-export async function getExpenses() {
-  const { data } = await api.get('/expenses');
+export async function getExpenses(params = {}) {
+  const { data } = await api.get('/expenses', { params });
   return data;
 }
 

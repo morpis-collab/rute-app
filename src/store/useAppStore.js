@@ -45,9 +45,9 @@ const useAppStore = create((set, get) => ({
     set({ apiStatus: 'loading' });
     try {
       const [sales, products, expenses, stock, bootstrapData] = await Promise.all([
-        getSales(),
+        getSales({ all: 'true' }),
         getProducts(),
-        getExpenses(),
+        getExpenses({ all: 'true' }),
         getStock(),
         getBootstrap().catch(() => ({}))
       ]);
