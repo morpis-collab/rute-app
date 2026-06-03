@@ -89,9 +89,14 @@ const useAppStore = create((set, get) => ({
   ),
   getCashExpected: (businessDate = getBusinessDate()) => {
     const session = get().cashSessions.find((cash) => cash.date === businessDate);
+    const cashExpensesList = get().expenses.filter((expense) => {
+      if (!expense.cashAccountId) return true;
+      const account = get().cashAccounts.find(a => String(a.id) === String(expense.cashAccountId));
+      return account ? account.type === 'cash' : true;
+    });
     return getCashExpected({
       sales: get().sales,
-      expenses: get().expenses,
+      expenses: cashExpensesList,
       openingCash: session?.openingCash || 0,
       businessDate,
     });
@@ -249,6 +254,15 @@ const useAppStore = create((set, get) => ({
     const session = get().cashSessions.find((cash) => cash.date === businessDate);
     const expectedCash = get().getCashExpected(businessDate);
     const difference = Number(actualCash || 0) - expectedCash;
+
+    const cashExpensesList = get().expenses.filter((expense) => {
+      if (!isSameBusinessDate(expense.date, businessDate)) return false;
+      if (!expense.cashAccountId) return true;
+      const account = get().cashAccounts.find(a => String(a.id) === String(expense.cashAccountId));
+      return account ? account.type === 'cash' : true;
+    });
+    const totalExpenseCash = cashExpensesList.reduce((sum, e) => sum + e.total, 0);
+
     const closedSession = {
       date: businessDate,
       openingCash: session?.openingCash || 0,
@@ -257,7 +271,7 @@ const useAppStore = create((set, get) => ({
       difference,
       qris: Number(qris || 0),
       transfer: Number(transfer || 0),
-      totalExpenseCash: get().getExpenseTotal(),
+      totalExpenseCash,
       status: 'closed',
       notes,
     };

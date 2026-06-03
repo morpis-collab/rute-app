@@ -15,6 +15,7 @@ export default function PartnerExpenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const expenses = useAppStore((state) => state.expenses);
   const ingredients = useAppStore((state) => state.ingredients);
+  const cashAccounts = useAppStore((state) => state.cashAccounts);
   const addExpense = useAppStore((state) => state.addExpense);
   const updateExpense = useAppStore((state) => state.updateExpense);
   const { user } = useAuthStore();
@@ -22,6 +23,14 @@ export default function PartnerExpenses() {
   
   const businessDate = getBusinessDate();
   const todayExpenses = expenses.filter(e => e.date?.startsWith(businessDate));
+
+  const getCashAccountLabel = (cashAccountId) => {
+    const account = cashAccounts.find(a => String(a.id) === String(cashAccountId));
+    if (!account) return 'Tunai';
+    if (account.type === 'cash') return 'Tunai';
+    if (account.type === 'qris') return 'QRIS';
+    return account.name;
+  };
 
   const handleSaveExpense = async (data) => {
     try {
@@ -31,6 +40,7 @@ export default function PartnerExpenses() {
           total: data.total,
           category: data.category,
           date: data.date,
+          cashAccountId: data.cashAccountId,
           user: user?.name || 'Partner',
         });
         useToastStore.getState().addToast('Pengeluaran berhasil diperbarui', 'success');
@@ -42,8 +52,10 @@ export default function PartnerExpenses() {
             total: data.total,
             category: data.category,
             items: data.items,
+            cashAccountId: data.cashAccountId,
             user: user?.name || 'Partner',
-          }
+          },
+          cashAccountId: data.cashAccountId,
         });
         useToastStore.getState().addToast('Pengeluaran berhasil disimpan', 'success');
       }
@@ -98,7 +110,7 @@ export default function PartnerExpenses() {
                   <span className={`badge badge-${st.variant}`}>{st.label}</span>
                 </div>
                 <div className="flex justify-between text-xs text-[var(--color-text-muted)]">
-                  <span>{exp.category.replace('_', ' ')}</span>
+                  <span>{exp.category.replace('_', ' ')} · {getCashAccountLabel(exp.cashAccountId)}</span>
                   <span className="font-mono font-semibold text-[var(--color-text-primary)]">{formatRupiah(exp.total)}</span>
                 </div>
               </div>

@@ -1,29 +1,35 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import useAuthStore from '../../store/useAuthStore';
+import useAppStore from '../../store/useAppStore';
 import { EXPENSE_CATEGORIES } from '../../utils/constants';
 import { getBusinessDate } from '../../utils/businessDate';
 
 export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
   const { user } = useAuthStore();
+  const cashAccounts = useAppStore((state) => state.cashAccounts);
   const [description, setDescription] = useState('');
   const [total, setTotal] = useState('');
   const [category, setCategory] = useState('lainnya');
   const [date, setDate] = useState(getBusinessDate());
+  const [cashAccountId, setCashAccountId] = useState('');
 
   useEffect(() => {
+    const defaultCashAccount = cashAccounts.find(a => ['cash', 'tunai'].includes(a.type.toLowerCase())) || cashAccounts[0];
     if (expense) {
       setDescription(expense.description || '');
       setTotal(expense.total || '');
       setCategory(expense.category || 'lainnya');
       setDate(expense.date ? expense.date.substring(0, 10) : getBusinessDate());
+      setCashAccountId(expense.cashAccountId || defaultCashAccount?.id || '');
     } else {
       setDescription('');
       setTotal('');
       setCategory('lainnya');
       setDate(getBusinessDate());
+      setCashAccountId(defaultCashAccount?.id || '');
     }
-  }, [expense, isOpen]);
+  }, [expense, isOpen, cashAccounts]);
 
   if (!isOpen) return null;
 
@@ -46,6 +52,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
       category,
       items,
       date: date ? `${date}T12:00:00.000Z` : undefined,
+      cashAccountId,
     });
 
     onClose();
@@ -99,6 +106,16 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
             <select className="form-select text-sm p-2 w-full" value={category} onChange={(e) => setCategory(e.target.value)}>
               {EXPENSE_CATEGORIES.filter(cat => !cat.ownerOnly || user?.role === 'owner').map(cat => (
                 <option key={cat.value} value={cat.value}>{cat.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Sumber Dana / Pembayaran</label>
+            <select className="form-select text-sm p-2 w-full" value={cashAccountId} onChange={(e) => setCashAccountId(e.target.value)} required>
+              {cashAccounts.map(account => (
+                <option key={account.id} value={account.id}>
+                  {account.name} (Saldo: Rp {(account.balance || 0).toLocaleString('id-ID')})
+                </option>
               ))}
             </select>
           </div>

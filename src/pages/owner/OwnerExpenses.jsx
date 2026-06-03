@@ -13,9 +13,18 @@ export default function OwnerExpenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const expenses = useAppStore((state) => state.expenses);
   const ingredients = useAppStore((state) => state.ingredients);
+  const cashAccounts = useAppStore((state) => state.cashAccounts);
   const addExpense = useAppStore((state) => state.addExpense);
   const updateExpense = useAppStore((state) => state.updateExpense);
   const { user } = useAuthStore();
+
+  const getCashAccountLabel = (cashAccountId) => {
+    const account = cashAccounts.find(a => String(a.id) === String(cashAccountId));
+    if (!account) return 'Tunai';
+    if (account.type === 'cash') return 'Tunai';
+    if (account.type === 'qris') return 'QRIS';
+    return account.name;
+  };
 
   const handleSaveExpense = async (data) => {
     try {
@@ -25,6 +34,7 @@ export default function OwnerExpenses() {
           total: data.total,
           category: data.category,
           date: data.date,
+          cashAccountId: data.cashAccountId,
           user: user?.name || 'Owner',
         });
         useToastStore.getState().addToast('Pengeluaran berhasil diperbarui', 'success');
@@ -36,8 +46,10 @@ export default function OwnerExpenses() {
             total: data.total,
             category: data.category,
             items: data.items,
+            cashAccountId: data.cashAccountId,
             user: user?.name || 'Owner',
-          }
+          },
+          cashAccountId: data.cashAccountId,
         });
         useToastStore.getState().addToast('Pengeluaran berhasil disimpan', 'success');
       }
@@ -75,7 +87,7 @@ export default function OwnerExpenses() {
                   <span className={`badge badge-${st.variant}`}>{st.label}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
-                  <span>{formatTanggalSingkat(exp.date)} · {exp.category.replace('_', ' ')}</span>
+                  <span>{formatTanggalSingkat(exp.date)} · {exp.category.replace('_', ' ')} · {getCashAccountLabel(exp.cashAccountId)}</span>
                   <span className="font-mono font-semibold text-[var(--color-text-primary)]">{formatRupiah(exp.total)}</span>
                 </div>
               </div>

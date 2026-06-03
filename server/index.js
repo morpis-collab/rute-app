@@ -193,10 +193,17 @@ function cashExpectedPayload(db, { date, openingCash } = {}) {
   const dayExpenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate));
   const salesSummary = getSalesSummary(daySales);
   const cashSales = Number(salesSummary.byMethod.cash || 0);
-  const cashExpenses = getExpenseTotal(dayExpenses);
+
+  const cashExpensesList = dayExpenses.filter((expense) => {
+    if (!expense.cashAccountId) return true;
+    const account = db.cashAccounts.find(a => String(a.id) === String(expense.cashAccountId));
+    return account ? account.type === 'cash' : true;
+  });
+  const cashExpenses = getExpenseTotal(cashExpensesList);
+
   const expectedCash = getCashExpected({
     sales: db.sales,
-    expenses: db.expenses,
+    expenses: cashExpensesList,
     openingCash: resolvedOpeningCash.value,
     businessDate,
   });
@@ -1000,28 +1007,38 @@ app.put('/api/expenses/:id', (req, res) => {
     }
 
     const priceDiff = total - oldExpense.total;
-    const cashAccountId = body.cashAccountId || oldExpense.cashAccountId;
-    const cashAccount = cashAccountId
-      ? db.cashAccounts.find((account) => String(account.id) === String(cashAccountId))
-      : null;
+    const oldCashAccountId = oldExpense.cashAccountId;
+    const newCashAccountId = body.cashAccountId || oldExpense.cashAccountId;
 
-    // Update Cash Account Balance
-    if (cashAccount) {
-      cashAccount.balance = Number(cashAccount.balance || 0) - priceDiff;
-      
-      // Update corresponding cash transactions
-      db.cashTransactions = db.cashTransactions.map(tx => {
-        if ((tx.sourceType === 'expense' || tx.sourceType === 'receipt_expense') && String(tx.sourceId) === String(id)) {
-          return {
-            ...tx,
-            amount: total,
-            description,
-            date: newDate,
-          };
-        }
-        return tx;
-      });
+    if (String(oldCashAccountId) !== String(newCashAccountId)) {
+      if (oldCashAccountId) {
+        const oldAccount = db.cashAccounts.find(a => String(a.id) === String(oldCashAccountId));
+        if (oldAccount) oldAccount.balance = Number(oldAccount.balance || 0) + oldExpense.total;
+      }
+      if (newCashAccountId) {
+        const newAccount = db.cashAccounts.find(a => String(a.id) === String(newCashAccountId));
+        if (newAccount) newAccount.balance = Number(newAccount.balance || 0) - total;
+      }
+    } else {
+      if (newCashAccountId) {
+        const cashAccount = db.cashAccounts.find(a => String(a.id) === String(newCashAccountId));
+        if (cashAccount) cashAccount.balance = Number(cashAccount.balance || 0) - priceDiff;
+      }
     }
+
+    // Update corresponding cash transactions
+    db.cashTransactions = db.cashTransactions.map(tx => {
+      if ((tx.sourceType === 'expense' || tx.sourceType === 'receipt_expense') && String(tx.sourceId) === String(id)) {
+        return {
+          ...tx,
+          accountId: newCashAccountId,
+          amount: total,
+          description,
+          date: newDate,
+        };
+      }
+      return tx;
+    });
 
     // Update expense in db
     const updatedExpense = {
@@ -1030,6 +1047,7 @@ app.put('/api/expenses/:id', (req, res) => {
       total,
       date: newDate,
       category,
+      cashAccountId: newCashAccountId,
       items: [{
         name: description,
         qty: 1,

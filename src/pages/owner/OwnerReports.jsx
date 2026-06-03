@@ -24,6 +24,15 @@ export default function OwnerReports() {
 
   const expenses = useAppStore((state) => state.expenses);
   const sales = useAppStore((state) => state.sales);
+  const cashAccounts = useAppStore((state) => state.cashAccounts);
+
+  const getCashAccountLabel = (cashAccountId) => {
+    const account = cashAccounts.find(a => String(a.id) === String(cashAccountId));
+    if (!account) return 'Tunai';
+    if (account.type === 'cash') return 'Tunai';
+    if (account.type === 'qris') return 'QRIS';
+    return account.name;
+  };
 
   const handleExport = (type) => {
     if (type === 'csv' || type === 'excel') {
@@ -32,7 +41,7 @@ export default function OwnerReports() {
       const csvContent = [
         ['Type', 'ID', 'Date', 'Category/Method', 'Description', 'Total (Rp)'],
         ...filteredSales.map(s => ['Sale', s.id, s.date, s.paymentMethod, `Penjualan ${s.items.length} item`, s.total]),
-        ...filteredExpenses.map(e => ['Expense', e.id, e.date, e.category, e.description, e.total])
+        ...filteredExpenses.map(e => ['Expense', e.id, e.date, `${e.category} (${getCashAccountLabel(e.cashAccountId)})`, e.description, e.total])
       ].map(e => e.join(",")).join("\n");
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
