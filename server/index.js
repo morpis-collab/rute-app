@@ -816,23 +816,24 @@ app.post('/api/expenses', (req, res) => {
       ? db.cashAccounts.find((account) => String(account.id) === String(cashAccountId))
       : null;
 
-    const expense = body.expense || {
-      id: `EXP-${Date.now()}`,
-      date: body.date || new Date().toISOString(),
-      category: body.category || 'lainnya',
-      description: body.description || 'Pengeluaran manual',
+    const expense = {
+      id: body.expense?.id || body.id || `EXP-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      date: body.expense?.date || body.date || new Date().toISOString(),
+      category: body.expense?.category || body.category || 'lainnya',
+      description: body.expense?.description || body.description || 'Pengeluaran manual',
       items: items.map((item) => ({
         ...item,
         amount: Number(item.amount ?? item.total ?? 0),
       })),
       total,
       status: 'approved',
-      photoUrl: body.proofUrl || body.photoUrl || null,
-      proofUrl: body.proofUrl || body.photoUrl || null,
-      sourceType: 'manual',
+      photoUrl: body.proofUrl || body.photoUrl || body.expense?.photoUrl || null,
+      proofUrl: body.proofUrl || body.photoUrl || body.expense?.proofUrl || null,
+      sourceType: body.expense?.sourceType || 'manual',
       cashAccountId: cashAccount?.id || null,
-      user: body.user || 'Partner',
+      user: body.expense?.user || body.user || 'Partner',
     };
+
 
     if (cashAccount) {
       cashAccount.balance = Number(cashAccount.balance || 0) - expense.total;
