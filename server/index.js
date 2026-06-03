@@ -686,10 +686,11 @@ app.get('/api/sales', (req, res) => {
 
 app.post('/api/sales', (req, res) => {
   const result = updateDb((db) => {
-    const lockError = checkCashLock(db, today());
+    const body = req.body || {};
+    const transactionDate = body.date || body.transaction?.date || new Date().toISOString();
+    const lockError = checkCashLock(db, transactionDate.substring(0, 10));
     if (lockError) return lockError;
 
-    const body = req.body || {};
     const products = refreshProductCosts(db.products, db.ingredients);
     const rawItems = Array.isArray(body.transaction?.items)
       ? body.transaction.items
@@ -705,7 +706,7 @@ app.post('/api/sales', (req, res) => {
 
     const transaction = body.transaction || {
       id: `TRX-${Date.now()}`,
-      date: new Date().toISOString(),
+      date: transactionDate,
       items: rawItems,
       total: Number(body.total || 0),
       paymentMethod,

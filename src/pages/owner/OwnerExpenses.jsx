@@ -20,7 +20,7 @@ export default function OwnerExpenses() {
     try {
       await addExpense({
         expense: {
-          date: new Date().toISOString(), // Owner records actual time
+          date: data.date || new Date().toISOString(),
           description: data.description,
           total: data.total,
           category: data.category,

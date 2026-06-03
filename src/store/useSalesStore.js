@@ -70,7 +70,7 @@ const useSalesStore = create((set, get) => ({
   },
 
   // Confirm transaction
-  confirmTransaction: async () => {
+  confirmTransaction: async (date) => {
     const { cart, paymentMethod } = get();
     if (cart.length === 0) return false;
 
@@ -86,6 +86,7 @@ const useSalesStore = create((set, get) => ({
         total: get().getCartTotal(),
         paymentMethod,
         user: 'Partner',
+        date: date ? `${date}T12:00:00.000Z` : undefined,
       });
 
       set({ cart: [], paymentMethod: 'cash' });

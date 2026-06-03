@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import useAuthStore from '../../store/useAuthStore';
 import { EXPENSE_CATEGORIES } from '../../utils/constants';
+import { getBusinessDate } from '../../utils/businessDate';
 
 export default function ExpenseModal({ isOpen, onClose, onSave }) {
   const { user } = useAuthStore();
   const [description, setDescription] = useState('');
   const [total, setTotal] = useState('');
   const [category, setCategory] = useState('lainnya');
+  const [date, setDate] = useState(getBusinessDate());
 
   if (!isOpen) return null;
 
@@ -29,6 +31,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave }) {
       total: Number(total),
       category,
       items,
+      date: date ? `${date}T12:00:00.000Z` : undefined,
     });
 
     onClose();
@@ -64,6 +67,16 @@ export default function ExpenseModal({ isOpen, onClose, onSave }) {
               placeholder="0" 
               value={total}
               onChange={(e) => setTotal(e.target.value)}
+              required 
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Tanggal</label>
+            <input 
+              type="date" 
+              className="form-input text-sm p-2 w-full font-mono bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               required 
             />
           </div>

@@ -4,6 +4,7 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useSalesStore from '../../store/useSalesStore';
 import { formatRupiah } from '../../utils/formatters';
+import { getBusinessDate } from '../../utils/businessDate';
 
 export default function PartnerSales() {
   const products = useAppStore((state) => state.products);
@@ -17,12 +18,13 @@ export default function PartnerSales() {
   const getCartCount = useSalesStore((state) => state.getCartCount);
   const confirmTransaction = useSalesStore((state) => state.confirmTransaction);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [transactionDate, setTransactionDate] = useState(getBusinessDate());
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
-    const success = await confirmTransaction();
+    const success = await confirmTransaction(transactionDate);
     setIsSubmitting(false);
     if (success) {
       setShowSuccess(true);
@@ -42,6 +44,17 @@ export default function PartnerSales() {
           <Check size={16} /> Berhasil disimpan
         </div>
       )}
+
+      {/* Date Selector */}
+      <div className="glass-card mb-4 flex items-center justify-between py-2 px-3">
+        <span className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase">Tanggal Transaksi</span>
+        <input 
+          type="date" 
+          value={transactionDate} 
+          onChange={(e) => setTransactionDate(e.target.value)} 
+          className="form-input text-xs p-1.5 w-36 font-mono bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]"
+        />
+      </div>
 
       {/* Menu Grid */}
       <div className="grid grid-cols-3 gap-3 mb-6">

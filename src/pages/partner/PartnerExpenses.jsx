@@ -25,7 +25,7 @@ export default function PartnerExpenses() {
     try {
       await addExpense({
         expense: {
-          date: businessDate,
+          date: data.date || businessDate,
           description: data.description,
           total: data.total,
           category: data.category,
