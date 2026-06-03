@@ -1,5 +1,4 @@
 import { AlertTriangle, Check } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import { formatRupiah, formatWaktu } from '../../utils/formatters';
@@ -25,57 +24,22 @@ export default function OwnerDashboard() {
   const todayExpenseTotal = expenses.filter(e => e.date?.startsWith(businessDate)).reduce((sum, e) => sum + e.total, 0);
   const estimasiLabaBersih = summary.totalOmzet - estimasiHPP - todayExpenseTotal;
 
-  // Daily profit and expense chart data
-  const allDates = new Set();
-  sales.forEach(s => {
-    if (s.date) allDates.add(s.date.substring(0, 10));
-  });
-  expenses.forEach(e => {
-    if (e.date) allDates.add(e.date.substring(0, 10));
-  });
+  // Calculate overall totals (sales, hpp, expenses, net profit)
+  const totalOmzetKeseluruhan = sales.reduce((sum, s) => sum + s.total, 0);
+  
+  const totalHppKeseluruhan = sales.reduce((sum, sale) => {
+    return sum + (sale.items?.reduce((itemSum, item) => {
+      if (item.estimatedHpp != null) return itemSum + Number(item.estimatedHpp);
+      const product = products.find((p) => String(p.id) === String(item.productId));
+      return itemSum + Number(product?.hpp || 0) * Number(item.qty || 0);
+    }, 0) || 0);
+  }, 0);
 
-  const sortedDates = Array.from(allDates)
-    .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d))
-    .sort();
+  const totalPengeluaranKeseluruhan = expenses
+    .filter(e => e.status !== 'rejected')
+    .reduce((sum, e) => sum + e.total, 0);
 
-  const formatDateLabel = (dateStr) => {
-    const [, month, day] = dateStr.split('-');
-    const monthNames = {
-      '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr',
-      '05': 'Mei', '06': 'Jun', '07': 'Jul', '08': 'Agt',
-      '09': 'Sep', '10': 'Okt', '11': 'Nov', '12': 'Des'
-    };
-    return `${parseInt(day)} ${monthNames[month] || month}`;
-  };
-
-  const chartData = sortedDates.map(date => {
-    const daySales = sales.filter(s => s.date?.startsWith(date));
-    const dayExpenses = expenses.filter(e => e.date?.startsWith(date) && e.status !== 'rejected');
-    
-    const omzet = daySales.reduce((sum, s) => sum + s.total, 0);
-    const expense = dayExpenses.reduce((sum, e) => sum + e.total, 0);
-    
-    const hpp = daySales.reduce((sum, sale) => {
-      return sum + (sale.items?.reduce((itemSum, item) => {
-        if (item.estimatedHpp != null) return itemSum + Number(item.estimatedHpp);
-        const product = products.find((p) => String(p.id) === String(item.productId));
-        return itemSum + Number(product?.hpp || 0) * Number(item.qty || 0);
-      }, 0) || 0);
-    }, 0);
-    
-    const profit = omzet - hpp - expense;
-
-    return {
-      date: formatDateLabel(date),
-      rawDate: date,
-      keuntungan: profit,
-      pengeluaran: expense
-    };
-  });
-
-  if (chartData.length === 0) {
-    chartData.push({ date: formatDateLabel(businessDate), keuntungan: 0, pengeluaran: 0 });
-  }
+  const totalKeuntunganKeseluruhan = totalOmzetKeseluruhan - totalHppKeseluruhan - totalPengeluaranKeseluruhan;
 
   // Dynamic Cash Session Status
   const todaySession = cashSessions.find(s => s.date === businessDate);
@@ -134,19 +98,21 @@ export default function OwnerDashboard() {
             </div>
           </div>
 
-          {/* Keuntungan & Pengeluaran Chart */}
-          <div className="bg-white border border-[var(--color-border)] rounded-xl p-4 h-72 shadow-sm">
+          {/* Keuntungan & Pengeluaran Keseluruhan */}
+          <div className="bg-white border border-[var(--color-border)] rounded-xl p-5 shadow-sm">
             <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">Keuntungan & Pengeluaran Keseluruhan</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: 'var(--color-text-muted)'}} />
-                <YAxis hide domain={['auto', 'auto']} />
-                <Tooltip contentStyle={{fontSize: '12px', borderRadius: '4px', border: '1px solid var(--color-border)', boxShadow: 'none'}} formatter={(val) => formatRupiah(val)} />
-                <Legend wrapperStyle={{fontSize: '11px', paddingTop: '10px'}} />
-                <Line type="monotone" name="Keuntungan Bersih" dataKey="keuntungan" stroke="var(--color-accent-green)" strokeWidth={2} dot={{r: 3, fill: 'var(--color-accent-green)'}} activeDot={{r: 5}} />
-                <Line type="monotone" name="Total Pengeluaran" dataKey="pengeluaran" stroke="var(--color-accent-red)" strokeWidth={2} dot={{r: 3, fill: 'var(--color-accent-red)'}} activeDot={{r: 5}} />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-white border border-[var(--color-border)] border-l-4 border-l-[var(--color-accent-green)] shadow-sm">
+                <p className="text-[10px] uppercase font-bold text-[var(--color-text-secondary)]">Total Keuntungan Bersih</p>
+                <p className="text-2xl font-mono font-bold text-[var(--color-accent-green)] mt-2">{formatRupiah(totalKeuntunganKeseluruhan)}</p>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-1">Akumulasi laba bersih usaha</p>
+              </div>
+              <div className="p-4 rounded-xl bg-white border border-[var(--color-border)] border-l-4 border-l-[var(--color-accent-red)] shadow-sm">
+                <p className="text-[10px] uppercase font-bold text-[var(--color-text-secondary)]">Total Pengeluaran</p>
+                <p className="text-2xl font-mono font-bold text-[var(--color-accent-red)] mt-2">{formatRupiah(totalPengeluaranKeseluruhan)}</p>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-1">Akumulasi biaya operasional</p>
+              </div>
+            </div>
           </div>
 
           {/* Recent Activity Table */}
