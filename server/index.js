@@ -467,6 +467,7 @@ app.post('/api/products', (req, res) => {
       active: body.active ?? true,
       emoji: body.emoji || '☕',
       recipe,
+      hpp: Number(body.hpp ?? 0),
     };
 
     if (!draft.name || sellingPrice <= 0) return { error: 'Nama menu dan harga jual wajib diisi' };
@@ -515,6 +516,9 @@ app.put('/api/products/:id', (req, res) => {
       emoji: body.emoji || product.emoji || '☕',
       recipe,
     };
+    if (body.hpp !== undefined) {
+      draft.hpp = Number(body.hpp ?? 0);
+    }
 
     if (!draft.name || sellingPrice <= 0) return { error: 'Nama menu dan harga jual wajib diisi' };
 
