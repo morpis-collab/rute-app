@@ -93,6 +93,12 @@ export async function postCashClose(payload) {
   return data;
 }
 
+export async function postCashOpen(payload) {
+  const { data } = await api.post('/cash/open', payload);
+  return data;
+}
+
+
 export async function getCashAccounts() {
   const { data } = await api.get('/cash/accounts');
   return data;

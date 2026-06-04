@@ -6,9 +6,7 @@ import {
   applyStockMovements,
   applyPurchaseCosts,
   buildExpenseStockMovements,
-  buildSaleStockMovements,
   calculateProductHpp,
-  calculateApprovalStatus,
   getCashExpected,
   getEstimatedHpp,
   getExpenseTotal,
@@ -182,7 +180,7 @@ function openingCashFromCapital(db, businessDate, existingSession, openingCash) 
   if (db.openingCapital?.businessStartDate === businessDate) {
     return { value: Number(db.openingCapital.cashCapital || 0), source: 'openingCapital' };
   }
-  return { value: 0, source: 'default' };
+  return { value: 100000, source: 'default' };
 }
 
 function cashExpectedPayload(db, { date, openingCash } = {}) {
@@ -196,8 +194,8 @@ function cashExpectedPayload(db, { date, openingCash } = {}) {
 
   const cashExpensesList = dayExpenses.filter((expense) => {
     if (!expense.cashAccountId) return true;
-    const account = db.cashAccounts.find(a => String(a.id) === String(expense.cashAccountId));
-    return account ? account.type === 'cash' : true;
+    const id = String(expense.cashAccountId);
+    return id === 'acc-01' || id === 'kas-utama';
   });
   const cashExpenses = getExpenseTotal(cashExpensesList);
 
@@ -1470,6 +1468,73 @@ app.post('/api/cash/transactions', requireRole('owner'), (req, res) => {
   return res.status(201).json(result);
 });
 
+app.post('/api/cash/open', (req, res) => {
+  const result = updateDb((db) => {
+    const body = req.body || {};
+    const businessDate = body.date || today();
+    const existing = db.cashSessions.find((session) => session.date === businessDate);
+    if (existing) {
+      return {
+        error: `Kas untuk tanggal ${businessDate} sudah diinisialisasi`,
+        statusCode: 409,
+        cashSession: existing,
+      };
+    }
+
+    if (body.openingCash == null || body.openingCash === '') {
+      return { error: 'openingCash wajib diisi', statusCode: 400 };
+    }
+
+    const openingCash = Number(body.openingCash);
+    if (!Number.isFinite(openingCash) || openingCash < 0) {
+      return { error: 'openingCash harus berupa angka positif', statusCode: 400 };
+    }
+
+    const openedBy = body.user || getAuthenticatedUser(db, req.auth)?.name || 'Partner';
+    const newSession = {
+      date: businessDate,
+      openingCash,
+      status: 'open',
+      openedBy,
+      openedAt: new Date().toISOString(),
+    };
+
+    db.cashSessions = [newSession, ...db.cashSessions.filter((session) => session.date !== businessDate)];
+
+    let drawerAccount = db.cashAccounts.find((a) => String(a.id) === 'acc-01' || String(a.id) === 'kas-utama');
+    if (!drawerAccount) {
+      drawerAccount = db.cashAccounts.find((a) => a.type === 'cash' || a.type === 'tunai');
+    }
+
+    if (drawerAccount) {
+      drawerAccount.balance = openingCash;
+      db.cashTransactions.unshift({
+        id: `CTX-OPEN-${Date.now()}`,
+        date: new Date().toISOString(),
+        type: 'in',
+        amount: openingCash,
+        category: 'modal_awal',
+        description: `Buka kas tanggal ${businessDate} dengan modal awal`,
+        accountId: drawerAccount.id,
+        user: openedBy,
+      });
+    }
+
+    db.activityLog.push({
+      id: `ACT-${Date.now()}`,
+      time: new Date().toISOString(),
+      action: `Buka kas harian tanggal ${businessDate} dengan modal awal Rp ${openingCash.toLocaleString('id-ID')}`,
+      user: openedBy,
+      type: 'kas',
+    });
+
+    return { cashSession: newSession, state: bootstrapPayload(db) };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json(result);
+  res.status(201).json(result);
+});
+
 app.post('/api/cash/close', (req, res) => {
   const result = updateDb((db) => {
     const body = req.body || {};
@@ -1530,9 +1595,14 @@ app.post('/api/cash/close', (req, res) => {
 
     db.cashSessions = [closedSession, ...db.cashSessions.filter((session) => session.date !== businessDate)];
 
-    const cashAccount = db.cashAccounts.find(a => a.type === 'cash');
-    if (cashAccount) {
-      cashAccount.balance = actualCash;
+    let drawerAccount = db.cashAccounts.find((a) => String(a.id) === 'acc-01' || String(a.id) === 'kas-utama');
+    if (!drawerAccount) {
+      drawerAccount = db.cashAccounts.find((a) => a.type === 'cash' || a.type === 'tunai');
+    }
+    const brankasAccount = db.cashAccounts.find((a) => String(a.id) === 'acc-brankas');
+
+    if (drawerAccount) {
+      drawerAccount.balance = actualCash;
       if (difference !== 0) {
         db.cashTransactions.unshift({
           id: `CTX-DIFF-${Date.now()}`,
@@ -1541,11 +1611,28 @@ app.post('/api/cash/close', (req, res) => {
           amount: Math.abs(difference),
           category: 'koreksi',
           description: `Koreksi selisih tutup kas tanggal ${businessDate}: ${body.notes || 'Selisih kas'}`,
-          accountId: cashAccount.id,
+          accountId: drawerAccount.id,
           adjustmentType: difference < 0 ? 'minus' : 'plus',
           user: closedBy,
         });
       }
+
+      if (brankasAccount && actualCash > 0) {
+        brankasAccount.balance = Number(brankasAccount.balance || 0) + actualCash;
+        db.cashTransactions.unshift({
+          id: `CTX-TRSF-CLOSE-${Date.now()}`,
+          date: new Date().toISOString(),
+          type: 'transfer',
+          amount: actualCash,
+          category: 'transfer',
+          description: `Transfer saldo laci akhir shift ke Brankas tanggal ${businessDate}`,
+          fromAccountId: drawerAccount.id,
+          toAccountId: brankasAccount.id,
+          user: closedBy,
+        });
+      }
+
+      drawerAccount.balance = 0;
     }
 
     db.activityLog.push({

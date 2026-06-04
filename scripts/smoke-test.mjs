@@ -283,6 +283,64 @@ try {
     }
   }
 
+  // --- CASE 6: Cash Open, Drawer Reset, and Brankas Transfer ---
+  console.log('\nTest Case 6: Cash Open, Drawer Reset, and Brankas Transfer');
+  
+  const accountsRes = await axios.get(`${apiUrl}/cash/accounts`, {
+    headers: { Authorization: `Bearer ${ownerToken}` }
+  });
+  
+  if (accountsRes.status === 200) {
+    const accounts = accountsRes.data.cashAccounts;
+    const drawer = accounts.find(a => a.id === 'acc-01' || a.id === 'kas-utama');
+    const brankas = accounts.find(a => a.id === 'acc-brankas');
+    
+    if (!drawer || drawer.balance !== 0) {
+      throw new Error(`Drawer balance is not 0 (found: ${drawer?.balance})`);
+    }
+    console.log('✅ Drawer Reset to 0: SUCCESS');
+    
+    if (!brankas || brankas.balance !== 150000) {
+      throw new Error(`Brankas balance is not 150000 (found: ${brankas?.balance})`);
+    }
+    console.log('✅ Brankas received actualCash transfer: SUCCESS');
+  } else {
+    throw new Error('Failed to retrieve cash accounts');
+  }
+
+  // Test POST /api/cash/open for a new date (tomorrow)
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().substring(0, 10);
+  
+  const openRes = await axios.post(`${apiUrl}/api/cash/open`.replace('/api/api/', '/api/'), {
+    date: tomorrowStr,
+    openingCash: 125000,
+    user: 'Partner RUTE'
+  }, {
+    headers: { Authorization: `Bearer ${partnerToken}` }
+  });
+  
+  if (openRes.status === 201 && openRes.data.cashSession.status === 'open' && openRes.data.cashSession.openingCash === 125000) {
+    console.log('✅ Cash Session Open for new date: SUCCESS');
+  } else {
+    throw new Error('POST /api/cash/open failed');
+  }
+
+  // Check drawer balance updated to 125000
+  const accountsRes2 = await axios.get(`${apiUrl}/cash/accounts`, {
+    headers: { Authorization: `Bearer ${ownerToken}` }
+  });
+  if (accountsRes2.status === 200) {
+    const accounts2 = accountsRes2.data.cashAccounts;
+    const drawer2 = accounts2.find(a => a.id === 'acc-01' || a.id === 'kas-utama');
+    if (drawer2 && drawer2.balance === 125000) {
+      console.log('✅ Drawer updated to openingCash: SUCCESS');
+    } else {
+      throw new Error(`Drawer balance did not update to openingCash (found: ${drawer2?.balance})`);
+    }
+  }
+
   console.log('\n======================================');
   console.log('🎉 ALL SMOKE TESTS COMPLETED SUCCESSFULLY! 🎉');
   console.log('======================================');

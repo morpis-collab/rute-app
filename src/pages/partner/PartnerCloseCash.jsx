@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAuthStore from '../../store/useAuthStore';
-import { getCashExpected, postCashClose } from '../../services/apiClient';
+import { getCashExpected, postCashClose, postCashOpen } from '../../services/apiClient';
 import { formatRupiah } from '../../utils/formatters';
 
 const cashSourceLabel = {
   openingCapital: 'Modal awal usaha',
   cashSession: 'Sesi kas tersimpan',
   query: 'Override manual',
-  default: 'Tanpa kas awal',
+  default: 'Uang kembalian bawaan (Rp 100.000)',
 };
 
 export default function PartnerCloseCash() {
@@ -42,6 +42,19 @@ export default function PartnerCloseCash() {
         const data = await getCashExpected(selectedDate);
 
         setExpectedData(data);
+
+        if (!data.existingSession) {
+          setStatus('not_opened');
+          setForm((prev) => ({
+            ...prev,
+            cashActual: '100000', // Saran modal awal di input field
+            qris: '0',
+            transfer: '0',
+            notes: '',
+          }));
+          return;
+        }
+
         setForm((prev) => ({
           ...prev,
           cashActual: data.existingSession?.closingCash != null ? String(data.existingSession.closingCash) : '',
@@ -50,7 +63,7 @@ export default function PartnerCloseCash() {
           notes: data.existingSession?.notes || '',
         }));
 
-        if (!data.canClose && data.existingSession) {
+        if (data.existingSession?.status === 'closed') {
           setStatus('closed');
           setMessage(`Kas untuk tanggal ${selectedDate} sudah ditutup.`);
           return;
@@ -73,6 +86,43 @@ export default function PartnerCloseCash() {
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleOpenCash = async () => {
+    if (form.cashActual === '') {
+      setMessage('Modal awal wajib diisi.');
+      return;
+    }
+    const val = Number(form.cashActual);
+    if (val < 0) {
+      setMessage('Modal awal tidak boleh negatif.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setMessage('');
+      await postCashOpen({
+        date: selectedDate,
+        openingCash: val,
+        user: user?.name || 'Partner',
+      });
+      // Reload expected data and update to open state
+      const data = await getCashExpected(selectedDate);
+      setExpectedData(data);
+      setStatus('ready');
+      setForm((prev) => ({
+        ...prev,
+        cashActual: '',
+        qris: data.salesByMethod?.qris || 0,
+        transfer: data.salesByMethod?.transfer || 0,
+        notes: '',
+      }));
+    } catch (err) {
+      setMessage(err.response?.data?.error || 'Gagal membuka kas.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -126,6 +176,64 @@ export default function PartnerCloseCash() {
     );
   }
 
+  if (status === 'not_opened') {
+    return (
+      <PageWrapper title="Kas" subtitle="Buka kasir harian">
+        <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[#faf6ef] p-4 flex flex-col gap-2">
+          <label className="text-xs font-bold uppercase text-[var(--color-text-secondary)]">Pilih Tanggal Kas</label>
+          <select
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            disabled={isSubmitting}
+            className="w-full rounded-lg border border-[var(--color-border)] p-2.5 text-sm bg-white focus:outline-none focus:border-[var(--color-band-1)]"
+          >
+            {pastDates.map((date, idx) => (
+              <option key={date} value={date}>
+                {idx === 0 ? `Hari Ini (${date})` : idx === 1 ? `Kemarin (${date})` : `${date}`}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {message && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border p-4 border-[var(--color-accent-red)] bg-red-50 text-red-700">
+            <AlertTriangle className="flex-shrink-0" />
+            <div className="text-sm font-medium">{message}</div>
+          </div>
+        )}
+
+        <div className="mb-6 overflow-hidden rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+          <div className="mb-5">
+            <label className="mb-2 block text-sm font-bold text-[var(--color-text-secondary)]">Modal Awal Laci (Uang Kembalian)</label>
+            <div className="relative flex items-center">
+              <span className="absolute left-3.5 text-sm font-semibold text-[var(--color-text-muted)]">Rp</span>
+              <input
+                type="number"
+                min="0"
+                value={form.cashActual}
+                onChange={(event) => updateForm('cashActual', event.target.value)}
+                placeholder="100.000"
+                className="w-full rounded-xl border border-[var(--color-border)] py-3.5 pl-10 pr-4 font-mono text-lg font-bold focus:border-[var(--color-band-1)] focus:outline-none"
+              />
+            </div>
+            <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+              Masukkan jumlah uang fisik yang ditaruh di laci kasir pagi ini untuk kembalian awal.
+            </p>
+          </div>
+
+          <button
+            onClick={handleOpenCash}
+            disabled={isSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[var(--color-band-1)] to-[var(--color-band-2)] py-3.5 text-sm font-semibold text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
+          >
+            {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+            {isSubmitting ? 'Membuka Kas...' : 'Mulai Sesi Kasir (Buka Kas)'}
+          </button>
+        </div>
+      </PageWrapper>
+    );
+  }
+
   return (
     <PageWrapper title="Kas" subtitle="Tutup kas harian">
       <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[#faf6ef] p-4 flex flex-col gap-2">
@@ -152,7 +260,7 @@ export default function PartnerCloseCash() {
               : 'border-[var(--color-border)] bg-white text-[var(--color-text-secondary)]'
             : 'border-[var(--color-accent-red)] bg-red-50 text-red-700'
         }`}>
-          {status === 'closed' ? <Check className={message.includes('berhasil') ? 'text-[var(--color-accent-green)]' : ''} /> : <AlertTriangle />}
+          {status === 'closed' ? <Check className={message.includes('berhasil') ? 'text-[var(--color-accent-green)]' : ''} /> : <AlertTriangle className="flex-shrink-0" />}
           <div className="text-sm font-medium">{message}</div>
         </div>
       )}
@@ -205,7 +313,7 @@ export default function PartnerCloseCash() {
 
           <div className="mb-6 space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">Cash Fisik (Laci Kasir)</label>
+              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">Cash Fisik Akhir (Laci Kasir)</label>
               <input
                 type="number"
                 min="0"
@@ -215,6 +323,9 @@ export default function PartnerCloseCash() {
                 placeholder="Rp 0"
                 className="w-full rounded-xl border border-[var(--color-border)] p-3 font-mono focus:border-[var(--color-band-1)] focus:outline-none disabled:bg-gray-50"
               />
+              <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                Seluruh uang fisik ini akan disetor ke Brankas, menyisakan Rp 0 di laci kasir setelah kas ditutup.
+              </p>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">Catatan Tambahan</label>

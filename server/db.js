@@ -157,7 +157,16 @@ function normalizeDb(db) {
     stockMovements: Array.isArray(db.stockMovements) ? db.stockMovements : seed.stockMovements,
     activityLog: Array.isArray(db.activityLog) ? db.activityLog : seed.activityLog,
     cashSessions: Array.isArray(db.cashSessions) ? db.cashSessions : seed.cashSessions,
-    cashAccounts: Array.isArray(db.cashAccounts) ? db.cashAccounts : seed.cashAccounts,
+    cashAccounts: (() => {
+      const accounts = Array.isArray(db.cashAccounts) ? db.cashAccounts : seed.cashAccounts;
+      if (!accounts.some((acc) => String(acc.id) === 'acc-brankas')) {
+        return [
+          ...accounts,
+          { id: 'acc-brankas', name: 'Brankas', type: 'tunai', balance: 0, status: 'active' },
+        ];
+      }
+      return accounts;
+    })(),
     cashTransactions: Array.isArray(db.cashTransactions) ? db.cashTransactions : seed.cashTransactions,
     openingCapital: db.openingCapital && typeof db.openingCapital === 'object'
       ? {
@@ -187,7 +196,8 @@ export function readDb() {
   if (
     JSON.stringify(normalized.ingredients) !== JSON.stringify(db.ingredients) ||
     JSON.stringify(normalized.users) !== JSON.stringify(db.users) ||
-    JSON.stringify(normalized.openingCapital) !== JSON.stringify(db.openingCapital)
+    JSON.stringify(normalized.openingCapital) !== JSON.stringify(db.openingCapital) ||
+    JSON.stringify(normalized.cashAccounts) !== JSON.stringify(db.cashAccounts)
   ) {
     fs.writeFileSync(dataFile, JSON.stringify(normalized, null, 2));
   }
