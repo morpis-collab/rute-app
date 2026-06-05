@@ -859,6 +859,14 @@ app.post('/api/expenses', (req, res) => {
         user: expense.user,
       });
     }
+    // Automatically apply stock movements and update purchase costs if approved
+    let movements = [];
+    if (expense.status === 'approved' || expense.status === 'auto_approved') {
+      movements = buildExpenseStockMovements(expense);
+      db.stockMovements.push(...movements);
+      db.ingredients = applyPurchaseCosts(db.ingredients, expense.items || []);
+      db.ingredients = applyStockMovements(db.ingredients, movements);
+    }
 
     db.expenses.unshift(expense);
     db.activityLog.push({
@@ -869,7 +877,7 @@ app.post('/api/expenses', (req, res) => {
       type: 'pengeluaran',
     });
 
-    return { expense, movements: [], state: bootstrapPayload(db) };
+    return { expense, movements, state: bootstrapPayload(db) };
   });
 
   if (result?.error) return res.status(result.statusCode || 400).json(result);
@@ -1186,6 +1194,14 @@ app.post('/api/receipt-expenses', (req, res) => {
       cashAccount.balance = Number(cashAccount.balance || 0) - expense.total;
       expense.cashTransactionId = cashTransaction.id;
     }
+    // Automatically apply stock movements and update purchase costs if approved
+    let movements = [];
+    if (expense.status === 'approved' || expense.status === 'auto_approved') {
+      movements = buildExpenseStockMovements(expense);
+      db.stockMovements.push(...movements);
+      db.ingredients = applyPurchaseCosts(db.ingredients, expense.items || []);
+      db.ingredients = applyStockMovements(db.ingredients, movements);
+    }
 
     db.expenses.unshift(expense);
     db.receiptUploads.unshift(uploadRecord);
@@ -1198,7 +1214,7 @@ app.post('/api/receipt-expenses', (req, res) => {
       type: 'pengeluaran',
     });
 
-    return { expense, upload: uploadRecord, cashTransaction, movements: [], state: bootstrapPayload(db) };
+    return { expense, upload: uploadRecord, cashTransaction, movements, state: bootstrapPayload(db) };
   });
 
   if (result?.error) return res.status(result.statusCode || 400).json(result);
