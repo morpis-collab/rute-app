@@ -1,10 +1,13 @@
 import { useState } from 'react';
 
-export default function CashModal({ activeModal, setActiveModal, handleSimpan, cashAccounts = [], saving = false, error = '' }) {
+export default function CashModal({ activeModal, setActiveModal, handleSimpan, cashAccounts = [], saving = false, error = '', defaultAccountId = '' }) {
+  const firstAcc = defaultAccountId || cashAccounts[0]?.id || '';
+  const secondAcc = cashAccounts.find(a => a.id !== firstAcc)?.id || cashAccounts[1]?.id || firstAcc;
+
   const [form, setForm] = useState({
-    accountId: '',
-    fromAccountId: '',
-    toAccountId: '',
+    accountId: firstAcc,
+    fromAccountId: firstAcc,
+    toAccountId: secondAcc,
     amount: '',
     description: '',
     adjustmentType: 'plus',

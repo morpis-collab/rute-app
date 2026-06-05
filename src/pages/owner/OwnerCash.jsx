@@ -9,6 +9,7 @@ import useToastStore from '../../store/useToastStore';
 
 export default function OwnerCash() {
   const [activeModal, setActiveModal] = useState(null); // 'in', 'out', 'transfer', 'koreksi'
+  const [defaultAccountId, setDefaultAccountId] = useState('');
   const [cashAccounts, setCashAccounts] = useState([]);
   const [txs, setTxs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,11 @@ export default function OwnerCash() {
   const { addToast } = useToastStore();
 
   const totalCash = cashAccounts.reduce((acc, curr) => acc + curr.balance, 0);
+
+  const handleOpenModal = (type, accountId = '') => {
+    setDefaultAccountId(accountId);
+    setActiveModal(type);
+  };
 
   const loadCash = useCallback(async () => {
     try {
@@ -66,16 +72,16 @@ export default function OwnerCash() {
       
       {/* Top Actions */}
       <div className="flex flex-wrap gap-2 mb-6">
-        <button onClick={() => setActiveModal('in')} className="btn btn-primary bg-white text-[var(--color-accent-green)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
+        <button onClick={() => handleOpenModal('in')} className="btn btn-primary bg-white text-[var(--color-accent-green)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
           <ArrowDown size={16} /> Kas Masuk
         </button>
-        <button onClick={() => setActiveModal('out')} className="btn btn-primary bg-white text-[var(--color-accent-red)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
+        <button onClick={() => handleOpenModal('out')} className="btn btn-primary bg-white text-[var(--color-accent-red)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
           <ArrowUp size={16} /> Kas Keluar
         </button>
-        <button onClick={() => setActiveModal('transfer')} className="btn btn-primary bg-white text-[var(--color-accent-blue)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
+        <button onClick={() => handleOpenModal('transfer')} className="btn btn-primary bg-white text-[var(--color-accent-blue)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
           <ArrowRightLeft size={16} /> Transfer Kas
         </button>
-        <button onClick={() => setActiveModal('koreksi')} className="btn btn-primary bg-white text-[var(--color-accent-orange)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
+        <button onClick={() => handleOpenModal('koreksi')} className="btn btn-primary bg-white text-[var(--color-accent-orange)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
           <AlertTriangle size={16} /> Koreksi
         </button>
       </div>
@@ -94,19 +100,31 @@ export default function OwnerCash() {
 
       {/* Saldo Accounts */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="kpi-card bg-[linear-gradient(135deg,var(--color-band-1),var(--color-band-2))] text-white border-none">
-          <p className="text-[11px] uppercase tracking-wider font-semibold mb-1 opacity-80">Total Saldo Semua Kas</p>
-          <p className="text-2xl font-mono font-bold">{formatRupiah(totalCash)}</p>
+        <div className="kpi-card bg-[linear-gradient(135deg,var(--color-band-1),var(--color-band-2))] text-white border-none flex flex-col justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-1 opacity-80">Total Saldo Semua Kas</p>
+            <p className="text-2xl font-mono font-bold">{formatRupiah(totalCash)}</p>
+          </div>
         </div>
         {cashAccounts.map(acc => (
-          <div key={acc.id} className="kpi-card">
-            <div className="flex justify-between items-start mb-2">
-              <p className="text-[11px] uppercase tracking-wider text-[var(--color-text-secondary)] font-semibold">{acc.name}</p>
-              <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${acc.type === 'tunai' ? 'bg-[#e8f5e4] text-[#4a7a3f]' : acc.type === 'bank' ? 'bg-[#e0ecf5] text-[#5a7a8f]' : 'bg-[#f5efe0] text-[#c4955a]'}`}>
-                {acc.type}
-              </span>
+          <div key={acc.id} className="kpi-card flex flex-col justify-between min-h-[125px]">
+            <div>
+              <div className="flex justify-between items-start mb-2">
+                <p className="text-[11px] uppercase tracking-wider text-[var(--color-text-secondary)] font-semibold">{acc.name}</p>
+                <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${acc.type === 'tunai' || acc.type === 'cash' ? 'bg-[#e8f5e4] text-[#4a7a3f]' : acc.type === 'bank' ? 'bg-[#e0ecf5] text-[#5a7a8f]' : 'bg-[#f5efe0] text-[#c4955a]'}`}>
+                  {acc.type}
+                </span>
+              </div>
+              <p className="text-xl font-mono text-[var(--color-text-primary)] font-bold">{formatRupiah(acc.balance)}</p>
             </div>
-            <p className="text-xl font-mono text-[var(--color-text-primary)] font-bold">{formatRupiah(acc.balance)}</p>
+            <div className="mt-3 pt-2 border-t border-[var(--color-border)] flex justify-end gap-2 text-xs">
+              <button 
+                onClick={() => handleOpenModal('koreksi', acc.id)}
+                className="text-[var(--color-accent-primary)] hover:text-[var(--color-accent-secondary)] flex items-center gap-1 font-semibold transition-colors cursor-pointer"
+              >
+                <AlertTriangle size={12} /> Koreksi
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -160,14 +178,18 @@ export default function OwnerCash() {
       </div>
 
       {/* MODALS */}
-      <CashModal
-        activeModal={activeModal}
-        setActiveModal={setActiveModal}
-        handleSimpan={handleSimpan}
-        cashAccounts={cashAccounts}
-        saving={saving}
-        error={error}
-      />
+      {activeModal && (
+        <CashModal
+          key={`${activeModal}-${defaultAccountId}`}
+          activeModal={activeModal}
+          setActiveModal={setActiveModal}
+          handleSimpan={handleSimpan}
+          cashAccounts={cashAccounts}
+          saving={saving}
+          error={error}
+          defaultAccountId={defaultAccountId}
+        />
+      )}
     </PageWrapper>
   );
 }
