@@ -23,6 +23,7 @@ import {
   deleteProduct,
   postIngredient,
   deleteIngredient,
+  postStockAdjustment,
   updateOpeningCapital
 } from '../services/apiClient';
 import { getBusinessDate, isSameBusinessDate } from '../utils/businessDate';

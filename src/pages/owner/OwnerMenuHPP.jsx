@@ -19,12 +19,75 @@ export default function OwnerMenuHPP() {
     hpp: 0,
     description: '',
     active: true,
+    recipe: [],
   });
 
   const [editingId, setEditingId] = useState(null);
 
-  // Calculate HPP
-  const totalHPP = Number(form.hpp || 0);
+  // Calculate HPP based on recipe if it exists, otherwise use form.hpp
+  const totalHPP = useMemo(() => {
+    if (!form.recipe || form.recipe.length === 0) {
+      return Number(form.hpp || 0);
+    }
+    return Math.round(
+      form.recipe.reduce((sum, item) => {
+        const ing = ingredients.find((i) => String(i.id) === String(item.ingredientId));
+        if (!ing) return sum;
+
+        let baseQty = Number(item.qty || 0);
+        const fromUnit = String(item.unit || ing.unit).trim().toLowerCase();
+        const baseUnit = String(ing.unit).trim().toLowerCase();
+        if (fromUnit !== baseUnit) {
+          const conversion = ing.unitConversions?.[fromUnit];
+          if (conversion != null) {
+            baseQty = baseQty * Number(conversion);
+          } else if (baseUnit === 'gram' && fromUnit === 'kg') {
+            baseQty = baseQty * 1000;
+          } else if (baseUnit === 'ml' && ['l', 'liter'].includes(fromUnit)) {
+            baseQty = baseQty * 1000;
+          }
+        }
+        const itemCost = baseQty * Number(ing.costPerUnit || 0);
+        return sum + itemCost;
+      }, 0)
+    );
+  }, [form.recipe, form.hpp, ingredients]);
+
+  const handleAddRecipeRow = () => {
+    setForm((prev) => ({
+      ...prev,
+      recipe: [...(prev.recipe || []), { ingredientId: '', qty: '', unit: 'gram' }],
+    }));
+  };
+
+  const handleRecipeRowChange = (index, field, value) => {
+    setForm((prev) => {
+      const updatedRecipe = [...(prev.recipe || [])];
+      const row = { ...updatedRecipe[index] };
+
+      if (field === 'ingredientId') {
+        row.ingredientId = value;
+        const ing = ingredients.find((i) => String(i.id) === String(value));
+        if (ing?.unit) {
+          row.unit = ing.unit;
+        }
+      } else if (field === 'qty') {
+        row.qty = value === '' ? '' : parseFloat(value) || 0;
+      } else {
+        row[field] = value;
+      }
+
+      updatedRecipe[index] = row;
+      return { ...prev, recipe: updatedRecipe };
+    });
+  };
+
+  const handleRemoveRecipeRow = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      recipe: (prev.recipe || []).filter((_, i) => i !== index),
+    }));
+  };
 
   const grossProfit = form.price - totalHPP;
   const margin = form.price > 0 ? ((grossProfit / form.price) * 100).toFixed(1) : 0;
@@ -43,32 +106,34 @@ export default function OwnerMenuHPP() {
     
     setIsSubmitting(true);
     try {
+      const validRecipe = (form.recipe || [])
+        .filter(r => r.ingredientId && Number(r.qty) > 0)
+        .map(r => ({
+          ingredientId: Number(r.ingredientId),
+          qty: Number(r.qty),
+          unit: r.unit
+        }));
+
+      const payload = {
+        name: form.name,
+        category: form.category.toLowerCase().replace(' ', '_'),
+        sellingPrice: form.price,
+        active: form.active,
+        hpp: totalHPP,
+        recipe: validRecipe,
+        emoji: editingId ? (products.find(p => p.id === editingId)?.emoji || '☕') : '☕'
+      };
+
       if (editingId) {
-        await updateProduct(editingId, {
-          name: form.name,
-          category: form.category.toLowerCase().replace(' ', '_'),
-          sellingPrice: form.price,
-          active: form.active,
-          hpp: totalHPP,
-          recipe: [],
-          emoji: '☕'
-        });
+        await updateProduct(editingId, payload);
         useToastStore.getState().addToast('Menu berhasil diperbarui', 'success');
       } else {
-        await addProduct({
-          name: form.name,
-          category: form.category.toLowerCase().replace(' ', '_'),
-          sellingPrice: form.price,
-          active: form.active,
-          hpp: totalHPP,
-          recipe: [],
-          emoji: '☕'
-        });
+        await addProduct(payload);
         useToastStore.getState().addToast('Menu baru berhasil ditambahkan', 'success');
       }
       
       // Reset form
-      setForm({ name: '', category: 'Espresso Based', price: 0, hpp: 0, description: '', active: true });
+      setForm({ name: '', category: 'Espresso Based', price: 0, hpp: 0, description: '', active: true, recipe: [] });
       setEditingId(null);
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'Gagal menyimpan menu';
@@ -93,9 +158,10 @@ export default function OwnerMenuHPP() {
       name: product.name,
       category: mappedCategory,
       price: product.sellingPrice,
-      hpp: product.hpp || 0,
+      hpp: product.recipe && product.recipe.length > 0 ? 0 : (product.hpp || 0),
       description: product.description || '',
       active: product.active ?? true,
+      recipe: product.recipe || [],
     });
     setEditingId(product.id);
     
@@ -104,7 +170,7 @@ export default function OwnerMenuHPP() {
   };
 
   const handleCancelEdit = () => {
-    setForm({ name: '', category: 'Espresso Based', price: 0, hpp: 0, description: '', active: true });
+    setForm({ name: '', category: 'Espresso Based', price: 0, hpp: 0, description: '', active: true, recipe: [] });
     setEditingId(null);
   };
 
@@ -150,7 +216,17 @@ export default function OwnerMenuHPP() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">HPP / Modal (Rp)</label>
-                  <input type="number" value={form.hpp} onChange={e => setForm({...form, hpp: parseFloat(e.target.value) || 0})} className="form-input font-mono" placeholder="0" />
+                  <input
+                    type="number"
+                    value={totalHPP}
+                    disabled={form.recipe && form.recipe.length > 0}
+                    onChange={(e) => setForm({ ...form, hpp: parseFloat(e.target.value) || 0 })}
+                    className={`form-input font-mono ${form.recipe && form.recipe.length > 0 ? 'bg-[#f4efe8] cursor-not-allowed text-[var(--color-text-secondary)] font-semibold' : ''}`}
+                    placeholder="0"
+                  />
+                  {form.recipe && form.recipe.length > 0 && (
+                    <span className="text-[10px] text-[var(--color-text-muted)] mt-1 block italic">Dihitung otomatis dari resep</span>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Status Menu</label>
@@ -161,6 +237,134 @@ export default function OwnerMenuHPP() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Recipe Builder Card */}
+          <div className="glass-card p-5">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="font-bold text-[var(--color-text-primary)]">Resep Bahan Baku</h3>
+                <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">Tentukan bahan baku untuk mengetahui rincian biaya HPP</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddRecipeRow}
+                className="px-3 py-1.5 rounded-lg bg-[var(--color-accent-light)]/40 text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-light)]/60 transition-colors text-xs font-semibold flex items-center gap-1"
+              >
+                <Plus size={14} /> Tambah Bahan
+              </button>
+            </div>
+
+            {!form.recipe || form.recipe.length === 0 ? (
+              <div className="text-center p-6 bg-[var(--color-bg-primary)] border border-dashed border-[var(--color-border)] rounded-lg text-[var(--color-text-muted)] text-xs">
+                Belum ada bahan baku dalam resep. Menu ini menggunakan HPP manual. Tekan tombol di atas untuk menyusun resep.
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                {form.recipe.map((row, index) => {
+                  const selectedIng = ingredients.find((i) => String(i.id) === String(row.ingredientId));
+                  const costPerUnit = selectedIng ? Number(selectedIng.costPerUnit || 0) : 0;
+                  
+                  // Calculate subtotal for display
+                  let baseQty = Number(row.qty || 0);
+                  const fromUnit = String(row.unit || selectedIng?.unit || 'gram').toLowerCase();
+                  const baseUnit = String(selectedIng?.unit || 'gram').toLowerCase();
+                  if (selectedIng && fromUnit !== baseUnit) {
+                    const conversion = selectedIng.unitConversions?.[fromUnit];
+                    if (conversion != null) {
+                      baseQty = baseQty * Number(conversion);
+                    } else if (baseUnit === 'gram' && fromUnit === 'kg') {
+                      baseQty = baseQty * 1000;
+                    } else if (baseUnit === 'ml' && ['l', 'liter'].includes(fromUnit)) {
+                      baseQty = baseQty * 1000;
+                    }
+                  }
+                  const calculatedCost = baseQty * costPerUnit;
+
+                  // Available units list based on ingredient
+                  const availableUnits = ['pcs', 'gram', 'kg', 'ml', 'l', 'liter', 'porsi'];
+                  if (selectedIng && selectedIng.unitConversions) {
+                    Object.keys(selectedIng.unitConversions).forEach((u) => {
+                      if (!availableUnits.includes(u)) availableUnits.push(u);
+                    });
+                  }
+                  if (selectedIng?.unit && !availableUnits.includes(selectedIng.unit)) {
+                    availableUnits.push(selectedIng.unit);
+                  }
+
+                  return (
+                    <div key={index} className="flex flex-col sm:flex-row gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[#FAF8F5] relative group">
+                      <div className="flex-1">
+                        <label className="block text-[9px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Bahan Baku</label>
+                        <select
+                          value={row.ingredientId}
+                          onChange={(e) => handleRecipeRowChange(index, 'ingredientId', e.target.value)}
+                          className="form-select text-xs p-1.5 w-full bg-white"
+                          required
+                        >
+                          <option value="">-- Pilih Bahan --</option>
+                          {ingredients.map((ing) => (
+                            <option key={ing.id} value={ing.id}>{ing.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="w-full sm:w-24">
+                        <label className="block text-[9px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Jumlah</label>
+                        <input
+                          type="number"
+                          value={row.qty}
+                          onChange={(e) => handleRecipeRowChange(index, 'qty', e.target.value)}
+                          placeholder="0"
+                          className="form-input text-xs p-1.5 w-full bg-white font-mono"
+                          required
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+
+                      <div className="w-full sm:w-20">
+                        <label className="block text-[9px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Satuan</label>
+                        <select
+                          value={row.unit}
+                          onChange={(e) => handleRecipeRowChange(index, 'unit', e.target.value)}
+                          className="form-select text-xs p-1.5 w-full bg-white"
+                        >
+                          {availableUnits.map((u) => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Display price details */}
+                      <div className="w-full sm:w-32 flex flex-col justify-end">
+                        <span className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Biaya</span>
+                        <div className="h-8 flex flex-col justify-center text-right sm:text-left">
+                          <span className="text-[10px] text-[var(--color-text-secondary)] font-mono">
+                            {selectedIng ? `Rp ${costPerUnit}/${selectedIng.unit}` : 'Rp 0'}
+                          </span>
+                          <span className="text-xs font-bold font-mono text-[var(--color-text-primary)]">
+                            = Rp {calculatedCost.toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Remove row button */}
+                      <div className="flex items-center justify-end sm:justify-center pt-2 sm:pt-4">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRecipeRow(index)}
+                          className="p-1.5 text-[var(--color-accent-red)] hover:bg-[var(--color-accent-red)]/10 rounded-lg transition-colors"
+                          title="Hapus baris"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -270,8 +474,23 @@ export default function OwnerMenuHPP() {
                   return (
                     <tr key={prod.id} className={`hover:bg-[#fbf9f4] transition-colors border-b border-[var(--color-coffee-latte)]/40 ${!prod.active ? 'opacity-60 bg-gray-50/50' : ''}`}>
                       <td className="py-3 px-4 font-medium text-[var(--color-text-primary)]">
-                        <span className="mr-2 text-base">{prod.emoji || '☕'}</span>
-                        {prod.name}
+                        <div>
+                          <span className="mr-2 text-base">{prod.emoji || '☕'}</span>
+                          {prod.name}
+                        </div>
+                        {prod.recipe && prod.recipe.length > 0 && (
+                          <div className="text-[10px] text-[var(--color-text-secondary)] font-normal mt-1.5 flex flex-wrap gap-1 items-center">
+                            <span className="bg-[#f5ece2] px-1.5 py-0.5 rounded text-[8px] font-bold text-[var(--color-text-secondary)] uppercase">Resep:</span>
+                            {prod.recipe.map((r, rIdx) => {
+                              const ingName = r.name || ingredients.find(i => String(i.id) === String(r.ingredientId))?.name || 'Bahan';
+                              return (
+                                <span key={rIdx} className="bg-white border border-[var(--color-border)] px-1.5 py-0.5 rounded text-[10px] text-[var(--color-text-secondary)] font-mono">
+                                  {ingName} ({r.qty} {r.unit})
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-sm text-[var(--color-text-secondary)]">
                         {prod.category === 'espresso_based' && 'Espresso Based'}
