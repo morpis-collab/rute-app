@@ -1521,6 +1521,7 @@ app.post('/api/cash/open', (req, res) => {
     if (!drawerAccount) {
       drawerAccount = db.cashAccounts.find((a) => a.type === 'cash' || a.type === 'tunai');
     }
+    const brankasAccount = db.cashAccounts.find((a) => String(a.id) === 'acc-brankas');
 
     if (drawerAccount) {
       drawerAccount.balance = openingCash;
@@ -1534,6 +1535,21 @@ app.post('/api/cash/open', (req, res) => {
         accountId: drawerAccount.id,
         user: openedBy,
       });
+
+      if (brankasAccount) {
+        brankasAccount.balance = Number(brankasAccount.balance || 0) - openingCash;
+        db.cashTransactions.unshift({
+          id: `CTX-TRSF-OPEN-${Date.now()}`,
+          date: new Date().toISOString(),
+          type: 'transfer',
+          amount: openingCash,
+          category: 'transfer',
+          description: `Ambil modal awal dari Brankas ke Laci tanggal ${businessDate}`,
+          fromAccountId: brankasAccount.id,
+          toAccountId: drawerAccount.id,
+          user: openedBy,
+        });
+      }
     }
 
     db.activityLog.push({

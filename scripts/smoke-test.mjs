@@ -327,7 +327,7 @@ try {
     throw new Error('POST /api/cash/open failed');
   }
 
-  // Check drawer balance updated to 125000
+  // Check drawer balance updated to 125000 and Brankas balance deducted
   const accountsRes2 = await axios.get(`${apiUrl}/cash/accounts`, {
     headers: { Authorization: `Bearer ${ownerToken}` }
   });
@@ -338,6 +338,13 @@ try {
       console.log('✅ Drawer updated to openingCash: SUCCESS');
     } else {
       throw new Error(`Drawer balance did not update to openingCash (found: ${drawer2?.balance})`);
+    }
+
+    const brankas2 = accounts2.find(a => a.id === 'acc-brankas');
+    if (brankas2 && brankas2.balance === 25000) {
+      console.log('✅ Brankas balance updated (deducted openingCash): SUCCESS');
+    } else {
+      throw new Error(`Brankas balance did not deduct openingCash (expected: 25000, found: ${brankas2?.balance})`);
     }
   }
 
