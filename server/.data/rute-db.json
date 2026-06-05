@@ -1291,6 +1291,13 @@
       "action": "Input penjualan: Kopi Susu RUTE 1x",
       "user": "Partner",
       "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780665272511",
+      "time": "2026-06-05T13:14:32.511Z",
+      "action": "Penyesuaian saldo Brankas dari Rp 0 menjadi Rp 1.303.000 (selisih Rp 1.303.000)",
+      "user": "Owner",
+      "type": "kas"
     }
   ],
   "cashSessions": [
@@ -1362,9 +1369,27 @@
       "type": "ewallet",
       "balance": 850000,
       "description": "Penerimaan E-Wallet online"
+    },
+    {
+      "id": "acc-brankas",
+      "name": "Brankas",
+      "type": "tunai",
+      "balance": 1303000,
+      "status": "active"
     }
   ],
   "cashTransactions": [
+    {
+      "id": "CTX-ADJ-BRANKAS-1780665272510",
+      "date": "2026-06-05T13:14:32.510Z",
+      "type": "koreksi",
+      "amount": 1303000,
+      "category": "koreksi",
+      "description": "Koreksi saldo Brankas sesuai uang fisik",
+      "accountId": "acc-brankas",
+      "adjustmentType": "plus",
+      "user": "Owner"
+    },
     {
       "id": "CTX-1779075975616",
       "date": "2026-05-18T03:46:15.616Z",
