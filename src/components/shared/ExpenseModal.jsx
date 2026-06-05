@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import useAuthStore from '../../store/useAuthStore';
 import useAppStore from '../../store/useAppStore';
@@ -8,28 +8,13 @@ import { getBusinessDate } from '../../utils/businessDate';
 export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
   const { user } = useAuthStore();
   const cashAccounts = useAppStore((state) => state.cashAccounts);
-  const [description, setDescription] = useState('');
-  const [total, setTotal] = useState('');
-  const [category, setCategory] = useState('lainnya');
-  const [date, setDate] = useState(getBusinessDate());
-  const [cashAccountId, setCashAccountId] = useState('');
+  const defaultCashAccount = cashAccounts.find(a => ['cash', 'tunai'].includes(a.type.toLowerCase())) || cashAccounts[0];
 
-  useEffect(() => {
-    const defaultCashAccount = cashAccounts.find(a => ['cash', 'tunai'].includes(a.type.toLowerCase())) || cashAccounts[0];
-    if (expense) {
-      setDescription(expense.description || '');
-      setTotal(expense.total || '');
-      setCategory(expense.category || 'lainnya');
-      setDate(expense.date ? expense.date.substring(0, 10) : getBusinessDate());
-      setCashAccountId(expense.cashAccountId || defaultCashAccount?.id || '');
-    } else {
-      setDescription('');
-      setTotal('');
-      setCategory('lainnya');
-      setDate(getBusinessDate());
-      setCashAccountId(defaultCashAccount?.id || '');
-    }
-  }, [expense, isOpen, cashAccounts]);
+  const [description, setDescription] = useState(expense?.description || '');
+  const [total, setTotal] = useState(expense?.total || '');
+  const [category, setCategory] = useState(expense?.category || 'lainnya');
+  const [date, setDate] = useState(expense?.date ? expense.date.substring(0, 10) : getBusinessDate());
+  const [cashAccountId, setCashAccountId] = useState(expense?.cashAccountId || defaultCashAccount?.id || '');
 
   if (!isOpen) return null;
 

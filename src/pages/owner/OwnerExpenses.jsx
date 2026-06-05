@@ -12,7 +12,6 @@ export default function OwnerExpenses() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const expenses = useAppStore((state) => state.expenses);
-  const ingredients = useAppStore((state) => state.ingredients);
   const cashAccounts = useAppStore((state) => state.cashAccounts);
   const addExpense = useAppStore((state) => state.addExpense);
   const updateExpense = useAppStore((state) => state.updateExpense);
@@ -106,12 +105,14 @@ export default function OwnerExpenses() {
         })}
       </div>
 
-      <ExpenseModal 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
-        onSave={handleSaveExpense}
-        expense={editingExpense}
-      />
+      {isModalOpen && (
+        <ExpenseModal 
+          isOpen={isModalOpen} 
+          onClose={handleCloseModal} 
+          onSave={handleSaveExpense}
+          expense={editingExpense}
+        />
+      )}
     </PageWrapper>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Briefcase, Coins, Package, Wallet, Trash2, Plus, Loader2, Save, AlertCircle, Info } from 'lucide-react';
+import { Briefcase, Coins, Wallet, Trash2, Plus, Loader2, Save, AlertCircle, Info } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useToastStore from '../../store/useToastStore';
@@ -11,7 +11,6 @@ export default function OwnerOpeningCapital() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   
-  const ingredients = useAppStore((state) => state.ingredients);
   const expenses = useAppStore((state) => state.expenses);
   const saveOpeningCapital = useAppStore((state) => state.saveOpeningCapital);
   const { addToast } = useToastStore();
