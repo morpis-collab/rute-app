@@ -12,6 +12,7 @@ import {
   getExpenseTotal,
   getSalesSummary,
   refreshProductCosts,
+  getIngredientStatus,
 } from './rules.js';
 import { readDb, resetDb, updateDb } from './db.js';
 import { scanReceipt } from './receiptAi.js';
@@ -930,7 +931,6 @@ app.patch('/api/expenses/:id/status', (req, res) => {
       movements.forEach((m) => {
         const ingredient = db.ingredients.find(i => String(i.id) === String(m.ingredientId));
         if (ingredient) {
-          const { getIngredientStatus } = require('./rules.js');
           ingredient.stock = Math.max(0, Number((Number(ingredient.stock || 0) - m.qty).toFixed(3)));
           ingredient.status = getIngredientStatus(ingredient.stock, ingredient.minStock);
         }
