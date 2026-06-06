@@ -3,7 +3,7 @@ import { create } from 'zustand';
 const useToastStore = create((set) => ({
   toasts: [],
   addToast: (message, type = 'success', duration = 3000) => {
-    const id = Date.now().toString();
+    const id = Date.now().toString() + '-' + Math.random().toString(36).slice(2, 7);
     set((state) => ({
       toasts: [...state.toasts, { id, message, type }]
     }));

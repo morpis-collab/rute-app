@@ -90,11 +90,12 @@ export default function OwnerMenuHPP() {
   };
 
   const grossProfit = form.price - totalHPP;
-  const margin = form.price > 0 ? ((grossProfit / form.price) * 100).toFixed(1) : 0;
+  const margin = form.price > 0 ? Number(((grossProfit / form.price) * 100).toFixed(1)) : 0;
   
   const getMarginStatus = (m) => {
-    if (m >= 60) return { label: 'Sehat', color: 'text-[var(--color-accent-green)] bg-[#e8f5e4]' };
-    if (m >= 40) return { label: 'Tipis', color: 'text-[var(--color-accent-orange)] bg-[#f5efe0]' };
+    const marginVal = Number(m || 0);
+    if (marginVal >= 60) return { label: 'Sehat', color: 'text-[var(--color-accent-green)] bg-[#e8f5e4]' };
+    if (marginVal >= 40) return { label: 'Tipis', color: 'text-[var(--color-accent-orange)] bg-[#f5efe0]' };
     return { label: 'Rugi/Kecil', color: 'text-[var(--color-accent-red)] bg-[#fae8e0]' };
   };
   const status = getMarginStatus(margin);
@@ -116,12 +117,12 @@ export default function OwnerMenuHPP() {
 
       const payload = {
         name: form.name,
-        category: form.category.toLowerCase().replace(' ', '_'),
+        category: form.category.toLowerCase().replaceAll(' ', '_'),
         sellingPrice: form.price,
         active: form.active,
         hpp: totalHPP,
         recipe: validRecipe,
-        emoji: editingId ? (products.find(p => p.id === editingId)?.emoji || '☕') : '☕'
+        emoji: editingId ? (products.find(p => String(p.id) === String(editingId))?.emoji || '☕') : '☕'
       };
 
       if (editingId) {
@@ -468,7 +469,7 @@ export default function OwnerMenuHPP() {
               <tbody>
                 {products.map((prod) => {
                   const gross = prod.sellingPrice - (prod.hpp || 0);
-                  const marginPct = prod.sellingPrice > 0 ? ((gross / prod.sellingPrice) * 100).toFixed(0) : 0;
+                  const marginPct = prod.sellingPrice > 0 ? Number(((gross / prod.sellingPrice) * 100).toFixed(0)) : 0;
                   const marginStatus = getMarginStatus(marginPct);
                   
                   return (

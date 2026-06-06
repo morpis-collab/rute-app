@@ -1,8 +1,9 @@
 import { APPROVAL_THRESHOLDS } from '../utils/constants';
 
 export function calculateApprovalStatus(total) {
-  if (total < APPROVAL_THRESHOLDS.auto) return 'auto_approved';
-  if (total <= APPROVAL_THRESHOLDS.notify) return 'approved';
+  const value = Number(total || 0);
+  if (value < APPROVAL_THRESHOLDS.auto) return 'auto_approved';
+  if (value <= APPROVAL_THRESHOLDS.notify) return 'approved';
   return 'pending';
 }
 
@@ -32,22 +33,25 @@ export function convertQuantityToIngredientUnit(quantity, movementUnit, ingredie
 }
 
 export function getSalesSummary(salesData = []) {
-  const totalOmzet = salesData.reduce((sum, sale) => sum + sale.total, 0);
+  const totalOmzet = salesData.reduce((sum, sale) => sum + Number(sale.total || 0), 0);
   const totalTransaksi = salesData.length;
   const totalCup = salesData.reduce(
-    (sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + item.qty, 0),
+    (sum, sale) => sum + (sale.items || []).reduce((itemSum, item) => itemSum + Number(item.qty || 0), 0),
     0,
   );
 
   const byMethod = { cash: 0, qris: 0, transfer: 0 };
   salesData.forEach((sale) => {
-    byMethod[sale.paymentMethod] = (byMethod[sale.paymentMethod] || 0) + sale.total;
+    const method = sale.paymentMethod || 'cash';
+    byMethod[method] = (byMethod[method] || 0) + Number(sale.total || 0);
   });
 
   const menuCount = {};
   salesData.forEach((sale) => {
-    sale.items.forEach((item) => {
-      menuCount[item.name] = (menuCount[item.name] || 0) + item.qty;
+    (sale.items || []).forEach((item) => {
+      if (item.name) {
+        menuCount[item.name] = (menuCount[item.name] || 0) + Number(item.qty || 0);
+      }
     });
   });
 
@@ -59,29 +63,29 @@ export function getSalesSummary(salesData = []) {
 }
 
 export function getExpenseTotal(expenses = []) {
-  return expenses.reduce((sum, expense) => sum + expense.total, 0);
+  return expenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0);
 }
 
 export function getEstimatedHpp(salesData = [], products = []) {
   return salesData.reduce((saleSum, sale) => {
-    const saleHpp = sale.items.reduce((itemSum, item) => {
-      const product = products.find((p) => p.id === item.productId);
-      return itemSum + (product?.hpp || 0) * item.qty;
+    const saleHpp = (sale.items || []).reduce((itemSum, item) => {
+      const product = products.find((p) => String(p.id) === String(item.productId));
+      return itemSum + (product?.hpp || 0) * Number(item.qty || 0);
     }, 0);
     return saleSum + saleHpp;
   }, 0);
 }
 
 export function buildSaleStockMovements(transaction, products = []) {
-  return transaction.items.flatMap((item) => {
-    const product = products.find((p) => p.id === item.productId);
+  return (transaction.items || []).flatMap((item) => {
+    const product = products.find((p) => String(p.id) === String(item.productId));
     if (!product?.recipe) return [];
 
     return product.recipe.map((recipe) => ({
       ingredientId: recipe.ingredientId,
       type: 'keluar',
       movementType: 'out',
-      qty: recipe.qty * item.qty,
+      qty: recipe.qty * Number(item.qty || 0),
       unit: recipe.unit,
       source: `Penjualan (${item.qty}x ${item.name})`,
       sourceType: 'sale',
@@ -93,7 +97,7 @@ export function buildSaleStockMovements(transaction, products = []) {
 }
 
 export function buildExpenseStockMovements(expense) {
-  return expense.items
+  return (expense.items || [])
     .filter((item) => item.addsStock && item.ingredientId && item.stockQty)
     .map((item) => ({
       ingredientId: item.ingredientId,
@@ -112,7 +116,7 @@ export function buildExpenseStockMovements(expense) {
 export function applyStockMovements(ingredients, movements) {
   return ingredients.map((ingredient) => {
     const totalDelta = movements
-      .filter((movement) => movement.ingredientId === ingredient.id)
+      .filter((movement) => String(movement.ingredientId) === String(ingredient.id))
       .reduce((sum, movement) => {
         const convertedQty = convertQuantityToIngredientUnit(movement.qty, movement.unit, ingredient);
         if (movement.type === 'masuk') return sum + convertedQty;
@@ -136,10 +140,10 @@ export function getCashExpected({ sales = [], expenses = [], openingCash = 0, bu
   const date = businessDate || new Date().toLocaleDateString('en-CA');
   const cashSales = sales
     .filter((sale) => sale.date?.startsWith(date) && sale.paymentMethod === 'cash')
-    .reduce((sum, sale) => sum + sale.total, 0);
+    .reduce((sum, sale) => sum + Number(sale.total || 0), 0);
   const cashExpenses = expenses
     .filter((expense) => expense.date?.startsWith(date))
-    .reduce((sum, expense) => sum + expense.total, 0);
+    .reduce((sum, expense) => sum + Number(expense.total || 0), 0);
 
   return openingCash + cashSales - cashExpenses;
 }

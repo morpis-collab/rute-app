@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BarChart3 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
@@ -10,6 +10,13 @@ export default function OwnerReports() {
   const [selectedDate, setSelectedDate] = useState(getBusinessDate());
   const { getSalesSummary, getEstimatedHpp, getExpenseTotal } = useAppStore();
   
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
   const summary = getSalesSummary(selectedDate);
   const totalHpp = getEstimatedHpp(selectedDate);
   const totalExpense = getExpenseTotal(selectedDate);
@@ -40,9 +47,9 @@ export default function OwnerReports() {
       const filteredExpenses = expenses.filter(e => e.date?.startsWith(selectedDate) && e.status !== 'rejected');
       const csvContent = [
         ['Type', 'ID', 'Date', 'Category/Method', 'Description', 'Total (Rp)'],
-        ...filteredSales.map(s => ['Sale', s.id, s.date, s.paymentMethod, `Penjualan ${s.items.length} item`, s.total]),
+        ...filteredSales.map(s => ['Sale', s.id, s.date, s.paymentMethod, `Penjualan ${(s.items || []).length} item`, s.total]),
         ...filteredExpenses.map(e => ['Expense', e.id, e.date, `${e.category} (${getCashAccountLabel(e.cashAccountId)})`, e.description, e.total])
-      ].map(e => e.join(",")).join("\n");
+      ].map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(",")).join("\n");
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
@@ -53,10 +60,10 @@ export default function OwnerReports() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
     
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
   };
 
   return (

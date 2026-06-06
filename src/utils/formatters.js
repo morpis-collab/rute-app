@@ -1,9 +1,12 @@
 /**
- * Format nominal Rupiah: Rp 10.000
+ * Format nominal Rupiah: Rp 10.000 atau -Rp 5.000 jika negatif
  */
 export function formatRupiah(amount) {
   if (amount == null) return 'Rp 0';
-  return 'Rp ' + Number(amount).toLocaleString('id-ID');
+  const num = Number(amount);
+  if (isNaN(num)) return 'Rp 0';
+  const prefix = num < 0 ? '-' : '';
+  return prefix + 'Rp ' + Math.abs(num).toLocaleString('id-ID');
 }
 
 /**
@@ -12,6 +15,7 @@ export function formatRupiah(amount) {
 export function formatTanggal(dateStr) {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '-';
   return d.toLocaleDateString('id-ID', {
     day: 'numeric',
     month: 'long',
@@ -25,6 +29,7 @@ export function formatTanggal(dateStr) {
 export function formatTanggalSingkat(dateStr) {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '-';
   return d.toLocaleDateString('id-ID', {
     day: 'numeric',
     month: 'short',
@@ -37,6 +42,7 @@ export function formatTanggalSingkat(dateStr) {
 export function formatWaktu(dateStr) {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '-';
   return d.toLocaleTimeString('id-ID', {
     hour: '2-digit',
     minute: '2-digit',
@@ -49,7 +55,9 @@ export function formatWaktu(dateStr) {
  */
 export function formatPersen(value, decimals = 0) {
   if (value == null) return '0%';
-  return Number(value).toFixed(decimals) + '%';
+  const num = Number(value);
+  if (isNaN(num)) return '0%';
+  return num.toFixed(decimals) + '%';
 }
 
 /**
@@ -57,7 +65,9 @@ export function formatPersen(value, decimals = 0) {
  */
 export function formatUnit(amount, unit) {
   if (amount == null) return '-';
-  return `${Number(amount).toLocaleString('id-ID')} ${unit}`;
+  const num = Number(amount);
+  if (isNaN(num)) return `- ${unit}`;
+  return `${num.toLocaleString('id-ID')} ${unit}`;
 }
 
 /**

@@ -58,8 +58,8 @@ export default function PartnerCloseCash() {
         setForm((prev) => ({
           ...prev,
           cashActual: data.existingSession?.closingCash != null ? String(data.existingSession.closingCash) : '',
-          qris: data.existingSession != null ? data.existingSession.qris : (data.salesByMethod?.qris || 0),
-          transfer: data.existingSession != null ? data.existingSession.transfer : (data.salesByMethod?.transfer || 0),
+          qris: data.existingSession != null ? String(data.existingSession.qris) : String(data.salesByMethod?.qris || 0),
+          transfer: data.existingSession != null ? String(data.existingSession.transfer) : String(data.salesByMethod?.transfer || 0),
           notes: data.existingSession?.notes || '',
         }));
 

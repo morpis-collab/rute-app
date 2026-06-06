@@ -23,6 +23,7 @@
   /* Backgrounds */
   --color-bg-warm: #faf6ef;
   --color-bg-primary: #faf6ef;
+  --color-bg-secondary: #f4efe8;
   --color-bg-card: #FFFFFF;
   --color-bg-glass: rgba(255, 255, 255, 0.9);
 
@@ -31,6 +32,10 @@
   --color-accent-red: #c4705a;
   --color-accent-blue: #5a7a8f;
   --color-accent-orange: #c4955a;
+  --color-accent-secondary: #e8d9c0;
+  --color-accent-warm: #eccda3;
+  --color-accent-light: #f5efe2;
+  --color-shadow: rgba(90, 78, 58, 0.15);
   
   /* Fallbacks for existing tailwind classes used in app */
   --color-accent-primary: #9a906f; 

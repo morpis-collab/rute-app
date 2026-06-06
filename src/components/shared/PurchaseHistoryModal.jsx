@@ -1,4 +1,4 @@
-import { createPortal } from 'react';
+import { createPortal } from 'react-dom';
 import useAppStore from '../../store/useAppStore';
 import { formatRupiah, formatUnit } from '../../utils/formatters';
 

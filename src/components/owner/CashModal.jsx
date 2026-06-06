@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function CashModal({ activeModal, setActiveModal, handleSimpan, cashAccounts = [], saving = false, error = '', defaultAccountId = '' }) {
   const firstAcc = defaultAccountId || cashAccounts[0]?.id || '';
@@ -13,16 +13,35 @@ export default function CashModal({ activeModal, setActiveModal, handleSimpan, c
     adjustmentType: 'plus',
   });
 
+  const [localError, setLocalError] = useState('');
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setLocalError('');
+        setActiveModal(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setActiveModal]);
+
   if (!activeModal) return null;
 
   const updateField = (field, value) => {
+    setLocalError('');
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleClose = () => {
+    setLocalError('');
+    setActiveModal(null);
   };
 
   const submit = (event) => {
     event.preventDefault();
+    setLocalError('');
     const firstAccount = cashAccounts[0]?.id || '';
-    const secondAccount = cashAccounts[1]?.id || firstAccount;
     const payload = {
       type: activeModal,
       amount: Number(form.amount || 0),
@@ -30,8 +49,14 @@ export default function CashModal({ activeModal, setActiveModal, handleSimpan, c
     };
 
     if (activeModal === 'transfer') {
-      payload.fromAccountId = form.fromAccountId || firstAccount;
-      payload.toAccountId = form.toAccountId || secondAccount;
+      const fromAcc = form.fromAccountId || firstAccount;
+      const toAcc = form.toAccountId || secondAcc;
+      if (String(fromAcc) === String(toAcc)) {
+        setLocalError('Akun asal dan akun tujuan transfer tidak boleh sama.');
+        return;
+      }
+      payload.fromAccountId = fromAcc;
+      payload.toAccountId = toAcc;
     } else {
       payload.accountId = form.accountId || firstAccount;
       if (activeModal === 'koreksi') payload.adjustmentType = form.adjustmentType;
@@ -50,7 +75,7 @@ export default function CashModal({ activeModal, setActiveModal, handleSimpan, c
             {activeModal === 'transfer' && 'Transfer Antar Kas'}
             {activeModal === 'koreksi' && 'Koreksi Saldo Kas'}
           </h3>
-          <button onClick={() => setActiveModal(null)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
+          <button onClick={handleClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
             ✕
           </button>
         </div>
@@ -150,9 +175,9 @@ export default function CashModal({ activeModal, setActiveModal, handleSimpan, c
             />
           </div>
 
-          {error && (
+          {(localError || error) && (
             <div className="rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-3 py-2 text-xs text-[#a34f39]">
-              {error}
+              {localError || error}
             </div>
           )}
 

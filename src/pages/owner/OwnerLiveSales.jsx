@@ -3,8 +3,9 @@ import useAppStore from '../../store/useAppStore';
 import { formatRupiah, formatWaktu } from '../../utils/formatters';
 
 export default function OwnerLiveSales() {
-  const { sales, getSalesSummary } = useAppStore();
+  const { getTodaySales, getSalesSummary } = useAppStore();
   const summary = getSalesSummary();
+  const todaySales = getTodaySales();
   return (
     <PageWrapper title="Live Transactions" subtitle="Hari ini">
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -33,7 +34,7 @@ export default function OwnerLiveSales() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">
-            {[...sales].reverse().map(trx => (
+            {[...todaySales].reverse().map(trx => (
               <tr key={trx.id}>
                 <td className="p-3 font-mono text-[var(--color-text-muted)] text-xs">{formatWaktu(trx.date)}</td>
                 <td className="p-3 text-[var(--color-text-secondary)]">{trx.items.map(i => `${i.name} x${i.qty}`).join(', ')}</td>

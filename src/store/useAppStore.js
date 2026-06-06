@@ -94,7 +94,7 @@ const useAppStore = create((set, get) => ({
       if (expense.status === 'rejected') return false;
       if (!expense.cashAccountId) return true;
       const account = get().cashAccounts.find(a => String(a.id) === String(expense.cashAccountId));
-      return account ? account.type === 'cash' : true;
+      return account ? ['cash', 'tunai'].includes(account.type) : true;
     });
     return getCashExpected({
       sales: get().sales,
@@ -167,7 +167,8 @@ const useAppStore = create((set, get) => ({
     }));
 
     patchExpenseStatus(expenseId, status).catch((error) => {
-      console.warn('Gagal sinkron status pengeluaran ke RUTE API.', error);
+      console.warn('Gagal sinkron status pengeluaran ke RUTE API. Melakukan rollback...', error);
+      get().loadRemoteData();
     });
   },
 
@@ -262,7 +263,7 @@ const useAppStore = create((set, get) => ({
       if (expense.status === 'rejected') return false;
       if (!expense.cashAccountId) return true;
       const account = get().cashAccounts.find(a => String(a.id) === String(expense.cashAccountId));
-      return account ? account.type === 'cash' : true;
+      return account ? ['cash', 'tunai'].includes(account.type) : true;
     });
     const totalExpenseCash = cashExpensesList.reduce((sum, e) => sum + e.total, 0);
 
@@ -272,6 +273,7 @@ const useAppStore = create((set, get) => ({
       closingCash: Number(actualCash || 0),
       expectedCash,
       difference,
+      differenceStatus: difference === 0 ? 'balanced' : difference > 0 ? 'over' : 'short',
       qris: Number(qris || 0),
       transfer: Number(transfer || 0),
       totalExpenseCash,
@@ -304,7 +306,8 @@ const useAppStore = create((set, get) => ({
       notes,
       user,
     }).catch((error) => {
-      console.warn('Gagal sinkron tutup kas ke RUTE API.', error);
+      console.warn('Gagal sinkron tutup kas ke RUTE API. Melakukan rollback...', error);
+      get().loadRemoteData();
     });
 
     return closedSession;

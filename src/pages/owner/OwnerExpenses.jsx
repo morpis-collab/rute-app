@@ -98,7 +98,7 @@ export default function OwnerExpenses() {
                   <span className={`badge badge-${st.variant}`}>{st.label}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
-                  <span>{formatTanggalSingkat(exp.date)} · {exp.category.replace('_', ' ')} · {getCashAccountLabel(exp.cashAccountId)}</span>
+                  <span>{formatTanggalSingkat(exp.date)} · {(exp.category || '').replace('_', ' ')} · {getCashAccountLabel(exp.cashAccountId)}</span>
                   <span className="font-mono font-semibold text-[var(--color-text-primary)]">{formatRupiah(exp.total)}</span>
                 </div>
               </div>

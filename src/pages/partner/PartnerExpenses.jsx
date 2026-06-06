@@ -109,7 +109,7 @@ export default function PartnerExpenses() {
                   <span className={`badge badge-${st.variant}`}>{st.label}</span>
                 </div>
                 <div className="flex justify-between text-xs text-[var(--color-text-muted)]">
-                  <span>{exp.category.replace('_', ' ')} · {getCashAccountLabel(exp.cashAccountId)}</span>
+                  <span>{(exp.category || '').replace('_', ' ')} · {getCashAccountLabel(exp.cashAccountId)}</span>
                   <span className="font-mono font-semibold text-[var(--color-text-primary)]">{formatRupiah(exp.total)}</span>
                 </div>
               </div>

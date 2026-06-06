@@ -1,5 +1,5 @@
 export function getBusinessDate(date = new Date()) {
-  return date.toLocaleDateString('en-CA');
+  return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
 }
 
 export function isSameBusinessDate(dateValue, businessDate = getBusinessDate()) {

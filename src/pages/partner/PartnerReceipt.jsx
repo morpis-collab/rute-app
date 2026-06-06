@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Camera, Check, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
@@ -91,6 +91,14 @@ export default function PartnerReceipt() {
   const selectedCashAccountId = cashAccountId || defaultCashAccount?.id || '';
   const total = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
 
+  useEffect(() => {
+    return () => {
+      if (imgPrev) {
+        URL.revokeObjectURL(imgPrev);
+      }
+    };
+  }, [imgPrev]);
+
   const resetForm = () => {
     setStep('upload');
     setItems([]);
@@ -102,11 +110,23 @@ export default function PartnerReceipt() {
     setError('');
   };
 
+  const handleUlangFoto = () => {
+    if (items.length > 0) {
+      if (!window.confirm('Perubahan yang belum disimpan akan hilang. Ulang foto resi?')) {
+        return;
+      }
+    }
+    resetForm();
+  };
+
   const onFile = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setError('');
+    if (imgPrev) {
+      URL.revokeObjectURL(imgPrev);
+    }
     setImgPrev(URL.createObjectURL(file));
     setStep('scanning');
     try {
@@ -200,7 +220,7 @@ export default function PartnerReceipt() {
     try {
       await saveReceiptExpense({
         receipt: {
-          ...receipt,
+          ...(receipt || {}),
           merchantName: merchantName.trim(),
           transactionDate: dateInputToIso(transactionDate),
           items: confirmedItems(),
@@ -261,7 +281,7 @@ export default function PartnerReceipt() {
                 Confidence {Math.round(Number(receipt?.confidence || 0) * 100)}% - {sourceLabel(receipt)}
               </p>
             </div>
-            <button onClick={resetForm} className="text-[11px] font-bold text-[var(--color-band-2)] hover:underline">Ulang Foto</button>
+            <button onClick={handleUlangFoto} className="text-[11px] font-bold text-[var(--color-band-2)] hover:underline">Ulang Foto</button>
           </div>
 
           {receipt?.requiresManualReview && (

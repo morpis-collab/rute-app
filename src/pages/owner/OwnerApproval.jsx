@@ -27,8 +27,8 @@ export default function OwnerApproval() {
                 <span className="font-semibold text-sm">{exp.description}</span>
                 <span className="badge badge-warning">Menunggu</span>
               </div>
-              <div className="text-xs text-[var(--color-text-muted)] mb-2">{formatTanggal(exp.date)} · {exp.category.replace('_',' ')}</div>
-              {exp.items.map((item, i) => (
+              <div className="text-xs text-[var(--color-text-muted)] mb-2">{formatTanggal(exp.date)} · {(exp.category || '').replace('_',' ')}</div>
+              {(exp.items || []).map((item, i) => (
                 <div key={i} className="flex justify-between text-sm mb-1">
                   <span className="text-[var(--color-text-secondary)]">{item.name} x{item.qty}</span>
                   <span className="font-mono">{formatRupiah(item.total)}</span>

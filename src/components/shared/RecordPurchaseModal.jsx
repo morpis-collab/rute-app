@@ -8,7 +8,7 @@ export default function RecordPurchaseModal({ isOpen, onClose, onSave, preselect
   const ingredients = useAppStore((state) => state.ingredients);
   const cashAccounts = useAppStore((state) => state.cashAccounts);
 
-  const defaultCashAccount = cashAccounts.find(a => ['cash', 'tunai'].includes(a.type.toLowerCase())) || cashAccounts[0];
+  const defaultCashAccount = cashAccounts.find(a => ['cash', 'tunai'].includes(String(a?.type || '').toLowerCase())) || cashAccounts[0];
   const initialIng = ingredients.find(i => String(i.id) === String(preselectedIngredientId));
 
   const [ingredientId, setIngredientId] = useState(preselectedIngredientId || '');

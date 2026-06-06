@@ -8,7 +8,7 @@ import { getBusinessDate } from '../../utils/businessDate';
 export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
   const { user } = useAuthStore();
   const cashAccounts = useAppStore((state) => state.cashAccounts);
-  const defaultCashAccount = cashAccounts.find(a => ['cash', 'tunai'].includes(a.type.toLowerCase())) || cashAccounts[0];
+  const defaultCashAccount = cashAccounts.find(a => ['cash', 'tunai'].includes(String(a?.type || '').toLowerCase())) || cashAccounts[0];
 
   const [description, setDescription] = useState(expense?.description || '');
   const [total, setTotal] = useState(expense?.total || '');
