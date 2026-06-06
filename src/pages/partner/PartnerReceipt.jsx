@@ -78,6 +78,7 @@ export default function PartnerReceipt() {
   const [cashAccountId, setCashAccountId] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [doneTimer, setDoneTimer] = useState(null);
   const navigate = useNavigate();
 
   const saveReceiptExpense = useAppStore((state) => state.saveReceiptExpense);
@@ -96,8 +97,11 @@ export default function PartnerReceipt() {
       if (imgPrev) {
         URL.revokeObjectURL(imgPrev);
       }
+      if (doneTimer) {
+        clearTimeout(doneTimer);
+      }
     };
-  }, [imgPrev]);
+  }, [imgPrev, doneTimer]);
 
   const resetForm = () => {
     setStep('upload');
@@ -108,6 +112,18 @@ export default function PartnerReceipt() {
     setTransactionDate(localDateInput());
     setCashAccountId('');
     setError('');
+    if (doneTimer) {
+      clearTimeout(doneTimer);
+      setDoneTimer(null);
+    }
+  };
+
+  const handleDoneReturn = () => {
+    if (doneTimer) {
+      clearTimeout(doneTimer);
+    }
+    resetForm();
+    navigate('/partner/expenses');
   };
 
   const handleUlangFoto = () => {
@@ -230,10 +246,11 @@ export default function PartnerReceipt() {
         user: user?.name || 'Partner',
       });
       setStep('done');
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         resetForm();
         navigate('/partner/expenses');
-      }, 1500);
+      }, 5000);
+      setDoneTimer(timer);
     } catch (saveError) {
       console.warn('Gagal simpan resi.', saveError);
       setError(receiptErrorMessage(saveError));
@@ -434,8 +451,92 @@ export default function PartnerReceipt() {
       )}
 
       {step === 'done' && (
-        <div className="slide-in fixed left-1/2 top-16 z-50 flex -translate-x-1/2 items-center gap-2 rounded bg-[var(--color-success)] px-4 py-2 text-sm font-medium text-white shadow-lg">
-          <Check size={16} /> Resi disimpan
+        <div className="flex flex-col items-center justify-center py-6 fade-in">
+          {/* Success Notification */}
+          <div className="mb-6 flex items-center gap-2 rounded-full bg-[var(--color-success)] px-5 py-2.5 text-sm font-bold text-white shadow-lg">
+            <Check size={18} strokeWidth={3} />
+            <span>Resi Berhasil Disimpan!</span>
+          </div>
+
+          {/* Thermal Receipt Paper Frame */}
+          <div className="receipt-paper w-full max-w-sm p-6 text-black font-mono text-xs mb-8 rounded-b-sm">
+            {/* Logo/Header */}
+            <div className="text-center space-y-1 mb-4">
+              <h2 className="text-sm font-bold tracking-widest uppercase">ruang.tengah</h2>
+              <p className="text-[10px] text-gray-500">COFFEE & CO-WORKING</p>
+              <p className="text-[9px] text-gray-400">Makassar WITA (Asia/Makassar)</p>
+              <div className="border-b border-dashed border-gray-300 my-2" />
+            </div>
+
+            {/* Receipt Meta */}
+            <div className="space-y-1 text-[10px] text-gray-600 mb-3">
+              <div className="flex justify-between">
+                <span>Tanggal:</span>
+                <span>{transactionDate}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Supplier:</span>
+                <span className="font-bold">{merchantName || 'Lainnya'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Kasir/Partner:</span>
+                <span>{user?.name || 'Partner'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Sumber Kas:</span>
+                <span>{cashAccounts.find(a => String(a.id) === String(selectedCashAccountId))?.name || 'Kas Utama'}</span>
+              </div>
+            </div>
+
+            <div className="border-b border-dashed border-gray-300 my-2" />
+
+            {/* Items */}
+            <div className="space-y-2 mb-4">
+              {items.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-start text-[10px]">
+                  <div className="pr-4">
+                    <div className="font-bold text-gray-800">{item.name}</div>
+                    <div className="text-[9px] text-gray-500">
+                      {item.qty} {item.unit} x {formatRupiah(item.price)}
+                      {item.addsStock && ` (Stok: +${item.stockQty} ${item.stockUnit})`}
+                    </div>
+                  </div>
+                  <span className="font-bold text-gray-900 shrink-0">{formatRupiah(item.total)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-b border-dashed border-gray-300 my-2" />
+
+            {/* Total */}
+            <div className="space-y-1 text-xs mb-4">
+              <div className="flex justify-between font-extrabold text-sm">
+                <span>TOTAL:</span>
+                <span>{formatRupiah(total)}</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="text-center text-[9px] text-gray-400 mt-6 space-y-1">
+              <p>TERIMA KASIH</p>
+              <p>RUTE Coffee Management System</p>
+              <div className="border-b border-dashed border-gray-300 my-2" />
+              <p className="text-[8px] font-mono tracking-tighter uppercase">*** PENGELUARAN TERVERIFIKASI ***</p>
+            </div>
+          </div>
+
+          {/* Action buttons / Timer redirect info */}
+          <div className="text-center space-y-4">
+            <p className="text-xs text-[var(--color-text-muted)] animate-pulse">
+              Mengalihkan ke daftar pengeluaran otomatis...
+            </p>
+            <button
+              onClick={handleDoneReturn}
+              className="btn btn-primary px-8 py-2.5 text-xs rounded-full font-bold"
+            >
+              Kembali Sekarang
+            </button>
+          </div>
         </div>
       )}
     </PageWrapper>

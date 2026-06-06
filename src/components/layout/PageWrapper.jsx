@@ -1,9 +1,25 @@
-import { LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { LogOut, Sun, Moon } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 
 export default function PageWrapper({ children, title, subtitle }) {
   const { user, logout } = useAuthStore();
   const isOwner = user?.role === 'owner';
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return document.documentElement.classList.contains('dark');
+  });
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   return (
     <div className={`min-h-screen bg-[var(--color-bg-primary)] ${isOwner ? 'lg:ml-60' : ''} pb-20 lg:pb-8`}>
@@ -17,15 +33,26 @@ export default function PageWrapper({ children, title, subtitle }) {
                 <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{subtitle}</p>
               )}
             </div>
-            {user && (
-              <button 
-                onClick={logout} 
-                className={`text-[var(--color-text-muted)] hover:text-[var(--color-accent-red)] transition-colors p-2 -mr-2 rounded-md hover:bg-red-50 flex items-center gap-1 text-xs font-medium ${isOwner ? 'lg:hidden' : ''}`}
-                title="Keluar"
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleDarkMode}
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-band-1)] transition-colors p-2 rounded-md hover:bg-[var(--color-bg-secondary)] flex items-center justify-center"
+                title={isDarkMode ? 'Mode Terang' : 'Mode Espresso'}
               >
-                <LogOut size={18} />
+                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
-            )}
+
+              {user && (
+                <button 
+                  onClick={logout} 
+                  className={`text-[var(--color-text-muted)] hover:text-[var(--color-accent-red)] transition-colors p-2 -mr-2 rounded-md hover:bg-red-50 flex items-center gap-1 text-xs font-medium ${isOwner ? 'lg:hidden' : ''}`}
+                  title="Keluar"
+                >
+                  <LogOut size={18} />
+                </button>
+              )}
+            </div>
           </div>
         </header>
       )}
