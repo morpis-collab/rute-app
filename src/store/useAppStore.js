@@ -81,7 +81,7 @@ const useAppStore = create((set, get) => ({
     get().sales.filter((sale) => isSameBusinessDate(sale.date, businessDate))
   ),
   getTodayExpenses: (businessDate = getBusinessDate()) => (
-    get().expenses.filter((expense) => isSameBusinessDate(expense.date, businessDate))
+    get().expenses.filter((expense) => isSameBusinessDate(expense.date, businessDate) && expense.status !== 'rejected')
   ),
   getSalesSummary: (businessDate = getBusinessDate()) => getSalesSummary(get().getTodaySales(businessDate)),
   getExpenseTotal: (businessDate = getBusinessDate()) => getExpenseTotal(get().getTodayExpenses(businessDate)),
@@ -91,6 +91,7 @@ const useAppStore = create((set, get) => ({
   getCashExpected: (businessDate = getBusinessDate()) => {
     const session = get().cashSessions.find((cash) => cash.date === businessDate);
     const cashExpensesList = get().expenses.filter((expense) => {
+      if (expense.status === 'rejected') return false;
       if (!expense.cashAccountId) return true;
       const account = get().cashAccounts.find(a => String(a.id) === String(expense.cashAccountId));
       return account ? account.type === 'cash' : true;
@@ -258,6 +259,7 @@ const useAppStore = create((set, get) => ({
 
     const cashExpensesList = get().expenses.filter((expense) => {
       if (!isSameBusinessDate(expense.date, businessDate)) return false;
+      if (expense.status === 'rejected') return false;
       if (!expense.cashAccountId) return true;
       const account = get().cashAccounts.find(a => String(a.id) === String(expense.cashAccountId));
       return account ? account.type === 'cash' : true;

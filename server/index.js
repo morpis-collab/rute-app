@@ -56,7 +56,7 @@ function today() {
 
 function dashboardFrom(db, businessDate = today()) {
   const todaySales = db.sales.filter((sale) => sale.date?.startsWith(businessDate));
-  const todayExpenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate));
+  const todayExpenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate) && expense.status !== 'rejected');
   const products = refreshProductCosts(db.products, db.ingredients);
   const summary = getSalesSummary(todaySales);
   const estimatedHpp = getEstimatedHpp(todaySales, products);
@@ -189,7 +189,7 @@ function cashExpectedPayload(db, { date, openingCash } = {}) {
   const existingSession = db.cashSessions.find((session) => session.date === businessDate) || null;
   const resolvedOpeningCash = openingCashFromCapital(db, businessDate, existingSession, openingCash);
   const daySales = db.sales.filter((sale) => sale.date?.startsWith(businessDate));
-  const dayExpenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate));
+  const dayExpenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate) && expense.status !== 'rejected');
   const salesSummary = getSalesSummary(daySales);
   const cashSales = Number(salesSummary.byMethod.cash || 0);
 
