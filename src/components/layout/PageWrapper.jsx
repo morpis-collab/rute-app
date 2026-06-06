@@ -1,18 +1,17 @@
-import { useState } from 'react';
 import { LogOut, Sun, Moon } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
+import useSettingsStore from '../../store/useSettingsStore';
 
 export default function PageWrapper({ children, title, subtitle }) {
   const { user, logout } = useAuthStore();
   const isOwner = user?.role === 'owner';
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return document.documentElement.classList.contains('dark');
-  });
+  const { theme, updateSettings } = useSettingsStore();
+  const isDarkMode = theme === 'dark';
 
   const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    if (newMode) {
+    const newTheme = isDarkMode ? 'light' : 'dark';
+    updateSettings({ theme: newTheme });
+    if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {

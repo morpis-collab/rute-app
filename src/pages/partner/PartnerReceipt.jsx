@@ -4,6 +4,7 @@ import { AlertCircle, Camera, Check, ImagePlus, Loader2, Plus, Trash2 } from 'lu
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
+import useSettingsStore from '../../store/useSettingsStore';
 import { scanReceiptImage } from '../../services/receiptService';
 import { formatRupiah } from '../../utils/formatters';
 import { EXPENSE_CATEGORIES } from '../../utils/constants';
@@ -85,6 +86,7 @@ export default function PartnerReceipt() {
   const ingredients = useAppStore((state) => state.ingredients);
   const cashAccounts = useAppStore((state) => state.cashAccounts);
   const { user } = useAuthStore();
+  const settings = useSettingsStore();
 
   const defaultCashAccount = cashAccounts.find((account) => (
     ['cash', 'tunai'].includes(String(account.type || '').toLowerCase())
@@ -459,12 +461,17 @@ export default function PartnerReceipt() {
           </div>
 
           {/* Thermal Receipt Paper Frame */}
-          <div className="receipt-paper w-full max-w-sm p-6 text-black font-mono text-xs mb-8 rounded-b-sm">
+          <div 
+            className="receipt-paper w-full p-6 text-black font-mono text-xs mb-8 rounded-b-sm"
+            style={{ maxWidth: settings.receiptPaperSize === '80mm' ? '380px' : '320px' }}
+          >
             {/* Logo/Header */}
             <div className="text-center space-y-1 mb-4">
-              <h2 className="text-sm font-bold tracking-widest uppercase">ruang.tengah</h2>
-              <p className="text-[10px] text-gray-500">COFFEE & CO-WORKING</p>
-              <p className="text-[9px] text-gray-400">Makassar WITA (Asia/Makassar)</p>
+              <h2 className="text-sm font-bold tracking-widest uppercase">{settings.receiptHeaderName || 'ruang.tengah'}</h2>
+              <p className="text-[10px] text-gray-500">{settings.receiptAddress || 'COFFEE & CO-WORKING'}</p>
+              {settings.receiptPhone && (
+                <p className="text-[9px] text-gray-400">Telp: {settings.receiptPhone}</p>
+              )}
               <div className="border-b border-dashed border-gray-300 my-2" />
             </div>
 
@@ -517,11 +524,15 @@ export default function PartnerReceipt() {
             </div>
 
             {/* Footer */}
-            <div className="text-center text-[9px] text-gray-400 mt-6 space-y-1">
-              <p>TERIMA KASIH</p>
-              <p>RUTE Coffee Management System</p>
-              <div className="border-b border-dashed border-gray-300 my-2" />
-              <p className="text-[8px] font-mono tracking-tighter uppercase">*** PENGELUARAN TERVERIFIKASI ***</p>
+            <div className="text-center text-[9px] text-gray-400 mt-6 space-y-1 whitespace-pre-line">
+              {settings.receiptFooter || (
+                <>
+                  <p>TERIMA KASIH</p>
+                  <p>RUTE Coffee Management System</p>
+                  <div className="border-b border-dashed border-gray-300 my-2" />
+                  <p className="text-[8px] font-mono tracking-tighter uppercase">*** PENGELUARAN TERVERIFIKASI ***</p>
+                </>
+              )}
             </div>
           </div>
 
