@@ -21,7 +21,9 @@ export default function OwnerDashboard() {
   const recentActivity = activityLog.slice(-5).reverse();
   const todayNote = dailyNotes.find((note) => note.date === businessDate);
   const estimasiHPP = getEstimatedHpp(businessDate);
-  const todayExpenseTotal = expenses.filter(e => e.date?.startsWith(businessDate)).reduce((sum, e) => sum + e.total, 0);
+  const todayExpenseTotal = expenses
+    .filter(e => e.date?.startsWith(businessDate) && e.status !== 'rejected')
+    .reduce((sum, e) => sum + e.total, 0);
   const estimasiLabaBersih = summary.totalOmzet - estimasiHPP - todayExpenseTotal;
 
   // Calculate overall totals (sales, hpp, expenses, net profit)

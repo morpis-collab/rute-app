@@ -37,7 +37,7 @@ export default function OwnerReports() {
   const handleExport = (type) => {
     if (type === 'csv' || type === 'excel') {
       const filteredSales = sales.filter(s => s.date?.startsWith(selectedDate));
-      const filteredExpenses = expenses.filter(e => e.date?.startsWith(selectedDate));
+      const filteredExpenses = expenses.filter(e => e.date?.startsWith(selectedDate) && e.status !== 'rejected');
       const csvContent = [
         ['Type', 'ID', 'Date', 'Category/Method', 'Description', 'Total (Rp)'],
         ...filteredSales.map(s => ['Sale', s.id, s.date, s.paymentMethod, `Penjualan ${s.items.length} item`, s.total]),
