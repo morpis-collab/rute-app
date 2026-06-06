@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit2 } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -15,6 +15,7 @@ export default function OwnerExpenses() {
   const cashAccounts = useAppStore((state) => state.cashAccounts);
   const addExpense = useAppStore((state) => state.addExpense);
   const updateExpense = useAppStore((state) => state.updateExpense);
+  const updateExpenseStatus = useAppStore((state) => state.updateExpenseStatus);
   const { user } = useAuthStore();
 
   const getCashAccountLabel = (cashAccountId) => {
@@ -57,6 +58,17 @@ export default function OwnerExpenses() {
     }
   };
 
+  const handleCancelExpense = (id) => {
+    if (window.confirm('Apakah Anda yakin ingin membatalkan pengeluaran ini? Saldo kas dan penyesuaian stok yang terkait akan dikembalikan.')) {
+      try {
+        updateExpenseStatus(id, 'rejected');
+        useToastStore.getState().addToast('Pengeluaran berhasil dibatalkan', 'success');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingExpense(null);
@@ -90,16 +102,27 @@ export default function OwnerExpenses() {
                   <span className="font-mono font-semibold text-[var(--color-text-primary)]">{formatRupiah(exp.total)}</span>
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  setEditingExpense(exp);
-                  setIsModalOpen(true);
-                }}
-                className="p-2 rounded-lg hover:bg-gray-50 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors shrink-0 cursor-pointer"
-                title="Edit Pengeluaran"
-              >
-                <Edit2 size={16} />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => {
+                    setEditingExpense(exp);
+                    setIsModalOpen(true);
+                  }}
+                  className="p-2 rounded-lg hover:bg-gray-50 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors shrink-0 cursor-pointer"
+                  title="Edit Pengeluaran"
+                >
+                  <Edit2 size={16} />
+                </button>
+                {exp.status !== 'rejected' && (
+                  <button
+                    onClick={() => handleCancelExpense(exp.id)}
+                    className="p-2 rounded-lg hover:bg-red-50 text-[var(--color-text-muted)] hover:text-red-500 transition-colors shrink-0 cursor-pointer"
+                    title="Batalkan Pengeluaran"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
