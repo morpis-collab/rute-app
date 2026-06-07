@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, TrendingUp, Receipt, Package,
-  Wallet, BookOpen, BarChart3, Bot, Settings, Camera, Clock, Briefcase
+  Wallet, BookOpen, BarChart3, Bot, Settings, Camera, Clock, Briefcase,
+  Percent
 } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 
@@ -15,6 +16,7 @@ const ownerMenu = [
   { to: '/owner/opening-capital', icon: Briefcase, label: 'Modal Awal' },
   { to: '/owner/menu-hpp', icon: BookOpen, label: 'Menu & HPP' },
   { to: '/owner/reports', icon: BarChart3, label: 'Laporan' },
+  { to: '/owner/revenue-allocation', icon: Percent, label: 'Bagi Omzet' },
   { to: '/owner/activity', icon: Clock, label: 'Activity Log' },
   { to: '/owner/ai', icon: Bot, label: 'AI Copilot' },
   { to: '/owner/settings', icon: Settings, label: 'Pengaturan' },

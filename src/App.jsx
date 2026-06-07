@@ -19,6 +19,7 @@ const OwnerApproval = lazy(() => import('./pages/owner/OwnerApproval'));
 const OwnerReports = lazy(() => import('./pages/owner/OwnerReports'));
 const OwnerSettings = lazy(() => import('./pages/owner/OwnerSettings'));
 const OwnerOpeningCapital = lazy(() => import('./pages/owner/OwnerOpeningCapital'));
+const OwnerRevenueAllocation = lazy(() => import('./pages/owner/OwnerRevenueAllocation'));
 
 const PartnerSales = lazy(() => import('./pages/partner/PartnerSales'));
 const PartnerReceipt = lazy(() => import('./pages/partner/PartnerReceipt'));
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="/owner/ai" element={<ProtectedRoute allowedRole="owner"><AIAssistant /></ProtectedRoute>} />
           <Route path="/owner/settings" element={<ProtectedRoute allowedRole="owner"><OwnerSettings /></ProtectedRoute>} />
           <Route path="/owner/opening-capital" element={<ProtectedRoute allowedRole="owner"><OwnerOpeningCapital /></ProtectedRoute>} />
+          <Route path="/owner/revenue-allocation" element={<ProtectedRoute allowedRole="owner"><OwnerRevenueAllocation /></ProtectedRoute>} />
 
           {/* Partner Routes */}
           <Route path="/partner/sales" element={<ProtectedRoute allowedRole="partner"><PartnerSales /></ProtectedRoute>} />

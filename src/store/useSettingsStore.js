@@ -10,6 +10,9 @@ const useSettingsStore = create(
       receiptFooter: 'TERIMA KASIH\nRUTE Coffee Management System',
       receiptPaperSize: '58mm',
       theme: localStorage.getItem('theme') || 'light',
+      allocationRawMaterials: 50,
+      allocationOperations: 20,
+      allocationProfit: 30,
 
       updateSettings: (newSettings) => {
         set((state) => ({ ...state, ...newSettings }));
