@@ -1431,8 +1431,9 @@ app.post('/api/cash/transactions', requireRole('owner'), (req, res) => {
 
     const now = new Date().toISOString();
     const transactionDate = body.date || now;
-    const lockError = checkCashLock(db, String(transactionDate).substring(0, 10));
-    if (lockError) return lockError;
+    // Bypassed cash lock check for owner manual cash adjustments (Transfer, Koreksi, dll)
+    // const lockError = checkCashLock(db, String(transactionDate).substring(0, 10));
+    // if (lockError) return lockError;
 
     const transaction = {
       id: `CTX-${Date.now()}`,

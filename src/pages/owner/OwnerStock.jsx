@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, Plus, Trash2, History } from 'lucide-react';
+import { Package, Plus, Trash2, History, AlertTriangle } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -8,6 +8,7 @@ import RecordPurchaseModal from '../../components/shared/RecordPurchaseModal';
 import PurchaseHistoryModal from '../../components/shared/PurchaseHistoryModal';
 import IngredientModal from '../../components/shared/IngredientModal';
 import useToastStore from '../../store/useToastStore';
+import { getBusinessDate } from '../../utils/businessDate';
 
 export default function OwnerStock() {
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
@@ -16,12 +17,20 @@ export default function OwnerStock() {
   const [selectedIngredientId, setSelectedIngredientId] = useState(null);
 
   const ingredients = useAppStore((state) => state.ingredients);
+  const cashSessions = useAppStore((state) => state.cashSessions);
   const addExpense = useAppStore((state) => state.addExpense);
   const addIngredient = useAppStore((state) => state.addIngredient);
   const removeIngredient = useAppStore((state) => state.removeIngredient);
   const { user } = useAuthStore();
 
+  const todayBusinessDate = getBusinessDate();
+  const isClosed = cashSessions.some(session => session.date === todayBusinessDate && session.status === 'closed');
+
   const handleSavePurchase = async (expenseData) => {
+    if (isClosed) {
+      useToastStore.getState().addToast('Gagal mencatat: Kas hari ini sudah ditutup.', 'error');
+      return;
+    }
     try {
       await addExpense(expenseData);
       useToastStore.getState().addToast('Belanja bahan berhasil dicatat', 'success');
@@ -70,10 +79,24 @@ export default function OwnerStock() {
 
   return (
     <PageWrapper title="Gudang & Harga Bahan" subtitle="Pantau harga modal rata-rata & riwayat pembelian">
+      {isClosed && (
+        <div className="mb-6 rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-4 py-3.5 text-sm text-[#a34f39] flex items-start gap-2.5 shadow-sm">
+          <AlertTriangle className="shrink-0 text-[#a34f39] mt-0.5" size={16} />
+          <div className="space-y-1">
+            <p className="font-semibold">Sesi Kasir Hari Ini Sudah Ditutup</p>
+            <p className="text-xs opacity-90 font-medium">Pemilik / Owner tidak dapat mencatat belanja bahan baru setelah laci kas ditutup oleh partner.</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         <button
-          onClick={() => setIsPurchaseModalOpen(true)}
-          className="px-4 py-2.5 rounded-xl border-2 border-[var(--color-accent-warm)] bg-[var(--color-accent-light)]/20 flex items-center justify-center gap-2 hover:bg-[var(--color-accent-light)]/40 transition-colors cursor-pointer"
+          onClick={() => {
+            if (isClosed) return;
+            setIsPurchaseModalOpen(true);
+          }}
+          disabled={isClosed}
+          className="px-4 py-2.5 rounded-xl border-2 border-[var(--color-accent-warm)] bg-[var(--color-accent-light)]/20 flex items-center justify-center gap-2 hover:bg-[var(--color-accent-light)]/40 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} className="text-[var(--color-accent-primary)]" />
           <span className="text-sm font-semibold text-[var(--color-accent-primary)]">Catat Belanja Bahan</span>

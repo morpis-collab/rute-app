@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -7,6 +7,7 @@ import { formatRupiah, formatTanggalSingkat, getPhotoUrl } from '../../utils/for
 import { APPROVAL_STATUS } from '../../utils/constants';
 import ExpenseModal from '../../components/shared/ExpenseModal';
 import useToastStore from '../../store/useToastStore';
+import { getBusinessDate } from '../../utils/businessDate';
 
 export default function OwnerExpenses() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,10 +16,19 @@ export default function OwnerExpenses() {
   const [activePhotoUrl, setActivePhotoUrl] = useState(null);
   const expenses = useAppStore((state) => state.expenses);
   const cashAccounts = useAppStore((state) => state.cashAccounts);
+  const cashSessions = useAppStore((state) => state.cashSessions);
   const addExpense = useAppStore((state) => state.addExpense);
   const updateExpense = useAppStore((state) => state.updateExpense);
   const updateExpenseStatus = useAppStore((state) => state.updateExpenseStatus);
   const { user } = useAuthStore();
+
+  const todayBusinessDate = getBusinessDate();
+  const isDateClosed = (dateStr) => {
+    if (!dateStr) return false;
+    const targetDate = String(dateStr).substring(0, 10);
+    return cashSessions.some(session => session.date === targetDate && session.status === 'closed');
+  };
+  const isTodayClosed = isDateClosed(todayBusinessDate);
 
   const getCashAccountLabel = (cashAccountId) => {
     const account = cashAccounts.find(a => String(a.id) === String(cashAccountId));
@@ -29,6 +39,11 @@ export default function OwnerExpenses() {
   };
 
   const handleSaveExpense = async (data) => {
+    const targetDate = data.date || new Date().toISOString();
+    if (isDateClosed(targetDate)) {
+      useToastStore.getState().addToast('Gagal menyimpan: Kas pada tanggal tersebut sudah ditutup.', 'error');
+      return;
+    }
     try {
       if (editingExpense) {
         await updateExpense(editingExpense.id, {
@@ -61,6 +76,11 @@ export default function OwnerExpenses() {
   };
 
   const handleCancelExpense = (id) => {
+    const expense = expenses.find(e => e.id === id);
+    if (expense && isDateClosed(expense.date)) {
+      useToastStore.getState().addToast('Gagal membatalkan: Kas pada tanggal pengeluaran sudah ditutup.', 'error');
+      return;
+    }
     if (window.confirm('Apakah Anda yakin ingin membatalkan pengeluaran ini? Saldo kas dan penyesuaian stok yang terkait akan dikembalikan.')) {
       try {
         updateExpenseStatus(id, 'rejected');
@@ -78,12 +98,24 @@ export default function OwnerExpenses() {
 
   return (
     <PageWrapper title="Pengeluaran" subtitle="Semua pengeluaran usaha">
+      {isTodayClosed && (
+        <div className="mb-6 rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-4 py-3.5 text-sm text-[#a34f39] flex items-start gap-2.5 shadow-sm">
+          <AlertTriangle className="shrink-0 text-[#a34f39] mt-0.5" size={16} />
+          <div className="space-y-1">
+            <p className="font-semibold">Sesi Kasir Hari Ini Sudah Ditutup</p>
+            <p className="text-xs opacity-90 font-medium">Pemilik / Owner tidak dapat menambahkan pengeluaran manual baru setelah laci kas ditutup oleh partner.</p>
+          </div>
+        </div>
+      )}
+
       <button 
         onClick={() => {
+          if (isTodayClosed) return;
           setEditingExpense(null);
           setIsModalOpen(true);
         }}
-        className="w-full lg:w-auto px-4 py-2.5 rounded-xl border-2 border-[var(--color-accent-warm)] bg-[var(--color-accent-light)]/20 flex items-center justify-center gap-2 mb-6 hover:bg-[var(--color-accent-light)]/40 transition-colors cursor-pointer"
+        disabled={isTodayClosed}
+        className="w-full lg:w-auto px-4 py-2.5 rounded-xl border-2 border-[var(--color-accent-warm)] bg-[var(--color-accent-light)]/20 flex items-center justify-center gap-2 mb-6 hover:bg-[var(--color-accent-light)]/40 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Plus size={18} className="text-[var(--color-accent-primary)]" />
         <span className="text-sm font-medium text-[var(--color-accent-primary)]">Tambah Pengeluaran Manual</span>
@@ -93,6 +125,7 @@ export default function OwnerExpenses() {
         {expenses.map(exp => {
           const st = APPROVAL_STATUS[exp.status] || {};
           const isExpanded = expandedExpenseId === exp.id;
+          const isExpenseClosed = isDateClosed(exp.date);
           return (
             <div 
               key={exp.id} 
@@ -207,11 +240,13 @@ export default function OwnerExpenses() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        if (isExpenseClosed) return;
                         setEditingExpense(exp);
                         setIsModalOpen(true);
                       }}
-                      className="px-3 py-1.5 rounded-lg border border-[var(--color-border)] bg-white text-xs text-[var(--color-text-secondary)] hover:bg-gray-50 hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1 cursor-pointer font-medium"
-                      title="Edit Pengeluaran"
+                      disabled={isExpenseClosed}
+                      className="px-3 py-1.5 rounded-lg border border-[var(--color-border)] bg-white text-xs text-[var(--color-text-secondary)] hover:bg-gray-50 hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1 cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={isExpenseClosed ? "Tidak dapat mengedit saat kas tutup" : "Edit Pengeluaran"}
                     >
                       <Edit2 size={12} />
                       <span>Edit</span>
@@ -220,10 +255,12 @@ export default function OwnerExpenses() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (isExpenseClosed) return;
                           handleCancelExpense(exp.id);
                         }}
-                        className="px-3 py-1.5 rounded-lg border border-red-200 bg-white text-xs text-red-500 hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-1 cursor-pointer font-medium"
-                        title="Batalkan Pengeluaran"
+                        disabled={isExpenseClosed}
+                        className="px-3 py-1.5 rounded-lg border border-red-200 bg-white text-xs text-red-500 hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-1 cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={isExpenseClosed ? "Tidak dapat membatalkan saat kas tutup" : "Batalkan Pengeluaran"}
                       >
                         <Trash2 size={12} />
                         <span>Batalkan</span>

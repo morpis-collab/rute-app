@@ -158,11 +158,29 @@ function normalizeDb(db) {
     activityLog: Array.isArray(db.activityLog) ? db.activityLog : seed.activityLog,
     cashSessions: Array.isArray(db.cashSessions) ? db.cashSessions : seed.cashSessions,
     cashAccounts: (() => {
-      const accounts = Array.isArray(db.cashAccounts) ? db.cashAccounts : seed.cashAccounts;
+      let accounts = Array.isArray(db.cashAccounts) ? db.cashAccounts : seed.cashAccounts;
       if (!accounts.some((acc) => String(acc.id) === 'acc-brankas')) {
-        return [
+        accounts = [
           ...accounts,
           { id: 'acc-brankas', name: 'Brankas', type: 'tunai', balance: 0, status: 'active' },
+        ];
+      }
+      if (!accounts.some((acc) => String(acc.id) === 'acc-brankas-bahan-baku')) {
+        accounts = [
+          ...accounts,
+          { id: 'acc-brankas-bahan-baku', name: 'Brankas Bahan Baku', type: 'tunai', balance: 0, status: 'active' },
+        ];
+      }
+      if (!accounts.some((acc) => String(acc.id) === 'acc-brankas-operasional')) {
+        accounts = [
+          ...accounts,
+          { id: 'acc-brankas-operasional', name: 'Brankas Operasional', type: 'tunai', balance: 0, status: 'active' },
+        ];
+      }
+      if (!accounts.some((acc) => String(acc.id) === 'acc-brankas-keuntungan')) {
+        accounts = [
+          ...accounts,
+          { id: 'acc-brankas-keuntungan', name: 'Brankas Keuntungan', type: 'tunai', balance: 0, status: 'active' },
         ];
       }
       return accounts;

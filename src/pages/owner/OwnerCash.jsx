@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ArrowRightLeft, AlertTriangle, ArrowDown, ArrowUp, Loader2 } from 'lucide-react';
+import { ArrowRightLeft, AlertTriangle, ArrowDown, ArrowUp, Loader2, Wallet } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { formatRupiah, formatWaktu } from '../../utils/formatters';
 import CashModal from '../../components/owner/CashModal';
@@ -15,6 +15,7 @@ export default function OwnerCash() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [isClosed, setIsClosed] = useState(false);
   
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
@@ -33,6 +34,7 @@ export default function OwnerCash() {
       const data = await getOwnerCash();
       setCashAccounts(data.cashAccounts || []);
       setTxs(data.cashTransactions || []);
+      setIsClosed(data.cashSession?.status === 'closed');
     } catch (err) {
       const msg = err.response?.data?.error || 'Gagal memuat data kas.';
       setError(msg);
@@ -70,18 +72,40 @@ export default function OwnerCash() {
   return (
     <PageWrapper title="Kas Usaha" subtitle="Manajemen Saldo & Rekening">
       
+      {isClosed && (
+        <div className="mb-6 rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-4 py-3.5 text-sm text-[#a34f39] flex items-start gap-2.5 shadow-sm">
+          <AlertTriangle className="shrink-0 text-[#a34f39] mt-0.5" size={16} />
+          <div className="space-y-1">
+            <p className="font-semibold">Sesi Kasir Hari Ini Sudah Ditutup</p>
+            <p className="text-xs opacity-90 font-medium">Uang laci harian telah dialokasikan. Harap berhati-hati saat memasukkan, mengeluarkan, atau memindahkan dana untuk keperluan penyesuaian laci dan brankas.</p>
+          </div>
+        </div>
+      )}
+
       {/* Top Actions */}
       <div className="flex flex-wrap gap-2 mb-6">
-        <button onClick={() => handleOpenModal('in')} className="btn btn-primary bg-white text-[var(--color-accent-green)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
+        <button 
+          onClick={() => handleOpenModal('in')} 
+          className="btn btn-primary bg-white text-[var(--color-accent-green)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md"
+        >
           <ArrowDown size={16} /> Kas Masuk
         </button>
-        <button onClick={() => handleOpenModal('out')} className="btn btn-primary bg-white text-[var(--color-accent-red)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
+        <button 
+          onClick={() => handleOpenModal('out')} 
+          className="btn btn-primary bg-white text-[var(--color-accent-red)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md"
+        >
           <ArrowUp size={16} /> Kas Keluar
         </button>
-        <button onClick={() => handleOpenModal('transfer')} className="btn btn-primary bg-white text-[var(--color-accent-blue)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
+        <button 
+          onClick={() => handleOpenModal('transfer')} 
+          className="btn btn-primary bg-white text-[var(--color-accent-blue)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md"
+        >
           <ArrowRightLeft size={16} /> Transfer Kas
         </button>
-        <button onClick={() => handleOpenModal('koreksi')} className="btn btn-primary bg-white text-[var(--color-accent-orange)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md">
+        <button 
+          onClick={() => handleOpenModal('koreksi')} 
+          className="btn btn-primary bg-white text-[var(--color-accent-orange)] border border-[var(--color-coffee-latte)] shadow-sm hover:shadow-md"
+        >
           <AlertTriangle size={16} /> Koreksi
         </button>
       </div>
@@ -106,27 +130,52 @@ export default function OwnerCash() {
             <p className="text-2xl font-mono font-bold">{formatRupiah(totalCash)}</p>
           </div>
         </div>
-        {cashAccounts.map(acc => (
-          <div key={acc.id} className="kpi-card flex flex-col justify-between min-h-[125px]">
-            <div>
-              <div className="flex justify-between items-start mb-2">
-                <p className="text-[11px] uppercase tracking-wider text-[var(--color-text-secondary)] font-semibold">{acc.name}</p>
-                <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${acc.type === 'tunai' || acc.type === 'cash' ? 'bg-[#e8f5e4] text-[#4a7a3f]' : acc.type === 'bank' ? 'bg-[#e0ecf5] text-[#5a7a8f]' : 'bg-[#f5efe0] text-[#c4955a]'}`}>
-                  {acc.type}
-                </span>
+        {cashAccounts.map(acc => {
+          const isBrankas = acc.id.toLowerCase().includes('brankas');
+          return (
+            <div 
+              key={acc.id} 
+              className={`kpi-card flex flex-col justify-between min-h-[125px] transition-all hover:shadow-md ${
+                isBrankas 
+                  ? 'border-2 border-[var(--color-accent-warm)] bg-[#fcfaf7]' 
+                  : 'border border-[var(--color-border)] bg-white'
+              }`}
+            >
+              <div>
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-1 min-w-0">
+                    {isBrankas && <Wallet size={12} className="text-[var(--color-accent-primary)] shrink-0" />}
+                    <p className={`text-[11px] uppercase tracking-wider font-semibold truncate ${
+                      isBrankas ? 'text-[var(--color-accent-primary)]' : 'text-[var(--color-text-secondary)]'
+                    }`}>
+                      {acc.name}
+                    </p>
+                  </div>
+                  <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                    isBrankas
+                      ? 'bg-[#f5efe0] text-[#c4955a]'
+                      : acc.type === 'tunai' || acc.type === 'cash'
+                        ? 'bg-[#e8f5e4] text-[#4a7a3f]'
+                        : acc.type === 'bank'
+                          ? 'bg-[#e0ecf5] text-[#5a7a8f]'
+                          : 'bg-[#f5efe0] text-[#c4955a]'
+                  }`}>
+                    {acc.type}
+                  </span>
+                </div>
+                <p className="text-xl font-mono text-[var(--color-text-primary)] font-bold">{formatRupiah(acc.balance)}</p>
               </div>
-              <p className="text-xl font-mono text-[var(--color-text-primary)] font-bold">{formatRupiah(acc.balance)}</p>
+              <div className="mt-3 pt-2 border-t border-[var(--color-border)] flex justify-end gap-2 text-xs">
+                <button 
+                  onClick={() => handleOpenModal('koreksi', acc.id)}
+                  className="text-[var(--color-accent-primary)] hover:text-[var(--color-accent-secondary)] flex items-center gap-1 font-semibold transition-colors cursor-pointer"
+                >
+                  <AlertTriangle size={12} /> Koreksi
+                </button>
+              </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-[var(--color-border)] flex justify-end gap-2 text-xs">
-              <button 
-                onClick={() => handleOpenModal('koreksi', acc.id)}
-                className="text-[var(--color-accent-primary)] hover:text-[var(--color-accent-secondary)] flex items-center gap-1 font-semibold transition-colors cursor-pointer"
-              >
-                <AlertTriangle size={12} /> Koreksi
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* History Mutasi Kas */}
