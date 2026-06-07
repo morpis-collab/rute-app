@@ -41,8 +41,8 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[var(--color-bg-primary)] via-[var(--color-accent-light)]/30 to-[var(--color-bg-secondary)] flex items-center justify-center px-4 relative overflow-hidden">
       {/* Mascot Boy (Left side on Desktop) */}
-      <div className="hidden lg:block absolute bottom-0 left-6 xl:left-12 w-48 xl:w-56 select-none animate-mascot-1 z-10">
-        <div className="relative">
+      <div className="hidden lg:block absolute bottom-0 left-6 xl:left-12 w-48 xl:w-56 select-none animate-entrance-bounce-boy z-10">
+        <div className="relative animate-mascot-1">
           <img src="/mascot-boy.png" alt="Mascot Boy" className="w-full h-auto drop-shadow-xs" />
           
           {/* Animated Steam */}
@@ -56,8 +56,8 @@ export default function Login() {
       </div>
 
       {/* Mascot Girl (Right side on Desktop) */}
-      <div className="hidden lg:block absolute bottom-0 right-6 xl:right-12 w-48 xl:w-56 select-none animate-mascot-2 z-10">
-        <div className="relative animate-y">
+      <div className="hidden lg:block absolute bottom-0 right-6 xl:right-12 w-48 xl:w-56 select-none animate-entrance-bounce-girl z-10">
+        <div className="relative animate-mascot-2">
           <img src="/mascot-girl.png" alt="Mascot Girl" className="w-full h-auto drop-shadow-xs" />
           
           {/* Animated Steam */}

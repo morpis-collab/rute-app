@@ -477,4 +477,32 @@ body, .glass-card, .kpi-card, .btn, .form-input, .form-select {
     animation: steam-rise 3.2s ease-in-out infinite;
     animation-delay: 1.4s;
   }
+
+  /* Mascot Entrance Bounce Animations */
+  @keyframes mascot-bounce-in {
+    0% {
+      transform: translateY(320px);
+      opacity: 0;
+    }
+    60% {
+      transform: translateY(-25px);
+      opacity: 1;
+    }
+    80% {
+      transform: translateY(8px);
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-entrance-bounce-boy {
+    animation: mascot-bounce-in 1.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  }
+
+  .animate-entrance-bounce-girl {
+    animation: mascot-bounce-in 1.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    animation-delay: 0.2s; /* Staggered entrance */
+  }
 }
