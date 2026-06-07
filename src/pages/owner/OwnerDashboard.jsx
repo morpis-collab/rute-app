@@ -1,8 +1,10 @@
-import { AlertTriangle, Check } from 'lucide-react';
+import { AlertTriangle, Check, Coffee, FileText, Activity } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import { formatRupiah, formatWaktu } from '../../utils/formatters';
 import { getBusinessDate } from '../../utils/businessDate';
+import EmptyState from '../../components/common/EmptyState';
+import AnimatedNumber from '../../components/common/AnimatedNumber';
 
 export default function OwnerDashboard() {
   const sales = useAppStore((state) => state.sales);
@@ -59,19 +61,19 @@ export default function OwnerDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="pb-2 border-b border-[var(--color-border)]">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Gross Volume (Omzet)</p>
-          <p className="text-xl font-mono text-[var(--color-text-primary)] font-bold">{formatRupiah(summary.totalOmzet)}</p>
+          <p className="text-xl font-mono text-[var(--color-text-primary)] font-bold"><AnimatedNumber value={summary.totalOmzet} /></p>
         </div>
         <div className="pb-2 border-b border-[var(--color-border)]">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Transactions</p>
-          <p className="text-xl font-mono text-[var(--color-text-primary)] font-bold">{summary.totalTransaksi} <span className="text-xs font-sans text-[var(--color-text-muted)] font-normal">/ {summary.totalCup} cup</span></p>
+          <p className="text-xl font-mono text-[var(--color-text-primary)] font-bold"><AnimatedNumber value={summary.totalTransaksi} formatter={(v) => String(Math.round(v))} /> <span className="text-xs font-sans text-[var(--color-text-muted)] font-normal">/ <AnimatedNumber value={summary.totalCup} formatter={(v) => `${Math.round(v)} cup`} duration={600} /></span></p>
         </div>
         <div className="pb-2 border-b border-[var(--color-border)]">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Expenses</p>
-          <p className="text-xl font-mono text-[var(--color-accent-red)] font-bold">{formatRupiah(todayExpenseTotal)}</p>
+          <p className="text-xl font-mono text-[var(--color-accent-red)] font-bold"><AnimatedNumber value={todayExpenseTotal} /></p>
         </div>
         <div className="pb-2 border-b border-[var(--color-border)]">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Est. Net Profit</p>
-          <p className={`text-xl font-mono font-bold ${estimasiLabaBersih >= 0 ? 'text-[var(--color-accent-green)]' : 'text-[var(--color-accent-red)]'}`}>{formatRupiah(estimasiLabaBersih)}</p>
+          <p className={`text-xl font-mono font-bold ${estimasiLabaBersih >= 0 ? 'text-[var(--color-accent-green)]' : 'text-[var(--color-accent-red)]'}`}><AnimatedNumber value={estimasiLabaBersih} /></p>
         </div>
       </div>
 
@@ -92,7 +94,7 @@ export default function OwnerDashboard() {
                 return (
                   <div key={account.id} className={`p-4 rounded-xl bg-white border border-[var(--color-border)] ${borderStyle} shadow-sm`}>
                     <p className="text-[10px] uppercase font-bold text-[var(--color-text-secondary)]">{account.name}</p>
-                    <p className="text-lg font-mono font-bold text-[var(--color-text-primary)] mt-1">{formatRupiah(account.balance)}</p>
+                    <p className="text-lg font-mono font-bold text-[var(--color-text-primary)] mt-1"><AnimatedNumber value={account.balance} duration={1000} /></p>
                     <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5 truncate">{account.description || 'Akun aktif'}</p>
                   </div>
                 );
@@ -106,12 +108,12 @@ export default function OwnerDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 rounded-xl bg-white border border-[var(--color-border)] border-l-4 border-l-[var(--color-accent-green)] shadow-sm">
                 <p className="text-[10px] uppercase font-bold text-[var(--color-text-secondary)]">Total Keuntungan Bersih</p>
-                <p className="text-2xl font-mono font-bold text-[var(--color-accent-green)] mt-2">{formatRupiah(totalKeuntunganKeseluruhan)}</p>
+                <p className="text-2xl font-mono font-bold text-[var(--color-accent-green)] mt-2"><AnimatedNumber value={totalKeuntunganKeseluruhan} duration={1200} /></p>
                 <p className="text-[10px] text-[var(--color-text-muted)] mt-1">Akumulasi laba bersih usaha</p>
               </div>
               <div className="p-4 rounded-xl bg-white border border-[var(--color-border)] border-l-4 border-l-[var(--color-accent-red)] shadow-sm">
                 <p className="text-[10px] uppercase font-bold text-[var(--color-text-secondary)]">Total Pengeluaran</p>
-                <p className="text-2xl font-mono font-bold text-[var(--color-accent-red)] mt-2">{formatRupiah(totalPengeluaranKeseluruhan)}</p>
+                <p className="text-2xl font-mono font-bold text-[var(--color-accent-red)] mt-2"><AnimatedNumber value={totalPengeluaranKeseluruhan} duration={1200} /></p>
                 <p className="text-[10px] text-[var(--color-text-muted)] mt-1">Akumulasi biaya operasional</p>
               </div>
             </div>
@@ -131,7 +133,15 @@ export default function OwnerDashboard() {
                   ))}
                   {recentActivity.length === 0 && (
                     <tr>
-                      <td className="p-3 text-center text-xs text-[var(--color-text-muted)] italic">Tidak ada aktivitas hari ini.</td>
+                      <td colSpan={2} className="p-0">
+                        <EmptyState
+                          message="Tidak ada aktivitas hari ini."
+                          sub="Aktivitas akan muncul saat ada transaksi"
+                          icon={<Activity size={24} />}
+                          size="sm"
+                          showParticles={false}
+                        />
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -223,7 +233,12 @@ export default function OwnerDashboard() {
                 </div>
               ))}
               {summary.menuTerlaris.length === 0 && (
-                <p className="text-xs text-[var(--color-text-muted)] italic text-center py-2">Belum ada menu terjual.</p>
+                <EmptyState
+                  message="Belum ada menu terjual."
+                  sub="Menu terlaris akan muncul setelah ada penjualan"
+                  icon={<Coffee size={24} />}
+                  size="sm"
+                />
               )}
             </div>
           </div>
@@ -231,9 +246,18 @@ export default function OwnerDashboard() {
           {/* Operator Notes */}
           <div>
             <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Catatan Operator</h3>
-            <div className="bg-white border border-[var(--color-border)] rounded-xl p-3 text-xs text-[var(--color-text-secondary)] shadow-sm leading-relaxed">
-              {todayNote ? todayNote.note : <span className="text-[var(--color-text-muted)] italic">Tidak ada catatan untuk hari ini.</span>}
-            </div>
+            {todayNote ? (
+              <div className="bg-white border border-[var(--color-border)] rounded-xl p-3 text-xs text-[var(--color-text-secondary)] shadow-sm leading-relaxed">
+                {todayNote.note}
+              </div>
+            ) : (
+              <EmptyState
+                message="Tidak ada catatan untuk hari ini."
+                sub="Operator belum membuat catatan"
+                icon={<FileText size={24} />}
+                size="sm"
+              />
+            )}
           </div>
 
         </div>
