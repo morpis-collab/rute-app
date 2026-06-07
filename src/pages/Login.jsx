@@ -39,8 +39,38 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--color-bg-primary)] via-[var(--color-accent-light)]/30 to-[var(--color-bg-secondary)] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-gradient-to-br from-[var(--color-bg-primary)] via-[var(--color-accent-light)]/30 to-[var(--color-bg-secondary)] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Mascot Boy (Left side on Desktop) */}
+      <div className="hidden lg:block absolute bottom-0 left-6 xl:left-12 w-48 xl:w-56 select-none animate-mascot-1 z-10">
+        <div className="relative">
+          <img src="/mascot-boy.png" alt="Mascot Boy" className="w-full h-auto drop-shadow-xs" />
+          
+          {/* Animated Steam */}
+          <svg className="absolute -top-3 left-[18%] w-6 h-12 text-[var(--color-band-1)]" viewBox="0 0 30 50">
+            <path d="M15,45 Q5,30 25,15 T15,0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="animate-steam" />
+          </svg>
+          <svg className="absolute top-0 left-[25%] w-4 h-8 text-[var(--color-band-3)]" viewBox="0 0 30 50">
+            <path d="M10,40 Q20,25 5,10 T15,0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-steam-delay" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Mascot Girl (Right side on Desktop) */}
+      <div className="hidden lg:block absolute bottom-0 right-6 xl:right-12 w-48 xl:w-56 select-none animate-mascot-2 z-10">
+        <div className="relative animate-y">
+          <img src="/mascot-girl.png" alt="Mascot Girl" className="w-full h-auto drop-shadow-xs" />
+          
+          {/* Animated Steam */}
+          <svg className="absolute -top-3 right-[18%] w-6 h-12 text-[var(--color-band-1)]" viewBox="0 0 30 50">
+            <path d="M15,45 Q5,30 25,15 T15,0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="animate-steam" />
+          </svg>
+          <svg className="absolute top-0 right-[25%] w-4 h-8 text-[var(--color-band-3)]" viewBox="0 0 30 50">
+            <path d="M10,40 Q20,25 5,10 T15,0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-steam-delay" />
+          </svg>
+        </div>
+      </div>
+
+      <div className="w-full max-w-sm relative z-20">
         {/* Logo Section */}
         <div className="text-center mb-10">
           <div className="w-24 h-24 mx-auto mb-4 rounded-2xl bg-white flex items-center justify-center shadow-lg p-2 overflow-hidden">
