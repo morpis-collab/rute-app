@@ -4,26 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
-import { formatRupiah } from '../../utils/formatters';
+import { formatRupiah, getPhotoUrl } from '../../utils/formatters';
 import { APPROVAL_STATUS } from '../../utils/constants';
 import { getBusinessDate } from '../../utils/businessDate';
 import ExpenseModal from '../../components/shared/ExpenseModal';
 import useToastStore from '../../store/useToastStore';
-
-const getPhotoUrl = (path) => {
-  if (!path) return '';
-  if (path.startsWith('blob:') || path.startsWith('data:')) return path;
-  const apiUrl = import.meta.env.VITE_API_URL || '';
-  if (apiUrl.startsWith('http')) {
-    try {
-      const origin = new URL(apiUrl).origin;
-      return `${origin}${path}`;
-    } catch {
-      return path;
-    }
-  }
-  return path;
-};
 
 export default function PartnerExpenses() {
   const [isModalOpen, setIsModalOpen] = useState(false);

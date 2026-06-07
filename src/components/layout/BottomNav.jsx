@@ -1,20 +1,21 @@
 import { NavLink } from 'react-router-dom';
-import { ShoppingCart, Camera, Receipt, Wallet, Bot, Package } from 'lucide-react';
+import { ShoppingCart, Camera, Receipt, Wallet, Bot, Package, FileText } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 
 const partnerMenu = [
   { to: '/partner/sales', icon: ShoppingCart, label: 'Jual' },
   { to: '/partner/expenses', icon: Receipt, label: 'Pengeluaran' },
   { to: '/partner/stock', icon: Package, label: 'Gudang' },
-  { to: '/partner/close-cash', icon: Wallet, label: 'Kas' },
-  { to: '/partner/ai', icon: Bot, label: 'Copilot' },
+  { to: '/partner/close-cash', icon: Wallet, label: 'Tutup Kas' },
+  { to: '/partner/notes', icon: FileText, label: 'Catatan' },
+  { to: '/partner/ai', icon: Bot, label: 'Asisten AI' },
 ];
 
 const ownerMobileMenu = [
-  { to: '/owner/dashboard', icon: ShoppingCart, label: 'Dash' },
+  { to: '/owner/dashboard', icon: ShoppingCart, label: 'Dasbor' },
   { to: '/owner/receipt', icon: Camera, label: 'Resi' },
-  { to: '/owner/reports', icon: Wallet, label: 'Report' },
-  { to: '/owner/ai', icon: Bot, label: 'Copilot' },
+  { to: '/owner/reports', icon: Wallet, label: 'Laporan' },
+  { to: '/owner/ai', icon: Bot, label: 'Asisten AI' },
 ];
 
 export default function BottomNav() {

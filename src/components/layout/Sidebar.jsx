@@ -7,7 +7,7 @@ import {
 import useAuthStore from '../../store/useAuthStore';
 
 const ownerMenu = [
-  { to: '/owner/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/owner/dashboard', icon: LayoutDashboard, label: 'Dasbor' },
   { to: '/owner/live-sales', icon: TrendingUp, label: 'Live Penjualan' },
   { to: '/owner/expenses', icon: Receipt, label: 'Pengeluaran' },
   { to: '/owner/receipt', icon: Camera, label: 'Upload Resi' },
@@ -17,8 +17,8 @@ const ownerMenu = [
   { to: '/owner/menu-hpp', icon: BookOpen, label: 'Menu & HPP' },
   { to: '/owner/reports', icon: BarChart3, label: 'Laporan' },
   { to: '/owner/revenue-allocation', icon: Percent, label: 'Bagi Omzet' },
-  { to: '/owner/activity', icon: Clock, label: 'Activity Log' },
-  { to: '/owner/ai', icon: Bot, label: 'AI Copilot' },
+  { to: '/owner/activity', icon: Clock, label: 'Riwayat Aktivitas' },
+  { to: '/owner/ai', icon: Bot, label: 'Asisten AI' },
   { to: '/owner/settings', icon: Settings, label: 'Pengaturan' },
 ];
 
@@ -76,7 +76,7 @@ export default function Sidebar() {
           onClick={logout}
           className="w-full text-center mt-2 text-xs font-medium text-white/50 hover:text-white transition-colors py-1"
         >
-          Sign out
+          Keluar
         </button>
       </div>
     </aside>

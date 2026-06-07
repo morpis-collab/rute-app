@@ -3,25 +3,10 @@ import { Plus, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
-import { formatRupiah, formatTanggalSingkat } from '../../utils/formatters';
+import { formatRupiah, formatTanggalSingkat, getPhotoUrl } from '../../utils/formatters';
 import { APPROVAL_STATUS } from '../../utils/constants';
 import ExpenseModal from '../../components/shared/ExpenseModal';
 import useToastStore from '../../store/useToastStore';
-
-const getPhotoUrl = (path) => {
-  if (!path) return '';
-  if (path.startsWith('blob:') || path.startsWith('data:')) return path;
-  const apiUrl = import.meta.env.VITE_API_URL || '';
-  if (apiUrl.startsWith('http')) {
-    try {
-      const origin = new URL(apiUrl).origin;
-      return `${origin}${path}`;
-    } catch {
-      return path;
-    }
-  }
-  return path;
-};
 
 export default function OwnerExpenses() {
   const [isModalOpen, setIsModalOpen] = useState(false);

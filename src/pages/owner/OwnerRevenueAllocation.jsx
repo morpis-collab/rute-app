@@ -361,7 +361,7 @@ export default function OwnerRevenueAllocation() {
               {/* Color coded Breakdown cards */}
               <div className="md:col-span-7 space-y-3">
                 {/* Pos 1: Bahan Baku */}
-                <div className="p-3 rounded-xl border border-l-4 border-l-[var(--color-band-2)] border-gray-100 bg-gray-55/20 flex justify-between items-center">
+                <div className="p-3 rounded-xl border border-l-4 border-l-[var(--color-band-2)] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-band-2)]" />
@@ -378,7 +378,7 @@ export default function OwnerRevenueAllocation() {
                 </div>
 
                 {/* Pos 2: Operasional */}
-                <div className="p-3 rounded-xl border border-l-4 border-l-[var(--color-accent-primary)] border-gray-100 bg-gray-55/20 flex justify-between items-center">
+                <div className="p-3 rounded-xl border border-l-4 border-l-[var(--color-accent-primary)] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-accent-primary)]" />
@@ -395,7 +395,7 @@ export default function OwnerRevenueAllocation() {
                 </div>
 
                 {/* Pos 3: Keuntungan Pribadi */}
-                <div className="p-3 rounded-xl border border-l-4 border-l-[#8b5a2b] border-gray-100 bg-gray-55/20 flex justify-between items-center">
+                <div className="p-3 rounded-xl border border-l-4 border-l-[#8b5a2b] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-[#8b5a2b]" />

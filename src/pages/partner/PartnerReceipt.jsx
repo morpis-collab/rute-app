@@ -11,9 +11,10 @@ import { EXPENSE_CATEGORIES } from '../../utils/constants';
 
 function localDateInput(value) {
   const date = value ? new Date(value) : new Date();
-  if (Number.isNaN(date.getTime())) return localDateInput();
-  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10);
+  if (Number.isNaN(date.getTime())) {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
+  }
+  return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
 }
 
 function dateInputToIso(value) {
@@ -350,57 +351,185 @@ export default function PartnerReceipt() {
                 Belum ada item terbaca. Tambahkan item manual dari resi.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="data-table">
-                  <thead className="bg-[#faf6ef]">
-                    <tr>
-                      <th className="min-w-44">Item</th>
-                      <th className="w-24">Jml</th>
-                      <th className="w-32">Harga</th>
-                      <th className="w-32">Kategori</th>
-                      <th className="w-10" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <input
-                            type="text"
-                            value={item.name}
-                            onChange={(event) => updateItem(item.id, 'name', event.target.value)}
-                            className="w-full border-b border-transparent bg-transparent p-1 text-xs outline-none hover:border-[var(--color-coffee-latte)] focus:border-[var(--color-band-2)]"
-                          />
-                        </td>
-                        <td>
-                          <div className="flex items-center gap-1">
+              <div>
+                {/* Desktop Layout - Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="data-table">
+                    <thead className="bg-[#faf6ef] dark:bg-[#221c19]">
+                      <tr>
+                        <th className="min-w-36">Item</th>
+                        <th className="w-20 text-center">Jml</th>
+                        <th className="w-28 text-right">Harga</th>
+                        <th className="w-32">Kategori</th>
+                        <th className="min-w-44">Gudang Bahan</th>
+                        <th className="w-10" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50/30 dark:hover:bg-white/5">
+                          <td className="align-top py-3">
+                            <input
+                              type="text"
+                              value={item.name}
+                              onChange={(event) => updateItem(item.id, 'name', event.target.value)}
+                              className="w-full border-b border-transparent bg-transparent p-1 text-xs outline-none hover:border-[var(--color-coffee-latte)] focus:border-[var(--color-band-2)] text-[var(--color-text-primary)]"
+                              placeholder="Nama item"
+                            />
+                          </td>
+                          <td className="align-top py-3">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="0"
+                                value={item.qty}
+                                onChange={(event) => updateItem(item.id, 'qty', event.target.value)}
+                                className="w-12 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-center font-mono text-xs bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]"
+                              />
+                              <input
+                                type="text"
+                                value={item.unit}
+                                onChange={(event) => updateItem(item.id, 'unit', event.target.value)}
+                                className="w-10 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-xs bg-[var(--color-bg-primary)] text-center text-[var(--color-text-primary)]"
+                                placeholder="pcs"
+                              />
+                            </div>
+                          </td>
+                          <td className="align-top py-3">
                             <input
                               type="number"
                               min="0"
-                              value={item.qty}
-                              onChange={(event) => updateItem(item.id, 'qty', event.target.value)}
-                              className="w-14 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-center font-mono text-xs"
+                              value={item.price}
+                              onChange={(event) => updateItem(item.id, 'price', event.target.value)}
+                              className="w-full rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-right font-mono text-xs bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]"
                             />
-                            <input
-                              type="text"
-                              value={item.unit}
-                              onChange={(event) => updateItem(item.id, 'unit', event.target.value)}
-                              className="w-12 rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-xs"
-                            />
-                          </div>
-                        </td>
-                        <td>
+                          </td>
+                          <td className="align-top py-3">
+                            <select
+                              className="form-select p-1 text-xs bg-[var(--color-bg-primary)] border border-[var(--color-coffee-latte)] text-[var(--color-text-primary)]"
+                              value={item.category}
+                              onChange={(event) => updateItem(item.id, 'category', event.target.value)}
+                            >
+                              {EXPENSE_CATEGORIES.filter(cat => !cat.ownerOnly || user?.role === 'owner').map(cat => (
+                                <option key={cat.value} value={cat.value}>{cat.label}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="align-top py-3">
+                            <div className="space-y-1 text-xs">
+                              <label className="flex items-center gap-1.5 font-medium cursor-pointer text-[var(--color-text-secondary)]">
+                                <input
+                                  type="checkbox"
+                                  checked={item.addsStock}
+                                  onChange={(e) => updateItem(item.id, 'addsStock', e.target.checked)}
+                                  className="rounded text-[var(--color-accent-primary)] focus:ring-0 w-3.5 h-3.5"
+                                />
+                                <span>Masuk Stok Gudang</span>
+                              </label>
+                              
+                              {item.addsStock && (
+                                <div className="space-y-1 fade-in">
+                                  <select
+                                    required
+                                    className="form-select p-1 text-xs w-full bg-[var(--color-bg-primary)] border border-[var(--color-coffee-latte)] text-[var(--color-text-primary)]"
+                                    value={item.ingredientId}
+                                    onChange={(event) => updateItem(item.id, 'ingredientId', event.target.value)}
+                                  >
+                                    <option value="">-- Pilih Bahan Baku --</option>
+                                    {ingredients.map(ing => (
+                                      <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>
+                                    ))}
+                                  </select>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="text-[10px] text-[var(--color-text-muted)] shrink-0">Qty masuk:</span>
+                                    <input
+                                      type="number"
+                                      min="0.001"
+                                      step="any"
+                                      value={item.stockQty}
+                                      onChange={(event) => updateItem(item.id, 'stockQty', event.target.value)}
+                                      className="w-14 rounded border border-[var(--color-coffee-latte)] px-1 py-0.5 text-center font-mono text-[10px] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]"
+                                    />
+                                    <span className="text-[10px] font-bold text-[var(--color-text-secondary)]">{item.stockUnit}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="align-top py-3 text-right">
+                            <button type="button" onClick={() => removeItem(item.id)} className="rounded p-1 text-[var(--color-accent-red)] hover:bg-red-50 transition-colors" title="Hapus item">
+                              <Trash2 size={15} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Layout - Card Stack */}
+                <div className="md:hidden divide-y divide-[var(--color-border)]">
+                  {items.map((item, index) => (
+                    <div key={item.id} className="py-4 bg-[var(--color-bg-card)] space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-bold text-[var(--color-text-secondary)]">Item #{index + 1}</span>
+                        <button type="button" onClick={() => removeItem(item.id)} className="rounded-lg p-1.5 text-[var(--color-accent-red)] hover:bg-red-55" title="Hapus item">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+
+                      {/* Item Name */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Nama Item</label>
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(event) => updateItem(item.id, 'name', event.target.value)}
+                          className="w-full rounded border border-[var(--color-coffee-latte)] px-3 py-2 text-xs bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:border-[var(--color-band-2)] focus:outline-none"
+                          placeholder="Contoh: Susu UHT Diamond"
+                        />
+                      </div>
+
+                      {/* Qty & Price row */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-1">
+                          <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Qty</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.qty}
+                            onChange={(event) => updateItem(item.id, 'qty', event.target.value)}
+                            className="w-full rounded border border-[var(--color-coffee-latte)] px-2 py-2 font-mono text-xs bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] text-center focus:border-[var(--color-band-2)] focus:outline-none"
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Satuan</label>
+                          <input
+                            type="text"
+                            value={item.unit}
+                            onChange={(event) => updateItem(item.id, 'unit', event.target.value)}
+                            className="w-full rounded border border-[var(--color-coffee-latte)] px-2 py-2 text-xs bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] text-center focus:border-[var(--color-band-2)] focus:outline-none"
+                            placeholder="pcs"
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Harga Satuan</label>
                           <input
                             type="number"
                             min="0"
                             value={item.price}
                             onChange={(event) => updateItem(item.id, 'price', event.target.value)}
-                            className="w-full rounded border border-[var(--color-coffee-latte)] px-1 py-1 text-right font-mono text-xs"
+                            className="w-full rounded border border-[var(--color-coffee-latte)] px-2 py-2 font-mono text-xs bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] text-right focus:border-[var(--color-band-2)] focus:outline-none"
                           />
-                        </td>
-                        <td>
+                        </div>
+                      </div>
+
+                      {/* Category & Subtotal row */}
+                      <div className="grid grid-cols-2 gap-3 items-end">
+                        <div>
+                          <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Kategori</label>
                           <select
-                            className="form-select p-1 text-xs"
+                            className="form-select p-2 text-xs bg-[var(--color-bg-primary)] border border-[var(--color-coffee-latte)] text-[var(--color-text-primary)] w-full font-normal"
                             value={item.category}
                             onChange={(event) => updateItem(item.id, 'category', event.target.value)}
                           >
@@ -408,19 +537,68 @@ export default function PartnerReceipt() {
                               <option key={cat.value} value={cat.value}>{cat.label}</option>
                             ))}
                           </select>
-                        </td>
-                        <td className="text-right">
-                          <button type="button" onClick={() => removeItem(item.id)} className="rounded p-1 text-[var(--color-accent-red)] hover:bg-red-50" title="Hapus item">
-                            <Trash2 size={15} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                        <div className="p-2 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border)] text-right">
+                          <span className="text-[9px] text-[var(--color-text-muted)] block font-semibold">SUBTOTAL</span>
+                          <span className="font-mono text-xs font-bold text-[var(--color-text-primary)]">{formatRupiah(item.total)}</span>
+                        </div>
+                      </div>
+
+                      {/* Stock Integration for Mobile */}
+                      <div className="p-3 bg-[var(--color-bg-secondary)]/50 rounded-xl border border-[var(--color-border)] space-y-2.5">
+                        <label className="flex items-center gap-2 font-semibold text-xs cursor-pointer text-[var(--color-text-secondary)]">
+                          <input
+                            type="checkbox"
+                            checked={item.addsStock}
+                            onChange={(e) => updateItem(item.id, 'addsStock', e.target.checked)}
+                            className="rounded text-[var(--color-accent-primary)] focus:ring-0 w-4 h-4"
+                          />
+                          <span>Masuk ke Stok Gudang</span>
+                        </label>
+
+                        {item.addsStock && (
+                          <div className="space-y-2 fade-in text-[var(--color-text-primary)]">
+                            <div>
+                              <label className="block text-[9px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Hubungkan ke Bahan Baku</label>
+                              <select
+                                required
+                                className="form-select p-2 text-xs bg-[var(--color-bg-primary)] border border-[var(--color-coffee-latte)] text-[var(--color-text-primary)] w-full font-normal"
+                                value={item.ingredientId}
+                                onChange={(event) => updateItem(item.id, 'ingredientId', event.target.value)}
+                              >
+                                <option value="">-- Pilih Bahan Baku --</option>
+                                {ingredients.map(ing => (
+                                  <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-1/2">
+                                <label className="block text-[9px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Qty Stok</label>
+                                <input
+                                  type="number"
+                                  min="0.001"
+                                  step="any"
+                                  value={item.stockQty}
+                                  onChange={(event) => updateItem(item.id, 'stockQty', event.target.value)}
+                                  className="w-full rounded border border-[var(--color-coffee-latte)] px-2 py-1.5 text-center font-mono text-xs bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none"
+                                />
+                              </div>
+                              <div className="w-1/2">
+                                <label className="block text-[9px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Satuan Stok</label>
+                                <span className="p-1.5 block text-xs font-bold text-[var(--color-text-secondary)] bg-white/70 dark:bg-black/20 rounded border border-gray-200/50 mt-0.5 text-center">{item.stockUnit}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            <div className="flex items-center justify-between border-t border-[var(--color-coffee-latte)] bg-[#faf6ef] p-4">
+            <div className="flex items-center justify-between border-t border-[var(--color-coffee-latte)] bg-[#faf6ef] dark:bg-[#221c19] p-4">
               <span className="text-sm font-semibold">Total Pengeluaran</span>
               <span className="font-mono text-lg font-bold text-[var(--color-accent-red)]">{formatRupiah(total)}</span>
             </div>

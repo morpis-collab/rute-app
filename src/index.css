@@ -7,55 +7,55 @@
 
 @theme {
   /* Core Palette */
-  --color-band-1: #4a6850;
-  --color-band-2: #3e5542;
-  --color-band-3: #8da693;
-  --color-band-4: #e2ebe4;
+  --color-band-1: #593e2b;
+  --color-band-2: #463020;
+  --color-band-3: #a3846c;
+  --color-band-4: #faf5f0;
 
   /* Extended Coffee */
-  --color-coffee-dark: #2e3d31;
-  --color-coffee-medium: #4a6850;
-  --color-coffee-light: #6f8f76;
-  --color-coffee-cream: #8da693;
-  --color-coffee-latte: #cce0d2;
-  --color-coffee-milk: #e2ebe4;
+  --color-coffee-dark: #332218;
+  --color-coffee-medium: #593e2b;
+  --color-coffee-light: #7c5c43;
+  --color-coffee-cream: #a3846c;
+  --color-coffee-latte: #ebdcd0;
+  --color-coffee-milk: #faf5f0;
 
   /* Backgrounds */
-  --color-bg-warm: #FAFBF9;
-  --color-bg-primary: #FAFBF9;
-  --color-bg-secondary: #ecf2ee;
+  --color-bg-warm: #FAF8F5;
+  --color-bg-primary: #FAF8F5;
+  --color-bg-secondary: #f0e6dd;
   --color-bg-card: #FFFFFF;
-  --color-bg-glass: rgba(255, 255, 255, 0.9);
+  --color-bg-glass: rgba(255, 255, 255, 0.95);
 
   /* Accents */
-  --color-accent-green: #588f6c;
-  --color-accent-red: #c4665a;
-  --color-accent-blue: #5a818f;
-  --color-accent-orange: #c49d5a;
-  --color-accent-secondary: #cce0d2;
-  --color-accent-warm: #bad1c1;
-  --color-accent-light: #ecf2ee;
-  --color-shadow: rgba(74, 104, 80, 0.15);
+  --color-accent-green: #5c7f67;
+  --color-accent-red: #b85c4f;
+  --color-accent-blue: #597d91;
+  --color-accent-orange: #c88b59;
+  --color-accent-secondary: #ebdcd0;
+  --color-accent-warm: #d7c5b4;
+  --color-accent-light: #f5efe8;
+  --color-shadow: rgba(89, 62, 43, 0.08);
   
   /* Fallbacks for existing tailwind classes used in app */
-  --color-accent-primary: #4a6850; 
-  --color-success: #588f6c;
-  --color-warning: #c49d5a;
-  --color-danger: #c4665a;
-  --color-info: #5a818f;
+  --color-accent-primary: #593e2b; 
+  --color-success: #5c7f67;
+  --color-warning: #c88b59;
+  --color-danger: #b85c4f;
+  --color-info: #597d91;
 
   /* Text */
-  --color-text-primary: #253028;
-  --color-text-secondary: #56695b;
-  --color-text-muted: rgba(86, 105, 91, 0.6);
+  --color-text-primary: #2b1f16;
+  --color-text-secondary: #654e3f;
+  --color-text-muted: rgba(101, 78, 63, 0.6);
 
   /* Borders */
-  --color-border: #d2ded5;
+  --color-border: #ebdcd0;
 
   /* Shadow */
-  --shadow-sm: 0 1px 3px 0 rgba(74, 104, 80, 0.08);
-  --shadow-md: 0 4px 12px -1px rgba(74, 104, 80, 0.12), 0 2px 6px -1px rgba(74, 104, 80, 0.06);
-  --shadow-lg: 0 12px 24px -4px rgba(74, 104, 80, 0.15);
+  --shadow-sm: 0 1px 3px 0 rgba(89, 62, 43, 0.05);
+  --shadow-md: 0 4px 12px -1px rgba(89, 62, 43, 0.08), 0 2px 6px -1px rgba(89, 62, 43, 0.04);
+  --shadow-lg: 0 12px 24px -4px rgba(89, 62, 43, 0.12);
 
   /* Radius */
   --radius-sm: 10px;
@@ -75,22 +75,22 @@
    Dark Mode Support (Espresso & Forest)
    ============================================ */
 .dark {
-  --color-bg-warm: #121613;
-  --color-bg-primary: #121613;
-  --color-bg-secondary: #1a221c;
-  --color-bg-card: #1c241e;
-  --color-bg-glass: rgba(28, 36, 30, 0.95);
-  --color-border: #2e3c31;
+  --color-bg-warm: #171311;
+  --color-bg-primary: #171311;
+  --color-bg-secondary: #221c19;
+  --color-bg-card: #28211d;
+  --color-bg-glass: rgba(40, 33, 29, 0.95);
+  --color-border: #3d322c;
   
-  --color-text-primary: #f0f5f1;
-  --color-text-secondary: #9db2a2;
-  --color-text-muted: rgba(157, 178, 162, 0.65);
+  --color-text-primary: #FAF5F0;
+  --color-text-secondary: #d2c3b8;
+  --color-text-muted: rgba(210, 195, 184, 0.6);
   
-  --color-coffee-latte: #2e3c31;
-  --color-coffee-milk: #1a221c;
-  --color-coffee-cream: #3b4d40;
-  --color-band-4: #2e3c31;
-  --color-accent-light: #1a221c;
+  --color-coffee-latte: #3d322c;
+  --color-coffee-milk: #221c19;
+  --color-coffee-cream: #4c3f37;
+  --color-band-4: #3d322c;
+  --color-accent-light: #221c19;
 }
 
 body, .glass-card, .kpi-card, .btn, .form-input, .form-select {

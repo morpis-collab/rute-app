@@ -2,22 +2,8 @@ import { useState } from 'react';
 import { ShieldCheck, Check, X } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
-import { formatRupiah, formatTanggal } from '../../utils/formatters';
+import { formatRupiah, formatTanggal, getPhotoUrl } from '../../utils/formatters';
 
-const getPhotoUrl = (path) => {
-  if (!path) return '';
-  if (path.startsWith('blob:') || path.startsWith('data:')) return path;
-  const apiUrl = import.meta.env.VITE_API_URL || '';
-  if (apiUrl.startsWith('http')) {
-    try {
-      const origin = new URL(apiUrl).origin;
-      return `${origin}${path}`;
-    } catch {
-      return path;
-    }
-  }
-  return path;
-};
 
 export default function OwnerApproval() {
   const { expenses, updateExpenseStatus } = useAppStore();

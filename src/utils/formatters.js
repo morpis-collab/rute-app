@@ -80,3 +80,22 @@ export function getGreeting() {
   if (hour < 18) return 'Selamat Sore';
   return 'Selamat Malam';
 }
+
+/**
+ * Dapatkan URL foto absolut dari path resi/bukti
+ */
+export function getPhotoUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('blob:') || path.startsWith('data:')) return path;
+  const apiUrl = import.meta.env.VITE_API_URL || '';
+  if (apiUrl.startsWith('http')) {
+    try {
+      const origin = new URL(apiUrl).origin;
+      return `${origin}${path}`;
+    } catch {
+      return path;
+    }
+  }
+  return path;
+}
+
