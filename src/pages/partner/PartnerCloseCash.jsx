@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAuthStore from '../../store/useAuthStore';
+import useAppStore from '../../store/useAppStore';
 import { getCashExpected, postCashClose, postCashOpen } from '../../services/apiClient';
 import { formatRupiah } from '../../utils/formatters';
+
+const BUSINESS_TIME_ZONE = 'Asia/Makassar';
 
 const cashSourceLabel = {
   openingCapital: 'Modal awal usaha',
@@ -12,27 +15,45 @@ const cashSourceLabel = {
   default: 'Uang kembalian bawaan (Rp 100.000)',
 };
 
+const drawerAccountIds = new Set(['acc-01', 'kas-utama']);
+const vaultAccountIds = new Set(['acc-brankas', 'kas-brankas']);
+
+const isDrawerAccount = (account) => drawerAccountIds.has(String(account?.id || ''));
+const isPhysicalCashAccount = (account) => ['cash', 'tunai'].includes(String(account?.type || '').toLowerCase());
+
+const getDefaultCashSourceId = (accounts) => (
+  accounts.find((account) => vaultAccountIds.has(String(account.id)))?.id || accounts[0]?.id || ''
+);
+
 export default function PartnerCloseCash() {
-  const getPastDates = () => {
+  const pastDates = useMemo(() => {
     const dates = [];
     const today = new Date();
     for (let i = 0; i < 5; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      dates.push(d.toLocaleDateString('en-CA'));
+      dates.push(d.toLocaleDateString('en-CA', { timeZone: BUSINESS_TIME_ZONE }));
     }
     return dates;
-  };
+  }, []);
 
-  const pastDates = getPastDates();
   const [selectedDate, setSelectedDate] = useState(pastDates[0]);
-  const [form, setForm] = useState({ cashActual: '', qris: '0', transfer: '0', notes: '' });
+  const [form, setForm] = useState({ cashActual: '', cashSourceAccountId: '', qris: '0', transfer: '0', notes: '' });
   const [status, setStatus] = useState('loading');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [expectedData, setExpectedData] = useState(null);
 
   const { user } = useAuthStore();
+  const cashAccounts = useAppStore((state) => state.cashAccounts);
+  const loadRemoteData = useAppStore((state) => state.loadRemoteData);
+  const cashSourceOptions = cashAccounts.filter((account) => (
+    account?.status !== 'inactive'
+    && isPhysicalCashAccount(account)
+    && !isDrawerAccount(account)
+  ));
+  const defaultCashSourceId = getDefaultCashSourceId(cashSourceOptions);
+  const selectedCashSourceId = form.cashSourceAccountId || defaultCashSourceId;
 
   useEffect(() => {
     async function fetchExpected() {
@@ -48,6 +69,7 @@ export default function PartnerCloseCash() {
           setForm((prev) => ({
             ...prev,
             cashActual: '100000', // Saran modal awal di input field
+            cashSourceAccountId: prev.cashSourceAccountId || defaultCashSourceId,
             qris: '0',
             transfer: '0',
             notes: '',
@@ -58,6 +80,7 @@ export default function PartnerCloseCash() {
         setForm((prev) => ({
           ...prev,
           cashActual: data.existingSession?.closingCash != null ? String(data.existingSession.closingCash) : '',
+          cashSourceAccountId: data.existingSession?.openingCashSourceAccountId || prev.cashSourceAccountId || defaultCashSourceId,
           qris: data.existingSession != null ? String(data.existingSession.qris) : String(data.salesByMethod?.qris || 0),
           transfer: data.existingSession != null ? String(data.existingSession.transfer) : String(data.salesByMethod?.transfer || 0),
           notes: data.existingSession?.notes || '',
@@ -77,12 +100,15 @@ export default function PartnerCloseCash() {
     }
 
     fetchExpected();
-  }, [selectedDate]);
+  }, [defaultCashSourceId, selectedDate]);
 
   const expectedCash = Number(expectedData?.expectedCash || 0);
   const cashActual = Number(form.cashActual || 0);
   const difference = cashActual - expectedCash;
-  const openingCashSource = cashSourceLabel[expectedData?.openingCashSource] || cashSourceLabel.default;
+  const selectedCashSource = cashSourceOptions.find((account) => String(account.id) === String(selectedCashSourceId));
+  const openingCashSource = expectedData?.openingCashSourceAccountName
+    ? `Diambil dari ${expectedData.openingCashSourceAccountName}`
+    : cashSourceLabel[expectedData?.openingCashSource] || cashSourceLabel.default;
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -98,6 +124,14 @@ export default function PartnerCloseCash() {
       setMessage('Modal awal tidak boleh negatif.');
       return;
     }
+    if (cashSourceOptions.length && !selectedCashSourceId) {
+      setMessage('Sumber kas untuk uang laci wajib dipilih.');
+      return;
+    }
+    if (selectedCashSource && Number(selectedCashSource.balance || 0) < val) {
+      setMessage(`Saldo ${selectedCashSource.name} tidak cukup untuk modal awal ${formatRupiah(val)}.`);
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -105,8 +139,10 @@ export default function PartnerCloseCash() {
       await postCashOpen({
         date: selectedDate,
         openingCash: val,
+        sourceCashAccountId: selectedCashSourceId || undefined,
         user: user?.name || 'Partner',
       });
+      await loadRemoteData();
       // Reload expected data and update to open state
       const data = await getCashExpected(selectedDate);
       setExpectedData(data);
@@ -114,8 +150,9 @@ export default function PartnerCloseCash() {
       setForm((prev) => ({
         ...prev,
         cashActual: '',
-        qris: data.salesByMethod?.qris || 0,
-        transfer: data.salesByMethod?.transfer || 0,
+        cashSourceAccountId: data.existingSession?.openingCashSourceAccountId || selectedCashSourceId,
+        qris: String(data.salesByMethod?.qris || 0),
+        transfer: String(data.salesByMethod?.transfer || 0),
         notes: '',
       }));
     } catch (err) {
@@ -203,6 +240,33 @@ export default function PartnerCloseCash() {
         )}
 
         <div className="mb-6 overflow-hidden rounded-xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+          <div className="mb-5">
+            <label className="mb-2 block text-sm font-bold text-[var(--color-text-secondary)]">Sumber Kas untuk Uang Laci</label>
+            {cashSourceOptions.length ? (
+              <>
+                <select
+                  value={selectedCashSourceId}
+                  onChange={(event) => updateForm('cashSourceAccountId', event.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-3.5 text-sm font-semibold text-[var(--color-text-primary)] focus:border-[var(--color-band-1)] focus:outline-none disabled:bg-gray-50"
+                >
+                  {cashSourceOptions.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name} - saldo {formatRupiah(account.balance || 0)}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                  Pilih akun kas yang uangnya diambil untuk mengisi laci kasir.
+                </p>
+              </>
+            ) : (
+              <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[#faf6ef] p-3 text-sm text-[var(--color-text-muted)]">
+                Belum ada akun sumber kas selain laci. Owner bisa menambahkan atau mengaktifkan Brankas di Kas Usaha.
+              </div>
+            )}
+          </div>
+
           <div className="mb-5">
             <label className="mb-2 block text-sm font-bold text-[var(--color-text-secondary)]">Modal Awal Laci (Uang Kembalian)</label>
             <div className="relative flex items-center">

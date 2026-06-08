@@ -510,7 +510,7 @@ Mengambil angka kas seharusnya sebelum Partner menutup kas. Endpoint ini sudah m
 Query:
 
 - `date` opsional, format `YYYY-MM-DD`. Default: business date hari ini.
-- `openingCash` opsional. Jika tidak dikirim, backend memakai `openingCash` dari cash session tanggal tersebut atau `0`.
+- `openingCash` opsional. Jika tidak dikirim, backend memakai `openingCash` dari cash session tanggal tersebut, modal awal usaha pada tanggal mulai bisnis, atau default Rp 100.000.
 
 Response:
 ```json
@@ -518,6 +518,8 @@ Response:
   "date": "2026-05-17",
   "openingCash": 100000,
   "openingCashSource": "query",
+  "openingCashSourceAccountId": "kas-brankas",
+  "openingCashSourceAccountName": "Brankas",
   "cashSales": 250000,
   "cashExpenses": 70000,
   "expectedCash": 280000,
@@ -533,6 +535,36 @@ Response:
     "status": "open"
   },
   "canClose": true
+}
+```
+
+`POST /cash/open`
+
+Request:
+```json
+{
+  "date": "2026-05-17",
+  "openingCash": 100000,
+  "sourceCashAccountId": "kas-brankas",
+  "user": "Partner"
+}
+```
+
+Membuka sesi kas harian dan mengisi laci kasir dengan modal awal. `sourceCashAccountId` opsional untuk kompatibilitas lama, tetapi frontend Partner mengirimnya agar uang laci tercatat diambil dari akun kas yang dipilih. Jika sumber dikirim, backend menolak sumber yang tidak ditemukan, sumber yang sama dengan laci, dan saldo sumber yang tidak cukup. Backend juga menolak tanggal yang sudah punya sesi kas.
+
+Response sukses `201`:
+```json
+{
+  "cashSession": {
+    "date": "2026-05-17",
+    "openingCash": 100000,
+    "openingCashSourceAccountId": "kas-brankas",
+    "openingCashSourceAccountName": "Brankas",
+    "status": "open",
+    "openedBy": "Partner",
+    "openedAt": "2026-05-17T01:00:00.000Z"
+  },
+  "state": {}
 }
 ```
 

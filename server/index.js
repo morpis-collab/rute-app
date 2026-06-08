@@ -184,10 +184,41 @@ function openingCashFromCapital(db, businessDate, existingSession, openingCash) 
   return { value: 100000, source: 'default' };
 }
 
+const cashDrawerAccountIds = new Set(['acc-01', 'kas-utama']);
+const defaultOpeningCashSourceIds = new Set(['acc-brankas', 'kas-brankas']);
+
+function isPhysicalCashAccount(account) {
+  return ['cash', 'tunai'].includes(String(account?.type || '').toLowerCase());
+}
+
+function isCashDrawerAccount(account) {
+  return cashDrawerAccountIds.has(String(account?.id || ''));
+}
+
+function findCashAccountById(db, id) {
+  return db.cashAccounts.find((account) => String(account.id) === String(id));
+}
+
+function findCashDrawerAccount(db) {
+  return db.cashAccounts.find(isCashDrawerAccount)
+    || db.cashAccounts.find(isPhysicalCashAccount);
+}
+
+function findDefaultOpeningCashSourceAccount(db, drawerAccount) {
+  const isNotDrawer = (account) => String(account?.id || '') !== String(drawerAccount?.id || '');
+  return findCashAccountById(db, 'acc-brankas')
+    || db.cashAccounts.find((account) => defaultOpeningCashSourceIds.has(String(account.id)) && isNotDrawer(account))
+    || db.cashAccounts.find((account) => /brankas/i.test(String(account.name || '')) && isPhysicalCashAccount(account) && isNotDrawer(account))
+    || db.cashAccounts.find((account) => isPhysicalCashAccount(account) && isNotDrawer(account));
+}
+
 function cashExpectedPayload(db, { date, openingCash } = {}) {
   const businessDate = date || today();
   const existingSession = db.cashSessions.find((session) => session.date === businessDate) || null;
   const resolvedOpeningCash = openingCashFromCapital(db, businessDate, existingSession, openingCash);
+  const openingCashSourceAccount = existingSession?.openingCashSourceAccountId
+    ? findCashAccountById(db, existingSession.openingCashSourceAccountId)
+    : null;
   const daySales = db.sales.filter((sale) => sale.date?.startsWith(businessDate));
   const dayExpenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate) && expense.status !== 'rejected');
   const salesSummary = getSalesSummary(daySales);
@@ -211,6 +242,8 @@ function cashExpectedPayload(db, { date, openingCash } = {}) {
     date: businessDate,
     openingCash: resolvedOpeningCash.value,
     openingCashSource: resolvedOpeningCash.source,
+    openingCashSourceAccountId: openingCashSourceAccount?.id || existingSession?.openingCashSourceAccountId || null,
+    openingCashSourceAccountName: openingCashSourceAccount?.name || existingSession?.openingCashSourceAccountName || null,
     cashSales,
     cashExpenses,
     expectedCash,
@@ -1508,21 +1541,33 @@ app.post('/api/cash/open', (req, res) => {
     }
 
     const openedBy = body.user || getAuthenticatedUser(db, req.auth)?.name || 'Partner';
+    const drawerAccount = findCashDrawerAccount(db);
+    const sourceCashAccountId = body.sourceCashAccountId || body.openingCashSourceAccountId || body.sourceAccountId || '';
+    const sourceAccount = sourceCashAccountId
+      ? findCashAccountById(db, sourceCashAccountId)
+      : findDefaultOpeningCashSourceAccount(db, drawerAccount);
+
+    if (sourceCashAccountId && !sourceAccount) {
+      return { error: 'Sumber kas untuk uang laci tidak ditemukan', statusCode: 400 };
+    }
+    if (drawerAccount && sourceAccount && String(drawerAccount.id) === String(sourceAccount.id)) {
+      return { error: 'Sumber kas tidak boleh sama dengan laci kasir', statusCode: 400 };
+    }
+    if (sourceCashAccountId && sourceAccount && Number(sourceAccount.balance || 0) < openingCash) {
+      return { error: `Saldo ${sourceAccount.name} tidak cukup untuk modal awal`, statusCode: 400 };
+    }
+
     const newSession = {
       date: businessDate,
       openingCash,
+      openingCashSourceAccountId: sourceAccount?.id || null,
+      openingCashSourceAccountName: sourceAccount?.name || null,
       status: 'open',
       openedBy,
       openedAt: new Date().toISOString(),
     };
 
     db.cashSessions = [newSession, ...db.cashSessions.filter((session) => session.date !== businessDate)];
-
-    let drawerAccount = db.cashAccounts.find((a) => String(a.id) === 'acc-01' || String(a.id) === 'kas-utama');
-    if (!drawerAccount) {
-      drawerAccount = db.cashAccounts.find((a) => a.type === 'cash' || a.type === 'tunai');
-    }
-    const brankasAccount = db.cashAccounts.find((a) => String(a.id) === 'acc-brankas');
 
     if (drawerAccount) {
       drawerAccount.balance = openingCash;
@@ -1537,16 +1582,16 @@ app.post('/api/cash/open', (req, res) => {
         user: openedBy,
       });
 
-      if (brankasAccount) {
-        brankasAccount.balance = Number(brankasAccount.balance || 0) - openingCash;
+      if (sourceAccount && openingCash > 0) {
+        sourceAccount.balance = Number(sourceAccount.balance || 0) - openingCash;
         db.cashTransactions.unshift({
           id: `CTX-TRSF-OPEN-${Date.now()}`,
           date: new Date().toISOString(),
           type: 'transfer',
           amount: openingCash,
           category: 'transfer',
-          description: `Ambil modal awal dari Brankas ke Laci tanggal ${businessDate}`,
-          fromAccountId: brankasAccount.id,
+          description: `Ambil modal awal dari ${sourceAccount.name} ke Laci tanggal ${businessDate}`,
+          fromAccountId: sourceAccount.id,
           toAccountId: drawerAccount.id,
           user: openedBy,
         });
