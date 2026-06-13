@@ -54,7 +54,7 @@ export default function OwnerApproval() {
                       <span className="text-[var(--color-text-secondary)]">
                         {item.name} x{item.qty} {item.unit || 'pcs'}
                         {item.addsStock && (
-                          <span className="text-[9px] px-1 ml-1.5 rounded bg-green-50 text-green-600 font-semibold border border-green-100">
+                          <span className="text-[9px] px-1 ml-1.5 rounded bg-success/10 text-success font-semibold border border-success/20">
                             + {item.stockQty} {item.stockUnit || item.unit} stok
                           </span>
                         )}

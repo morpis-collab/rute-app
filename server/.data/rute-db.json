@@ -546,6 +546,24 @@
       "paymentMethod": "cash",
       "user": "Partner",
       "estimatedHpp": 6235
+    },
+    {
+      "id": "TRX-1780911709681",
+      "date": "2026-06-08T12:00:00.000Z",
+      "items": [
+        {
+          "productId": 1,
+          "name": "Kopi Susu RUTE",
+          "qty": 1,
+          "price": 10000,
+          "subtotal": 10000,
+          "estimatedHpp": 6235
+        }
+      ],
+      "total": 10000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 6235
     }
   ],
   "expenses": [
@@ -1298,6 +1316,48 @@
       "action": "Penyesuaian saldo Brankas dari Rp 0 menjadi Rp 1.303.000 (selisih Rp 1.303.000)",
       "user": "Owner",
       "type": "kas"
+    },
+    {
+      "id": "ACT-1780911709681",
+      "time": "2026-06-08T12:00:00.000Z",
+      "action": "Input penjualan: Kopi Susu RUTE 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1781282610655",
+      "time": "2026-06-12T16:43:30.655Z",
+      "action": "Promo dibuat: Promo Test Codex",
+      "user": "Owner RUTE",
+      "type": "promo"
+    },
+    {
+      "id": "ACT-1781282610683",
+      "time": "2026-06-12T16:43:30.683Z",
+      "action": "Promo dihapus: Promo Test Codex",
+      "user": "Owner RUTE",
+      "type": "promo"
+    },
+    {
+      "id": "ACT-1781283032487",
+      "time": "2026-06-12T16:50:32.487Z",
+      "action": "Promo dibuat: Hemat",
+      "user": "Owner RUTE",
+      "type": "promo"
+    },
+    {
+      "id": "ACT-1781283048115",
+      "time": "2026-06-12T16:50:48.115Z",
+      "action": "Promo dihapus: Hemat",
+      "user": "Owner RUTE",
+      "type": "promo"
+    },
+    {
+      "id": "ACT-1781283050614",
+      "time": "2026-06-12T16:50:50.614Z",
+      "action": "Promo dihapus: Paket Hemat Sore",
+      "user": "Owner RUTE",
+      "type": "promo"
     }
   ],
   "cashSessions": [
@@ -1346,7 +1406,7 @@
       "id": "acc-01",
       "name": "Kas Tunai Outlet",
       "type": "tunai",
-      "balance": 1862000,
+      "balance": 1872000,
       "description": "Uang tunai fisik di laci kasir"
     },
     {
@@ -1376,9 +1436,42 @@
       "type": "tunai",
       "balance": 1303000,
       "status": "active"
+    },
+    {
+      "id": "acc-brankas-bahan-baku",
+      "name": "Brankas Bahan Baku",
+      "type": "tunai",
+      "balance": 0,
+      "status": "active"
+    },
+    {
+      "id": "acc-brankas-operasional",
+      "name": "Brankas Operasional",
+      "type": "tunai",
+      "balance": 0,
+      "status": "active"
+    },
+    {
+      "id": "acc-brankas-keuntungan",
+      "name": "Brankas Keuntungan",
+      "type": "tunai",
+      "balance": 0,
+      "status": "active"
     }
   ],
   "cashTransactions": [
+    {
+      "id": "CTX-SALE-1780911709681-TRX-1780911709681",
+      "date": "2026-06-08T12:00:00.000Z",
+      "type": "in",
+      "amount": 10000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Kopi Susu RUTE 1x",
+      "accountId": "acc-01",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780911709681",
+      "user": "Partner"
+    },
     {
       "id": "CTX-ADJ-BRANKAS-1780665272510",
       "date": "2026-06-05T13:14:32.510Z",
@@ -1458,5 +1551,6 @@
       "createdAt": "2026-05-16T21:00:00"
     }
   ],
-  "receiptUploads": []
+  "receiptUploads": [],
+  "promotions": []
 }

@@ -84,7 +84,7 @@ export default function AIAssistant() {
   };
 
   return (
-    <PageWrapper title="Business Copilot" subtitle={`AI Insights & Assistant ${source === 'local' ? '(Rule-Based Mode)' : source === 'ai' ? '(AI Mode)' : ''}`}>
+    <PageWrapper title="Asisten AI" subtitle={`Insight dan tanya jawab operasional ${source === 'local' ? '(Mode Aturan)' : source === 'ai' ? '(Mode AI)' : ''}`}>
       <div className="flex flex-col h-[calc(100vh-140px)]">
         
         {/* Scrollable Content */}
@@ -94,7 +94,7 @@ export default function AIAssistant() {
           {chat.length === 0 && (
             <div className="space-y-4 fade-in">
               <h3 className="text-[13px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">
-                Automated Insights {loadingInsights && <Loader2 size={12} className="inline animate-spin ml-1" />}
+                Insight Otomatis {loadingInsights && <Loader2 size={12} className="inline animate-spin ml-1" />}
               </h3>
               
               {!loadingInsights && insights.length === 0 && (

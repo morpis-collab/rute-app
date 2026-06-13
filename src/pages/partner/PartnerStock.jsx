@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { Plus, History } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { History, Package, Plus } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
+import { KpiTile, SectionHeader } from '../../components/common/DashboardPrimitives';
 import useAppStore from '../../store/useAppStore';
 import { formatRupiah } from '../../utils/formatters';
+import { getIngredientTone } from '../../utils/productVisuals';
 import RecordPurchaseModal from '../../components/shared/RecordPurchaseModal';
 import PurchaseHistoryModal from '../../components/shared/PurchaseHistoryModal';
 import useToastStore from '../../store/useToastStore';
@@ -14,6 +16,7 @@ export default function PartnerStock() {
 
   const ingredients = useAppStore((state) => state.ingredients);
   const addExpense = useAppStore((state) => state.addExpense);
+  const criticalCount = useMemo(() => (ingredients || []).filter((item) => item.status === 'kritis' || Number(item.stock || 0) <= Number(item.minStock || 0)).length, [ingredients]);
 
   const handleSavePurchase = async (expenseData) => {
     try {
@@ -35,62 +38,47 @@ export default function PartnerStock() {
   };
 
   return (
-    <PageWrapper title="Gudang & Harga Bahan" subtitle="Pantau harga modal & catat belanja">
-      <div className="mb-4">
-        <button
-          onClick={() => handleOpenPurchase(null)}
-          className="w-full py-3 px-4 rounded-xl bg-[var(--color-accent-primary)] hover:bg-[var(--color-accent-secondary)] text-white font-bold flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
-        >
-          <Plus size={18} />
-          Catat Belanja Bahan Baku
-        </button>
+    <PageWrapper title="Gudang Bahan" subtitle="Pantau harga modal dan catat belanja">
+      <div className="mb-4 grid grid-cols-2 gap-3">
+        <KpiTile icon={Package} label="Total Bahan" value={(ingredients || []).length} helper="Aktif" tone="blue" compact />
+        <KpiTile icon={Package} label="Stok Kritis" value={criticalCount} helper="Perlu restock" tone={criticalCount ? 'red' : 'green'} compact />
       </div>
 
-      <div className="bg-white border border-[var(--color-border)] rounded-xl overflow-hidden shadow-[var(--shadow-sm)]">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-[#FAF8F5] border-b border-[var(--color-border)] text-xs text-[var(--color-text-secondary)]">
-            <tr>
-              <th className="p-3 font-semibold">Bahan</th>
-              <th className="p-3 font-semibold text-right">Harga Modal</th>
-              <th className="p-3 font-semibold text-center w-24">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--color-border)]">
-            {ingredients.map(item => (
-              <tr key={item.id} className="hover:bg-[#FDFCFB] transition-colors">
-                <td className="p-3">
-                  <div className="font-bold text-[var(--color-text-primary)]">{item.name}</div>
-                  <div className="text-[10px] text-[var(--color-text-secondary)] mt-0.5 capitalize">
-                    {item.category === 'bahan_baku' ? 'Bahan Baku' : item.category === 'packaging' ? 'Packaging' : item.category}
+      <button onClick={() => handleOpenPurchase(null)} className="btn btn-primary mb-5 w-full">
+        <Plus size={18} /> Catat Belanja Bahan
+      </button>
+
+      <SectionHeader title="Daftar Bahan" subtitle="Tekan bahan untuk lihat riwayat atau catat belanja" />
+      <div className="space-y-2">
+        {(ingredients || []).map((item) => {
+          const tone = getIngredientTone(item);
+          return (
+            <div key={item.id} className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full" style={{ background: tone.tone, color: tone.accent }}>
+                  <Package size={18} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-black text-[var(--color-text-primary)]">{item.name}</p>
+                    <span className={`badge ${tone.label === 'Kritis' ? 'badge-danger' : 'badge-success'}`}>{tone.label}</span>
                   </div>
-                </td>
-                <td className="p-3 text-right">
-                  <span className="font-mono text-xs font-bold text-[var(--color-text-primary)]">
-                    {item.costPerUnit ? `${formatRupiah(item.costPerUnit)} / ${item.unit}` : 'Rp 0'}
-                  </span>
-                </td>
-                <td className="p-3 text-center">
-                  <div className="flex justify-center gap-2">
-                    <button 
-                      onClick={() => handleOpenPurchase(item.id)} 
-                      className="p-1.5 text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-light)]/20 rounded-lg cursor-pointer"
-                      title="Belanja Bahan ini"
-                    >
-                      <Plus size={16} />
-                    </button>
-                    <button 
-                      onClick={() => handleOpenHistory(item.id)} 
-                      className="p-1.5 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] rounded-lg cursor-pointer"
-                      title="Riwayat Belanja"
-                    >
-                      <History size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  <p className="mt-1 font-mono text-xs font-bold text-[var(--color-text-muted)]">
+                    {item.costPerUnit ? `${formatRupiah(item.costPerUnit)} / ${item.unit}` : 'Belum ada harga'}
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <button onClick={() => handleOpenPurchase(item.id)} className="touch-target rounded-[var(--radius-button)] text-[var(--color-band-1)] hover:bg-[var(--color-band-4)]" title="Belanja bahan ini">
+                    <Plus size={17} className="mx-auto" />
+                  </button>
+                  <button onClick={() => handleOpenHistory(item.id)} className="touch-target rounded-[var(--radius-button)] text-[var(--color-text-secondary)] hover:bg-[var(--color-coffee-milk)]" title="Riwayat belanja">
+                    <History size={17} className="mx-auto" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {isPurchaseModalOpen && (
@@ -101,13 +89,9 @@ export default function PartnerStock() {
           preselectedIngredientId={selectedIngredientId}
         />
       )}
-      
+
       {isHistoryModalOpen && (
-        <PurchaseHistoryModal
-          isOpen={isHistoryModalOpen}
-          onClose={() => setIsHistoryModalOpen(false)}
-          ingredientId={selectedIngredientId}
-        />
+        <PurchaseHistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} ingredientId={selectedIngredientId} />
       )}
     </PageWrapper>
   );

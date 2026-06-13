@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 
 /**
- * EmptyState — Komponen reusable untuk area kosong dengan animasi satisfying.
+ * EmptyState - Komponen reusable untuk area kosong dengan animasi satisfying.
  * 
  * Fitur animasi:
- * 1. Floating Coffee Beans — biji kopi SVG melayang pelan
- * 2. Lava Lamp Blob — gradient blob organik bergerak di background
- * 3. Particle Dust — partikel kecil bergerak random
+ * 1. Floating Coffee Beans/Leaves - melayang organik via Framer Motion loop
+ * 2. Lava Lamp Blob - gradient blob organik bergerak di background
+ * 3. Particle Dust - partikel kecil bergerak random via Canvas
  * 
  * @param {string} message - Teks yang ditampilkan
  * @param {React.ReactNode} icon - Ikon opsional (Lucide, dll)
@@ -15,6 +16,8 @@ import { useEffect, useRef } from 'react';
  * @param {boolean} showBeans - Tampilkan floating beans (default: true)
  * @param {boolean} showBlob - Tampilkan lava blob (default: true)
  * @param {boolean} showParticles - Tampilkan particle dust (default: true)
+ * @param {string} ctaLabel - Teks tombol aksi opsional
+ * @param {function} onCtaClick - Event click tombol aksi opsional
  */
 export default function EmptyState({
   message = 'Belum ada data.',
@@ -24,6 +27,8 @@ export default function EmptyState({
   showBeans = true,
   showBlob = true,
   showParticles = true,
+  ctaLabel,
+  onCtaClick,
 }) {
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
@@ -79,7 +84,7 @@ export default function EmptyState({
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(141, 166, 147, ${p.opacity})`;
+        ctx.fillStyle = `rgba(120, 150, 125, ${p.opacity})`;
         ctx.fill();
       });
 
@@ -103,16 +108,16 @@ export default function EmptyState({
   }, [showParticles]);
 
   const sizeClasses = {
-    sm: 'py-4 min-h-[80px]',
-    md: 'py-8 min-h-[120px]',
-    lg: 'py-12 min-h-[160px]',
+    sm: 'py-5 min-h-[90px]',
+    md: 'py-10 min-h-[140px]',
+    lg: 'py-14 min-h-[180px]',
   };
 
   return (
-    <div className={`empty-state-container relative overflow-hidden rounded-xl ${sizeClasses[size]}`}>
+    <div className={`empty-state-container relative overflow-hidden rounded-xl bg-gradient-to-br from-white to-[var(--color-coffee-milk)] border border-dashed border-[var(--color-border)] ${sizeClasses[size]}`}>
       {/* Lava Lamp Blob Background */}
       {showBlob && (
-        <div className="empty-state-blobs" aria-hidden="true">
+        <div className="empty-state-blobs absolute inset-0 pointer-events-none z-0" aria-hidden="true">
           <div className="empty-blob empty-blob-1" />
           <div className="empty-blob empty-blob-2" />
           <div className="empty-blob empty-blob-3" />
@@ -129,29 +134,80 @@ export default function EmptyState({
         />
       )}
 
-      {/* Floating Coffee Beans */}
+      {/* Floating Coffee Beans (Framer Motion Loop) */}
       {showBeans && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true" style={{ zIndex: 2 }}>
-          <CoffeeBean className="empty-bean empty-bean-1" style={{ left: '12%', top: '20%' }} />
-          <CoffeeBean className="empty-bean empty-bean-2" style={{ left: '75%', top: '30%' }} />
-          <CoffeeBean className="empty-bean empty-bean-3" style={{ left: '45%', top: '65%' }} />
+          <motion.div
+            animate={{ y: [0, -8, 0], rotate: [0, 10, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute"
+            style={{ left: '12%', top: '20%' }}
+          >
+            <CoffeeBean />
+          </motion.div>
+          <motion.div
+            animate={{ y: [0, -10, 0], rotate: [0, -12, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+            className="absolute"
+            style={{ left: '80%', top: '25%' }}
+          >
+            <CoffeeBean />
+          </motion.div>
+          <motion.div
+            animate={{ y: [0, -6, 0], rotate: [0, 8, 0] }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+            className="absolute"
+            style={{ left: '48%', top: '65%' }}
+          >
+            <CoffeeBean />
+          </motion.div>
         </div>
       )}
 
       {/* Content */}
-      <div className="relative flex flex-col items-center justify-center gap-2 px-4" style={{ zIndex: 3 }}>
+      <div className="relative flex flex-col items-center justify-center gap-2.5 px-4 text-center z-10">
         {icon && (
-          <div className="empty-state-icon text-[var(--color-band-3)] mb-1">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="text-[var(--color-band-3)] mb-1"
+          >
             {icon}
-          </div>
+          </motion.div>
         )}
-        <p className="text-xs text-[var(--color-text-muted)] italic text-center leading-relaxed">
+        
+        <motion.p
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-xs text-[var(--color-text-muted)] italic font-bold max-w-xs leading-normal"
+        >
           {message}
-        </p>
+        </motion.p>
+        
         {sub && (
-          <p className="text-[10px] text-[var(--color-text-muted)] opacity-60 text-center">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.6 }}
+            transition={{ delay: 0.1, duration: 0.4 }}
+            className="text-[10px] text-[var(--color-text-muted)] font-semibold max-w-xs"
+          >
             {sub}
-          </p>
+          </motion.p>
+        )}
+
+        {ctaLabel && onCtaClick && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onCtaClick}
+            className="mt-2 min-h-[36px] rounded-lg bg-[var(--color-band-1)] text-white text-[11px] font-black px-4.5 py-1.5 shadow-sm hover:shadow transition-all"
+          >
+            {ctaLabel}
+          </motion.button>
         )}
       </div>
     </div>
@@ -159,13 +215,11 @@ export default function EmptyState({
 }
 
 /**
- * SVG Coffee Bean — bentuk biji kopi minimalis
+ * SVG Coffee Bean - bentuk biji kopi/daun minimalis
  */
-function CoffeeBean({ className = '', style = {} }) {
+function CoffeeBean() {
   return (
     <svg
-      className={className}
-      style={style}
       width="16"
       height="20"
       viewBox="0 0 16 20"
@@ -185,7 +239,7 @@ function CoffeeBean({ className = '', style = {} }) {
         stroke="var(--color-band-1)"
         strokeWidth="1"
         strokeLinecap="round"
-        opacity="0.2"
+        opacity="0.25"
       />
     </svg>
   );

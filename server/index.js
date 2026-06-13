@@ -30,6 +30,8 @@ const RECEIPT_ALLOWED_MIME_TYPES = new Set([
 ]);
 const RECEIPT_CATEGORIES = new Set(['bahan_baku', 'packaging', 'operasional', 'pra_operasional', 'lainnya']);
 const EXPENSE_STATUSES = new Set(['auto_approved', 'pending', 'approved', 'rejected']);
+const PROMOTION_TYPES = new Set(['percentage', 'nominal', 'fixed_price', 'bundle', 'bogo']);
+const PROMOTION_STATUSES = new Set(['draft', 'scheduled', 'active', 'completed', 'canceled']);
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 },
@@ -94,7 +96,74 @@ function bootstrapPayload(db) {
     openingCapital: openingCapitalPayload(db.openingCapital, { includePersonal: false }),
     dailyNotes: db.dailyNotes,
     receiptUploads: db.receiptUploads,
+    promotions: (db.promotions || []).map((promotion) => promotionContractFrom(promotion)),
     dashboard: dashboardFrom(db),
+  };
+}
+
+function resolvePromotionStatus(promotion, businessDate = today()) {
+  const status = promotion.status || 'draft';
+  if (['draft', 'canceled'].includes(status)) return status;
+  if (promotion.endDate && promotion.endDate < businessDate) return 'completed';
+  if (promotion.startDate && promotion.startDate > businessDate) return 'scheduled';
+  return 'active';
+}
+
+function promotionContractFrom(promotion) {
+  return {
+    ...promotion,
+    targetProductIds: Array.isArray(promotion.targetProductIds)
+      ? promotion.targetProductIds.map((id) => String(id))
+      : [],
+    discountValue: Number(promotion.discountValue || 0),
+    targetSales: Number(promotion.targetSales || 0),
+    budget: Number(promotion.budget || 0),
+    computedStatus: resolvePromotionStatus(promotion),
+  };
+}
+
+function normalizePromotionPayload(body = {}, existing = {}) {
+  const name = String(body.name ?? existing.name ?? '').trim();
+  const type = String(body.type ?? existing.type ?? 'nominal').trim();
+  const status = String(body.status ?? existing.status ?? 'draft').trim();
+  const startDate = String(body.startDate ?? existing.startDate ?? '').trim();
+  const endDate = String(body.endDate ?? existing.endDate ?? '').trim();
+  const targetProductIds = Array.isArray(body.targetProductIds)
+    ? body.targetProductIds.map((id) => String(id))
+    : Array.isArray(existing.targetProductIds)
+      ? existing.targetProductIds.map((id) => String(id))
+      : [];
+  const discountValue = Number(body.discountValue ?? existing.discountValue ?? 0);
+  const targetSales = Number(body.targetSales ?? existing.targetSales ?? 0);
+  const budget = Number(body.budget ?? existing.budget ?? 0);
+
+  if (!name) return { error: 'Nama promo wajib diisi', statusCode: 400 };
+  if (!PROMOTION_TYPES.has(type)) return { error: 'Jenis promo tidak valid', statusCode: 400 };
+  if (!PROMOTION_STATUSES.has(status)) return { error: 'Status promo tidak valid', statusCode: 400 };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+    return { error: 'Tanggal promo wajib format YYYY-MM-DD', statusCode: 400 };
+  }
+  if (endDate < startDate) return { error: 'Tanggal selesai promo tidak boleh sebelum tanggal mulai', statusCode: 400 };
+  if (!Number.isFinite(discountValue) || discountValue < 0) return { error: 'Nilai promo harus angka positif', statusCode: 400 };
+  if (type === 'percentage' && discountValue > 100) return { error: 'Diskon persen maksimal 100%', statusCode: 400 };
+  if (!Number.isFinite(targetSales) || targetSales < 0) return { error: 'Target penjualan harus angka positif', statusCode: 400 };
+  if (!Number.isFinite(budget) || budget < 0) return { error: 'Budget promo harus angka positif', statusCode: 400 };
+
+  return {
+    promotion: {
+      ...existing,
+      name,
+      type,
+      status,
+      startDate,
+      endDate,
+      targetProductIds,
+      discountValue,
+      targetSales,
+      budget,
+      objective: String(body.objective ?? existing.objective ?? '').trim(),
+      notes: String(body.notes ?? existing.notes ?? '').trim(),
+    },
   };
 }
 
@@ -481,6 +550,108 @@ app.get('/api/dashboard', (req, res) => {
   res.json(dashboardFrom(db, req.query.date || today()));
 });
 
+app.get('/api/promotions', (req, res) => {
+  const db = readDb();
+  res.json((db.promotions || []).map((promotion) => promotionContractFrom(promotion)));
+});
+
+app.post('/api/promotions', requireRole('owner'), (req, res) => {
+  const result = updateDb((db) => {
+    const normalized = normalizePromotionPayload(req.body || {});
+    if (normalized.error) return normalized;
+
+    const now = new Date().toISOString();
+    const user = getAuthenticatedUser(db, req.auth)?.name || req.body?.user || 'Owner';
+    const promotion = {
+      id: req.body?.id || `PROMO-${Date.now()}`,
+      ...normalized.promotion,
+      createdBy: user,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    db.promotions = [promotion, ...(db.promotions || [])];
+    db.activityLog.push({
+      id: `ACT-${Date.now()}`,
+      time: now,
+      action: `Promo dibuat: ${promotion.name}`,
+      user,
+      type: 'promo',
+    });
+
+    return { promotion: promotionContractFrom(promotion), state: bootstrapPayload(db) };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
+  return res.status(201).json(result);
+});
+
+app.put('/api/promotions/:id', requireRole('owner'), (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const promotionIndex = (db.promotions || []).findIndex((promotion) => String(promotion.id) === String(id));
+    if (promotionIndex === -1) return { error: 'Promo tidak ditemukan', statusCode: 404 };
+
+    const normalized = normalizePromotionPayload(req.body || {}, db.promotions[promotionIndex]);
+    if (normalized.error) return normalized;
+
+    const now = new Date().toISOString();
+    const user = getAuthenticatedUser(db, req.auth)?.name || req.body?.user || 'Owner';
+    const promotion = {
+      ...normalized.promotion,
+      id: db.promotions[promotionIndex].id,
+      createdAt: db.promotions[promotionIndex].createdAt,
+      createdBy: db.promotions[promotionIndex].createdBy,
+      updatedAt: now,
+      updatedBy: user,
+    };
+
+    db.promotions[promotionIndex] = promotion;
+    db.activityLog.push({
+      id: `ACT-${Date.now()}`,
+      time: now,
+      action: `Promo diperbarui: ${promotion.name}`,
+      user,
+      type: 'promo',
+    });
+
+    return { promotion: promotionContractFrom(promotion), state: bootstrapPayload(db) };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
+  return res.json(result);
+});
+
+app.delete('/api/promotions/:id', requireRole('owner'), (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const promotion = (db.promotions || []).find((candidate) => String(candidate.id) === String(id));
+    if (!promotion) return { error: 'Promo tidak ditemukan', statusCode: 404 };
+
+    const isUsed = db.sales.some((sale) => (
+      (sale.items || []).some((item) => String(item.promoId || '') === String(id))
+    ));
+    if (isUsed) {
+      return { error: 'Promo sudah dipakai dalam transaksi. Ubah status menjadi Dibatalkan jika tidak ingin digunakan lagi.', statusCode: 400 };
+    }
+
+    db.promotions = db.promotions.filter((candidate) => String(candidate.id) !== String(id));
+    const now = new Date().toISOString();
+    db.activityLog.push({
+      id: `ACT-${Date.now()}`,
+      time: now,
+      action: `Promo dihapus: ${promotion.name}`,
+      user: getAuthenticatedUser(db, req.auth)?.name || req.query.user || 'Owner',
+      type: 'promo',
+    });
+
+    return { success: true, state: bootstrapPayload(db) };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
+  return res.json(result);
+});
+
 app.get('/api/products', (req, res) => {
   const db = readDb();
   res.json(refreshProductCosts(db.products, db.ingredients));
@@ -767,6 +938,10 @@ app.post('/api/sales', (req, res) => {
         qty,
         price,
         subtotal,
+        normalPrice: item.normalPrice == null ? price : Number(item.normalPrice || 0),
+        discountAmount: Number(item.discountAmount || 0),
+        promoId: item.promoId || null,
+        promoName: item.promoName || null,
         estimatedHpp: Math.round(Number(product?.hpp || item.estimatedHpp || 0) * qty),
       };
     });

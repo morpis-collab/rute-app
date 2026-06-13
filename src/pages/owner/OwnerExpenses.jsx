@@ -178,7 +178,7 @@ export default function OwnerExpenses() {
                                 ({item.qty} {item.unit} x {formatRupiah(item.price)})
                               </span>
                               {item.addsStock && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-green-50 text-green-600 font-semibold ml-2 border border-green-100">
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-success/10 text-success font-semibold ml-2 border border-success/20">
                                   + {item.stockQty} {item.stockUnit || item.unit} ke stok
                                 </span>
                               )}

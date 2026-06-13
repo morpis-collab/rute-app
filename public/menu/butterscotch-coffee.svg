@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Butterscotch Coffee">
+  <rect width="240" height="240" rx="28" fill="#FFF1D6"/>
+  <ellipse cx="120" cy="196" rx="60" ry="12" fill="#CF8A38" opacity=".25"/>
+  <path d="M78 68h84l-11 126H89z" fill="#FFF7EC" stroke="#7A4826" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M87 93h66l-6 63H94z" fill="#D58331"/>
+  <path d="M88 112c19-12 31 8 49 0 8-4 14-9 18-14l-5 54c-14 9-31-4-48 7-6 4-10 9-13 14z" fill="#F0C46B"/>
+  <path d="M91 150c19 8 33-4 50 4 8 4 12 11 15 18l-2 22H88z" fill="#5A2F1C"/>
+  <path d="M75 68c13-15 91-15 104 0-18 12-85 12-104 0z" fill="#FFFDF7" stroke="#7A4826" stroke-width="5"/>
+  <path d="M99 61c24 10 47 10 69 0" fill="none" stroke="#D58331" stroke-width="6" stroke-linecap="round"/>
+</svg>

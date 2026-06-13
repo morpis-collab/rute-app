@@ -241,8 +241,8 @@ export default function OwnerRevenueAllocation() {
                 <span className="text-gray-600">Total Akumulasi:</span>
                 <span className={`px-2 py-0.5 rounded-full font-mono text-[11px] font-bold ${
                   isValidAllocation
-                    ? 'bg-green-50 text-green-700 border border-green-150'
-                    : 'bg-red-50 text-red-700 border border-red-150'
+                    ? 'bg-success/10 text-success border border-success/20'
+                    : 'bg-danger/10 text-danger border border-danger/20'
                 }`}>
                   {totalPct}%
                 </span>
@@ -366,7 +366,7 @@ export default function OwnerRevenueAllocation() {
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-band-2)]" />
                       <span className="text-xs font-bold text-gray-800">Pos Bahan Baku</span>
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-green-50 text-green-700">{pctRawMaterials}%</span>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-success/10 text-success">{pctRawMaterials}%</span>
                     </div>
                     <p className="text-[10px] text-gray-500 mt-1 max-w-[200px] leading-relaxed">
                       Anggaran belanja kopi blend, susu UHT, sirup, gula, dan packaging cup.

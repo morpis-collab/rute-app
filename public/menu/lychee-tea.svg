@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Lychee Tea">
+  <rect width="240" height="240" rx="28" fill="#FFF2D9"/>
+  <ellipse cx="120" cy="196" rx="58" ry="12" fill="#D08B42" opacity=".23"/>
+  <path d="M78 68h84l-11 125H89z" fill="#FFFCF7" stroke="#7B4A2E" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M87 93h66l-6 86H94z" fill="#DA8F35"/>
+  <path d="M90 123c16-10 27 7 43-2 8-4 14-10 18-16l-5 70H95z" fill="#F4B657"/>
+  <circle cx="112" cy="132" r="15" fill="#FFF0BF" stroke="#D08B42" stroke-width="4"/>
+  <circle cx="137" cy="111" r="12" fill="#FFF0BF" stroke="#D08B42" stroke-width="4"/>
+  <path d="M75 68c13-15 91-15 104 0-18 12-85 12-104 0z" fill="#FFFDF7" stroke="#7B4A2E" stroke-width="5"/>
+</svg>

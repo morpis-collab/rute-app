@@ -7,7 +7,7 @@ export default function ActivityLog() {
   const reversedLog = [...activityLog].reverse();
 
   return (
-    <PageWrapper title="Activity Log" subtitle="Riwayat Aktivitas Sistem">
+    <PageWrapper title="Riwayat Aktivitas" subtitle="Log perubahan dan transaksi sistem">
       <div className="glass-card p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="data-table">

@@ -184,6 +184,26 @@ export async function getProducts() {
   return data;
 }
 
+export async function getPromotions() {
+  const { data } = await api.get('/promotions');
+  return data;
+}
+
+export async function postPromotion(payload) {
+  const { data } = await api.post('/promotions', payload);
+  return data;
+}
+
+export async function putPromotion(id, payload) {
+  const { data } = await api.put(`/promotions/${id}`, payload);
+  return data;
+}
+
+export async function deletePromotion(id) {
+  const { data } = await api.delete(`/promotions/${id}`);
+  return data;
+}
+
 export async function getStock() {
   const { data } = await api.get('/stock');
   return data;

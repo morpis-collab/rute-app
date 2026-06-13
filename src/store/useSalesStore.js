@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import useAppStore from './useAppStore';
+import { findBestPromotionForProduct } from '../utils/promotions';
 
 const useSalesStore = create((set, get) => ({
   // Cart state for partner quick sales
@@ -7,17 +8,22 @@ const useSalesStore = create((set, get) => ({
   paymentMethod: 'cash',
 
   // Add item to cart
-  addToCart: (productId) => {
-    const { products } = useAppStore.getState();
-    const product = products.find(p => p.id === productId);
+  addToCart: (productId, businessDate) => {
+    const { products, promotions } = useAppStore.getState();
+    const product = products.find((p) => String(p.id) === String(productId));
     if (!product) return;
+    const promoMatch = findBestPromotionForProduct(product, promotions, businessDate);
+    const normalPrice = Number(product.sellingPrice || product.price || 0);
+    const price = Number(promoMatch?.pricing.promoPrice ?? normalPrice);
+    const discountAmount = Number(promoMatch?.pricing.discountAmount || 0);
+    const promotion = promoMatch?.promotion || null;
 
     set((state) => {
-      const existing = state.cart.find(item => item.productId === productId);
+      const existing = state.cart.find((item) => String(item.productId) === String(productId));
       if (existing) {
         return {
           cart: state.cart.map(item =>
-            item.productId === productId
+            String(item.productId) === String(productId)
               ? { ...item, qty: item.qty + 1, subtotal: (item.qty + 1) * item.price }
               : item
           ),
@@ -27,9 +33,13 @@ const useSalesStore = create((set, get) => ({
         cart: [...state.cart, {
           productId,
           name: product.name,
-          price: product.sellingPrice,
+          price,
+          normalPrice,
+          discountAmount,
+          promoId: promotion?.id || null,
+          promoName: promotion?.name || null,
           qty: 1,
-          subtotal: product.sellingPrice,
+          subtotal: price,
         }],
       };
     });
@@ -38,14 +48,14 @@ const useSalesStore = create((set, get) => ({
   // Remove one qty from cart
   removeFromCart: (productId) => {
     set((state) => {
-      const existing = state.cart.find(item => item.productId === productId);
+      const existing = state.cart.find((item) => String(item.productId) === String(productId));
       if (!existing) return state;
       if (existing.qty <= 1) {
-        return { cart: state.cart.filter(item => item.productId !== productId) };
+        return { cart: state.cart.filter((item) => String(item.productId) !== String(productId)) };
       }
       return {
         cart: state.cart.map(item =>
-          item.productId === productId
+          String(item.productId) === String(productId)
             ? { ...item, qty: item.qty - 1, subtotal: (item.qty - 1) * item.price }
             : item
         ),
@@ -82,6 +92,10 @@ const useSalesStore = create((set, get) => ({
           qty: item.qty,
           price: item.price,
           subtotal: item.subtotal,
+          normalPrice: item.normalPrice,
+          discountAmount: item.discountAmount,
+          promoId: item.promoId,
+          promoName: item.promoName,
         })),
         total: get().getCartTotal(),
         paymentMethod,

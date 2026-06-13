@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Coklat">
+  <rect width="240" height="240" rx="28" fill="#F1E2D7"/>
+  <ellipse cx="120" cy="196" rx="58" ry="12" fill="#70412B" opacity=".22"/>
+  <path d="M78 68h84l-11 125H89z" fill="#FFF9F3" stroke="#533220" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M87 93h66l-6 87H94z" fill="#7B4A31"/>
+  <path d="M90 109c19-8 29 8 47 0 8-4 13-9 17-14l-4 45c-17 9-29-7-48 2-5 3-9 7-13 12z" fill="#B0744A"/>
+  <path d="M75 68c13-15 91-15 104 0-18 12-85 12-104 0z" fill="#FFFDF7" stroke="#533220" stroke-width="5"/>
+  <path d="M108 61h44" stroke="#70412B" stroke-width="6" stroke-linecap="round"/>
+</svg>

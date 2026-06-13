@@ -71,7 +71,7 @@ export default function OwnerReports() {
       
       {showToast && (
         <div className="fixed top-16 right-4 z-50 bg-[var(--color-accent-green)] text-white px-4 py-3 rounded shadow-[var(--shadow-md)] flex items-center gap-2 text-sm font-medium slide-in">
-          ✓ File laporan berhasil di-export!
+          File laporan berhasil di-export!
         </div>
       )}
 

@@ -87,7 +87,62 @@ Dipakai frontend saat app start untuk mengambil data awal:
 - `openingCapital`
 - `dailyNotes`
 - `receiptUploads`
+- `promotions`
 - `dashboard`
+
+## Promotions
+
+`GET /promotions`
+
+Mengambil daftar promo. Field `computedStatus` dihitung dari tanggal bisnis WITA.
+
+Response:
+```json
+[
+  {
+    "id": "PROMO-001",
+    "name": "Hemat Sore",
+    "type": "nominal",
+    "status": "active",
+    "computedStatus": "active",
+    "startDate": "2026-06-15",
+    "endDate": "2026-06-30",
+    "targetProductIds": ["1"],
+    "discountValue": 2000,
+    "targetSales": 100,
+    "budget": 200000,
+    "objective": "Dorong transaksi jam sore",
+    "notes": "Evaluasi setelah promo selesai"
+  }
+]
+```
+
+`POST /promotions`
+
+Khusus owner. Membuat promo baru. `type` valid: `percentage`, `nominal`, `fixed_price`, `bundle`, `bogo`. `status` valid: `draft`, `scheduled`, `active`, `completed`, `canceled`.
+
+Request minimal:
+```json
+{
+  "name": "Hemat Sore",
+  "type": "nominal",
+  "status": "active",
+  "startDate": "2026-06-15",
+  "endDate": "2026-06-30",
+  "targetProductIds": ["1"],
+  "discountValue": 2000,
+  "targetSales": 100,
+  "budget": 200000
+}
+```
+
+`PUT /promotions/:id`
+
+Khusus owner. Memperbarui promo, termasuk membatalkan promo dengan `status: "canceled"`.
+
+`DELETE /promotions/:id`
+
+Khusus owner. Menghapus promo jika belum pernah dipakai dalam transaksi penjualan.
 
 ## Sales
 
@@ -105,7 +160,7 @@ Response:
     "id": "TRX-001",
     "date": "2026-05-18T09:15:00.000Z",
     "items": [
-      { "productId": 1, "name": "Kopi Susu RUTE", "qty": 1, "price": 10000, "subtotal": 10000 }
+      { "productId": 1, "name": "Kopi Susu RUTE", "qty": 1, "price": 8000, "normalPrice": 10000, "discountAmount": 2000, "promoId": "PROMO-001", "promoName": "Hemat Sore", "subtotal": 8000 }
     ],
     "total": 10000,
     "paymentMethod": "cash",
@@ -120,7 +175,7 @@ Request minimal:
 ```json
 {
   "items": [
-    { "productId": 1, "name": "Kopi Susu RUTE", "qty": 1, "price": 10000, "subtotal": 10000 }
+    { "productId": 1, "name": "Kopi Susu RUTE", "qty": 1, "price": 8000, "normalPrice": 10000, "discountAmount": 2000, "promoId": "PROMO-001", "promoName": "Hemat Sore", "subtotal": 8000 }
   ],
   "total": 10000,
   "paymentMethod": "cash",

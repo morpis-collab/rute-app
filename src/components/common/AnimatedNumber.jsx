@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
+import { motion, useAnimation } from 'framer-motion';
 
 /**
- * AnimatedNumber — Angka yang beranimasi counting saat value berubah.
+ * AnimatedNumber - Angka yang beranimasi counting saat value berubah.
  * 
  * Fitur:
  * - Roll up/down animation saat value berubah
  * - Smooth easing (ease-out cubic)
  * - Format otomatis sebagai Rupiah
  * - Configurable duration
+ * - Micro-interaction: scale pulse & color flash (hijau jika naik, merah jika turun)
  * 
  * @param {number} value - Nilai akhir yang ditampilkan
  * @param {function} formatter - Fungsi format (default: formatRupiah)
@@ -21,10 +23,15 @@ export default function AnimatedNumber({
   className = '',
 }) {
   const [displayValue, setDisplayValue] = useState(value);
+  const [trend, setTrend] = useState('stable'); // 'up' | 'down' | 'stable'
+  
   const animFrameRef = useRef(null);
   const startTimeRef = useRef(null);
   const startValueRef = useRef(0);
   const currentValueRef = useRef(value);
+  const prevValueRef = useRef(value);
+  
+  const controls = useAnimation();
 
   useEffect(() => {
     const targetValue = Number(value) || 0;
@@ -35,6 +42,21 @@ export default function AnimatedNumber({
       setDisplayValue(targetValue);
       return;
     }
+
+    // Determine trend for color flash
+    const oldVal = prevValueRef.current;
+    if (targetValue > oldVal) {
+      setTrend('up');
+    } else if (targetValue < oldVal) {
+      setTrend('down');
+    }
+    prevValueRef.current = targetValue;
+
+    // Trigger scale pulse animation
+    controls.start({
+      scale: [1, 1.05, 1],
+      transition: { duration: 0.3, ease: 'easeOut' }
+    });
 
     startValueRef.current = startValue;
     startTimeRef.current = null;
@@ -56,6 +78,8 @@ export default function AnimatedNumber({
       } else {
         currentValueRef.current = targetValue;
         setDisplayValue(targetValue);
+        // Reset trend after some delay so the color goes back to normal
+        setTimeout(() => setTrend('stable'), 800);
       }
     };
 
@@ -66,12 +90,21 @@ export default function AnimatedNumber({
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [value, duration]);
+  }, [value, duration, controls]);
+
+  const getColorClass = () => {
+    if (trend === 'up') return 'text-success dark:text-success';
+    if (trend === 'down') return 'text-red-500 dark:text-red-400';
+    return '';
+  };
 
   return (
-    <span className={`animated-number ${className}`}>
+    <motion.span
+      animate={controls}
+      className={`animated-number inline-block transition-colors duration-300 font-mono ${getColorClass()} ${className}`}
+    >
       {formatter(displayValue)}
-    </span>
+    </motion.span>
   );
 }
 

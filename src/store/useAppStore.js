@@ -21,6 +21,9 @@ import {
   postProduct,
   putProduct,
   deleteProduct,
+  postPromotion,
+  putPromotion,
+  deletePromotion,
   postIngredient,
   deleteIngredient,
   postStockAdjustment,
@@ -40,6 +43,7 @@ const useAppStore = create((set, get) => ({
   cashTransactions: [],
   dailyNotes: [],
   receiptUploads: [],
+  promotions: [],
   openingCapital: null,
   apiStatus: 'idle',
 
@@ -65,6 +69,7 @@ const useAppStore = create((set, get) => ({
         cashTransactions: bootstrapData.cashTransactions || [],
         dailyNotes: bootstrapData.dailyNotes || [],
         receiptUploads: bootstrapData.receiptUploads || [],
+        promotions: bootstrapData.promotions || [],
         openingCapital: bootstrapData.openingCapital || null,
         apiStatus: 'connected',
       });
@@ -138,6 +143,7 @@ const useAppStore = create((set, get) => ({
           cashTransactions: result.state.cashTransactions || [],
           dailyNotes: result.state.dailyNotes || [],
           receiptUploads: result.state.receiptUploads || [],
+          promotions: result.state.promotions || [],
           apiStatus: 'connected',
         });
       }
@@ -248,6 +254,96 @@ const useAppStore = create((set, get) => ({
       await get().loadRemoteData();
     } catch (err) {
       console.error('Failed to delete product', err);
+      throw err;
+    }
+  },
+
+  addPromotion: async (promotionData) => {
+    try {
+      const result = await postPromotion(promotionData);
+      if (result?.state) {
+        set((state) => ({
+          ...state,
+          products: result.state.products || state.products,
+          sales: result.state.sales || state.sales,
+          expenses: result.state.expenses || state.expenses,
+          ingredients: result.state.ingredients || state.ingredients,
+          stockMovements: result.state.stockMovements || state.stockMovements,
+          activityLog: result.state.activityLog || state.activityLog,
+          cashSessions: result.state.cashSessions || state.cashSessions,
+          cashAccounts: result.state.cashAccounts || state.cashAccounts,
+          cashTransactions: result.state.cashTransactions || state.cashTransactions,
+          dailyNotes: result.state.dailyNotes || state.dailyNotes,
+          receiptUploads: result.state.receiptUploads || state.receiptUploads,
+          promotions: result.state.promotions || state.promotions,
+        }));
+      } else {
+        await get().loadRemoteData();
+      }
+      return result?.promotion;
+    } catch (err) {
+      console.error('Failed to add promotion', err);
+      await get().loadRemoteData();
+      throw err;
+    }
+  },
+
+  updatePromotion: async (id, promotionData) => {
+    try {
+      const result = await putPromotion(id, promotionData);
+      if (result?.state) {
+        set((state) => ({
+          ...state,
+          products: result.state.products || state.products,
+          sales: result.state.sales || state.sales,
+          expenses: result.state.expenses || state.expenses,
+          ingredients: result.state.ingredients || state.ingredients,
+          stockMovements: result.state.stockMovements || state.stockMovements,
+          activityLog: result.state.activityLog || state.activityLog,
+          cashSessions: result.state.cashSessions || state.cashSessions,
+          cashAccounts: result.state.cashAccounts || state.cashAccounts,
+          cashTransactions: result.state.cashTransactions || state.cashTransactions,
+          dailyNotes: result.state.dailyNotes || state.dailyNotes,
+          receiptUploads: result.state.receiptUploads || state.receiptUploads,
+          promotions: result.state.promotions || state.promotions,
+        }));
+      } else {
+        await get().loadRemoteData();
+      }
+      return result?.promotion;
+    } catch (err) {
+      console.error('Failed to update promotion', err);
+      await get().loadRemoteData();
+      throw err;
+    }
+  },
+
+  removePromotion: async (id) => {
+    try {
+      const result = await deletePromotion(id);
+      if (result?.state) {
+        set((state) => ({
+          ...state,
+          products: result.state.products || state.products,
+          sales: result.state.sales || state.sales,
+          expenses: result.state.expenses || state.expenses,
+          ingredients: result.state.ingredients || state.ingredients,
+          stockMovements: result.state.stockMovements || state.stockMovements,
+          activityLog: result.state.activityLog || state.activityLog,
+          cashSessions: result.state.cashSessions || state.cashSessions,
+          cashAccounts: result.state.cashAccounts || state.cashAccounts,
+          cashTransactions: result.state.cashTransactions || state.cashTransactions,
+          dailyNotes: result.state.dailyNotes || state.dailyNotes,
+          receiptUploads: result.state.receiptUploads || state.receiptUploads,
+          promotions: result.state.promotions || state.promotions,
+        }));
+      } else {
+        await get().loadRemoteData();
+      }
+      return result;
+    } catch (err) {
+      console.error('Failed to delete promotion', err);
+      await get().loadRemoteData();
       throw err;
     }
   },
@@ -363,6 +459,7 @@ const useAppStore = create((set, get) => ({
             cashTransactions: result.state.cashTransactions || state.cashTransactions,
             dailyNotes: result.state.dailyNotes || state.dailyNotes,
             receiptUploads: result.state.receiptUploads || state.receiptUploads,
+            promotions: result.state.promotions || state.promotions,
           } : {})
         }));
       }

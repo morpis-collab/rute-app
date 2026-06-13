@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Camera, Check, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, Camera, Check, FileScan, ImagePlus, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -68,6 +68,43 @@ function receiptErrorMessage(error) {
   if (error.response?.status === 403) return 'Tanggal resi masuk periode kas yang sudah ditutup.';
   if (error.response?.status === 400) return serverMessage || 'Item atau mapping stok belum valid.';
   return serverMessage || 'Resi belum tersimpan. Periksa koneksi backend lalu coba lagi.';
+}
+
+const steps = [
+  { id: 'upload', label: 'Upload' },
+  { id: 'scanning', label: 'AI' },
+  { id: 'preview', label: 'Review' },
+  { id: 'done', label: 'Selesai' },
+];
+
+function ReceiptStepper({ current }) {
+  const currentIndex = steps.findIndex((step) => step.id === current);
+  return (
+    <div className="mb-4 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-3 shadow-sm">
+      <div className="grid grid-cols-4 gap-2">
+        {steps.map((step, index) => {
+          const isActive = index === currentIndex;
+          const isDone = index < currentIndex;
+          return (
+            <div key={step.id} className="flex items-center gap-2">
+              <span className={`grid h-7 w-7 place-items-center rounded-full text-[11px] font-black ${
+                isDone
+                  ? 'bg-[var(--color-success)] text-white'
+                  : isActive
+                    ? 'bg-[var(--color-band-1)] text-white'
+                    : 'bg-[var(--color-coffee-milk)] text-[var(--color-text-muted)]'
+              }`}>
+                {isDone ? <Check size={14} /> : index + 1}
+              </span>
+              <span className={`hidden text-[11px] font-bold sm:inline ${isActive ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'}`}>
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function PartnerReceipt() {
@@ -264,48 +301,71 @@ export default function PartnerReceipt() {
 
   return (
     <PageWrapper title="Upload Resi" subtitle="Foto resi diproses AI, lalu konfirmasi sebelum masuk data">
+      <ReceiptStepper current={step} />
+
       {step === 'upload' && (
-        <div className="flex flex-col gap-3 py-4">
+        <div className="flex flex-col gap-3 py-2">
           {error && (
-            <div className="flex items-start gap-2 rounded border border-[var(--color-accent-red)] bg-red-50 p-3 text-xs text-[var(--color-accent-red)]">
+            <div className="flex items-start gap-2 rounded-[var(--radius-card)] border border-[#EAC1B8] bg-[#FFF0EC] p-3 text-xs font-semibold text-[#A04434]">
               <AlertCircle size={16} className="shrink-0" />
               <span>{error}</span>
             </div>
           )}
-          <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-6 transition-colors hover:bg-[#F5F5F5]">
-            <Camera size={24} className="text-[var(--color-text-secondary)]" />
-            <p className="text-sm font-medium text-[var(--color-text-primary)]">Ambil Foto</p>
-            <input type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
-          </label>
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 transition-colors hover:bg-[#F5F5F5]">
-            <ImagePlus size={18} className="text-[var(--color-text-secondary)]" />
-            <span className="text-sm font-medium">Pilih Galeri</span>
+          <div className="relative overflow-hidden rounded-[18px] border border-[var(--color-border)] bg-white p-5 shadow-sm">
+            <img src="/mascot-girl.png" alt="" className="pointer-events-none absolute -right-6 bottom-0 hidden w-32 opacity-25 sm:block" />
+            <div className="relative z-10 mb-4 flex items-start gap-3">
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--color-band-4)] text-[var(--color-band-1)]">
+                <Sparkles size={22} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-[var(--color-text-primary)]">Scan Resi AI</h3>
+                <p className="mt-1 max-w-md text-sm font-medium leading-relaxed text-[var(--color-text-muted)]">
+                  Foto resi supplier, cek hasil bacaan, lalu pilih item yang masuk stok gudang.
+                </p>
+              </div>
+            </div>
+            <label className="relative z-10 flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed border-[var(--color-band-3)] bg-[var(--color-coffee-milk)] p-6 transition-colors hover:bg-[var(--color-band-4)]">
+              <Camera size={28} className="text-[var(--color-band-1)]" />
+              <p className="text-sm font-black text-[var(--color-text-primary)]">Ambil Foto Resi</p>
+              <p className="text-xs font-semibold text-[var(--color-text-muted)]">Kamera belakang disarankan</p>
+              <input type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
+            </label>
+          </div>
+          <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-3 text-[var(--color-text-primary)] shadow-sm transition-colors hover:bg-[var(--color-coffee-milk)]">
+            <ImagePlus size={18} className="text-[var(--color-band-1)]" />
+            <span className="text-sm font-black">Pilih dari Galeri</span>
             <input type="file" accept="image/*" onChange={onFile} className="hidden" />
           </label>
         </div>
       )}
 
       {step === 'scanning' && (
-        <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <Loader2 size={24} className="animate-spin text-[var(--color-text-primary)]" />
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Memproses OCR...</p>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-[18px] border border-[var(--color-border)] bg-white py-16 shadow-sm">
+          <div className="grid h-16 w-16 place-items-center rounded-full bg-[var(--color-band-4)] text-[var(--color-band-1)]">
+            <Loader2 size={28} className="animate-spin" />
+          </div>
+          <p className="text-sm font-black text-[var(--color-text-primary)]">AI sedang membaca resi...</p>
+          <p className="text-xs font-semibold text-[var(--color-text-muted)]">Mendeteksi merchant, tanggal, item, harga, dan stok.</p>
         </div>
       )}
 
       {step === 'preview' && (
         <div className="space-y-4 fade-in">
-          <div className="flex items-end justify-between gap-3">
+          <div className="flex items-end justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-4 shadow-sm">
             <div>
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Cek & Konfirmasi Resi</h3>
+              <h3 className="flex items-center gap-2 text-base font-black text-[var(--color-text-primary)]">
+                <FileScan size={18} className="text-[var(--color-band-1)]" />
+                Cek & Konfirmasi Resi
+              </h3>
               <p className="text-xs text-[var(--color-text-muted)]">
                 Confidence {Math.round(Number(receipt?.confidence || 0) * 100)}% - {sourceLabel(receipt)}
               </p>
             </div>
-            <button onClick={handleUlangFoto} className="text-[11px] font-bold text-[var(--color-band-2)] hover:underline">Ulang Foto</button>
+            <button onClick={handleUlangFoto} className="btn btn-secondary min-h-10 px-3 text-xs">Ulang Foto</button>
           </div>
 
           {receipt?.requiresManualReview && (
-            <div className="flex items-start gap-2 rounded border border-[#e6c56a] bg-[#fff8dc] p-3 text-xs text-[#806100]">
+            <div className="flex items-start gap-2 rounded-[var(--radius-card)] border border-[#F3D7A7] bg-[#FFF6E8] p-3 text-xs font-semibold text-[#9A5D1B]">
               <AlertCircle size={16} className="shrink-0" />
               <span>OCR butuh koreksi manual. Isi merchant dan item sebelum simpan.</span>
             </div>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Red Velvet">
+  <rect width="240" height="240" rx="28" fill="#FBE7EA"/>
+  <ellipse cx="120" cy="196" rx="58" ry="12" fill="#B94F58" opacity=".2"/>
+  <path d="M80 68h80l-10 125H90z" fill="#FFF7F8" stroke="#7A333B" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M89 92h62l-6 86H95z" fill="#C85B62"/>
+  <path d="M90 104c17 7 28-5 43 1 8 3 13 9 18 15l-4 36c-18-8-32 5-49-2-5-2-8-5-10-8z" fill="#F0B7B9"/>
+  <path d="M83 68c13-14 87-14 100 0-18 12-82 12-100 0z" fill="#FFFDFD" stroke="#7A333B" stroke-width="5"/>
+  <circle cx="116" cy="63" r="5" fill="#C85B62"/>
+  <circle cx="136" cy="63" r="5" fill="#C85B62"/>
+</svg>

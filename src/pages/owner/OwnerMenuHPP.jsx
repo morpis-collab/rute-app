@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Plus, Trash2, Save, Check, Edit, X } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
+import { ProductThumb, SectionHeader } from '../../components/common/DashboardPrimitives';
 import useAppStore from '../../store/useAppStore';
 import useToastStore from '../../store/useToastStore';
 import { formatRupiah } from '../../utils/formatters';
@@ -440,12 +441,11 @@ export default function OwnerMenuHPP() {
 
       {/* Daftar Menu Section */}
       <div className="mt-8 glass-card p-5">
-        <h3 className="font-bold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-          <span>Daftar Menu & HPP</span>
-          <span className="text-xs bg-[var(--color-coffee-latte)] px-2 py-0.5 rounded-full text-[var(--color-text-secondary)] font-mono font-medium">
+        <SectionHeader title="Daftar Menu & HPP" subtitle="Harga jual, modal, margin, dan resep bahan">
+          <span className="rounded-[var(--radius-button)] bg-[var(--color-band-4)] px-2.5 py-1.5 font-mono text-xs font-black text-[var(--color-band-1)]">
             {products.length} Menu
           </span>
-        </h3>
+        </SectionHeader>
         
         {!products || products.length === 0 ? (
           <div className="text-center p-6 bg-[var(--color-bg-primary)] border border-dashed border-[var(--color-coffee-latte)] rounded-lg text-[var(--color-text-muted)] text-sm">
@@ -475,7 +475,9 @@ export default function OwnerMenuHPP() {
                   return (
                     <tr key={prod.id} className={`hover:bg-[#fbf9f4] transition-colors border-b border-[var(--color-coffee-latte)]/40 ${!prod.active ? 'opacity-60 bg-gray-50/50' : ''}`}>
                       <td className="py-3 px-4 font-medium text-[var(--color-text-primary)]">
-                        <div>
+                        <div className="flex items-center gap-3">
+                          <ProductThumb product={prod} size="sm" className="shrink-0" />
+                          <div className="min-w-0">
                           <span className="mr-2 text-base">{prod.emoji || '☕'}</span>
                           {prod.name}
                         </div>
@@ -492,6 +494,7 @@ export default function OwnerMenuHPP() {
                             })}
                           </div>
                         )}
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-sm text-[var(--color-text-secondary)]">
                         {prod.category === 'espresso_based' && 'Espresso Based'}

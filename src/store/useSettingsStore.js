@@ -13,6 +13,7 @@ const useSettingsStore = create(
       allocationRawMaterials: 50,
       allocationOperations: 20,
       allocationProfit: 30,
+      sidebarCollapsed: false,
 
       updateSettings: (newSettings) => {
         set((state) => ({ ...state, ...newSettings }));

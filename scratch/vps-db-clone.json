@@ -1,0 +1,4449 @@
+{
+  "meta": {
+    "app": "RUTE CoffeeOps",
+    "version": 1,
+    "seededAt": "2026-05-18T10:39:09.419Z"
+  },
+  "users": {
+    "owner": {
+      "id": 1,
+      "name": "Owner RUTE",
+      "email": "owner@rute.coffee",
+      "role": "owner",
+      "authMethod": "pin",
+      "active": true
+    },
+    "partner": {
+      "id": 2,
+      "name": "Partner Malinau",
+      "email": "partner@rute.coffee",
+      "role": "partner",
+      "authMethod": "pin",
+      "active": true
+    }
+  },
+  "products": [
+    {
+      "id": "PRD-1780153433944",
+      "name": "Ruang Coffee",
+      "category": "espresso_based",
+      "sellingPrice": 10000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 2,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 390,
+          "costPerUnit": 390
+        },
+        {
+          "ingredientId": 13,
+          "qty": 7,
+          "unit": "gram",
+          "cost": 595,
+          "costPerUnit": 85
+        },
+        {
+          "ingredientId": 18,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 52,
+          "costPerUnit": 52
+        },
+        {
+          "ingredientId": 15,
+          "qty": 9,
+          "unit": "gram",
+          "cost": 1530,
+          "costPerUnit": 170
+        },
+        {
+          "ingredientId": 14,
+          "qty": 35,
+          "unit": "ml",
+          "cost": 826,
+          "costPerUnit": 23.6
+        }
+      ],
+      "hpp": 3393,
+      "margin": 66,
+      "createdAt": "2026-05-30T15:03:53.945Z",
+      "updatedAt": "2026-05-31T12:44:13.044Z"
+    },
+    {
+      "id": "PRD-1780154183616",
+      "name": "Tengah Coffee",
+      "category": "espresso_based",
+      "sellingPrice": 13000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 1,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 390
+        },
+        {
+          "ingredientId": 13,
+          "qty": 7,
+          "unit": "gram",
+          "cost": 85
+        },
+        {
+          "ingredientId": 15,
+          "qty": 9,
+          "unit": "gram",
+          "cost": 170
+        },
+        {
+          "ingredientId": 18,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 52
+        },
+        {
+          "ingredientId": 12,
+          "qty": 30,
+          "unit": "ml",
+          "cost": 21
+        },
+        {
+          "ingredientId": 14,
+          "qty": 35,
+          "unit": "ml",
+          "cost": 23.6
+        }
+      ],
+      "hpp": 4023,
+      "margin": 69,
+      "createdAt": "2026-05-30T15:16:23.616Z"
+    },
+    {
+      "id": "PRD-1780154320189",
+      "name": "Americano",
+      "category": "espresso_based",
+      "sellingPrice": 10000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 2,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 390
+        },
+        {
+          "ingredientId": 16,
+          "qty": 16,
+          "unit": "gram",
+          "cost": 180
+        },
+        {
+          "ingredientId": 18,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 52
+        }
+      ],
+      "hpp": 3322,
+      "margin": 67,
+      "createdAt": "2026-05-30T15:18:40.189Z"
+    },
+    {
+      "id": "PRD-1780154402571",
+      "name": "Butterscotch Coffee",
+      "category": "espresso_based",
+      "sellingPrice": 20000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 1,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 390
+        },
+        {
+          "ingredientId": 12,
+          "qty": 100,
+          "unit": "ml",
+          "cost": 21
+        },
+        {
+          "ingredientId": 15,
+          "qty": 9,
+          "unit": "gram",
+          "cost": 170
+        },
+        {
+          "ingredientId": 14,
+          "qty": 35,
+          "unit": "ml",
+          "cost": 23.6
+        },
+        {
+          "ingredientId": 17,
+          "qty": 10,
+          "unit": "ml",
+          "cost": 151.316
+        }
+      ],
+      "hpp": 6359,
+      "margin": 68,
+      "createdAt": "2026-05-30T15:20:02.571Z"
+    },
+    {
+      "id": "PRD-1780230491297",
+      "name": "Matcha",
+      "category": "non-coffee",
+      "sellingPrice": 20000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 11,
+          "qty": 8,
+          "unit": "gram",
+          "cost": 311.111
+        },
+        {
+          "ingredientId": 14,
+          "qty": 35,
+          "unit": "ml",
+          "cost": 23.6
+        },
+        {
+          "ingredientId": 12,
+          "qty": 100,
+          "unit": "ml",
+          "cost": 21
+        },
+        {
+          "ingredientId": 1,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 390
+        },
+        {
+          "ingredientId": 18,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 52
+        }
+      ],
+      "hpp": 5857,
+      "margin": 71,
+      "createdAt": "2026-05-31T12:28:11.298Z"
+    },
+    {
+      "id": "PRD-1780231235920",
+      "name": "RED VELVET",
+      "category": "non-coffee",
+      "sellingPrice": 15000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 1,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 390,
+          "costPerUnit": 390
+        },
+        {
+          "ingredientId": 14,
+          "qty": 30,
+          "unit": "ml",
+          "cost": 708,
+          "costPerUnit": 23.6
+        },
+        {
+          "ingredientId": 12,
+          "qty": 80,
+          "unit": "ml",
+          "cost": 1680,
+          "costPerUnit": 21
+        },
+        {
+          "ingredientId": 18,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 52,
+          "costPerUnit": 52
+        },
+        {
+          "ingredientId": 4,
+          "qty": 20,
+          "unit": "gram",
+          "cost": 2775,
+          "costPerUnit": 138.75
+        }
+      ],
+      "hpp": 5605,
+      "margin": 63,
+      "createdAt": "2026-05-31T12:40:35.920Z",
+      "updatedAt": "2026-05-31T12:41:00.268Z"
+    },
+    {
+      "id": "PRD-1780231427332",
+      "name": "TARO",
+      "category": "non-coffee",
+      "sellingPrice": 15000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 1,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 390
+        },
+        {
+          "ingredientId": 19,
+          "qty": 25,
+          "unit": "gram",
+          "cost": 90
+        },
+        {
+          "ingredientId": 12,
+          "qty": 80,
+          "unit": "ml",
+          "cost": 21
+        },
+        {
+          "ingredientId": 14,
+          "qty": 25,
+          "unit": "ml",
+          "cost": 23.6
+        },
+        {
+          "ingredientId": 18,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 52
+        }
+      ],
+      "hpp": 4962,
+      "margin": 67,
+      "createdAt": "2026-05-31T12:43:47.332Z"
+    },
+    {
+      "id": "PRD-1780231525220",
+      "name": "COKLAT",
+      "category": "non-coffee",
+      "sellingPrice": 15000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [
+        {
+          "ingredientId": 1,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 390
+        },
+        {
+          "ingredientId": 5,
+          "qty": 20,
+          "unit": "gram",
+          "cost": 144.375
+        },
+        {
+          "ingredientId": 14,
+          "qty": 25,
+          "unit": "ml",
+          "cost": 23.6
+        },
+        {
+          "ingredientId": 12,
+          "qty": 80,
+          "unit": "ml",
+          "cost": 21
+        },
+        {
+          "ingredientId": 18,
+          "qty": 1,
+          "unit": "pcs",
+          "cost": 52
+        }
+      ],
+      "hpp": 5600,
+      "margin": 63,
+      "createdAt": "2026-05-31T12:45:25.220Z"
+    },
+    {
+      "id": "PRD-1780485383033",
+      "name": "Lychee Tea",
+      "category": "non-coffee",
+      "sellingPrice": 18000,
+      "active": true,
+      "emoji": "☕",
+      "recipe": [],
+      "hpp": 6500,
+      "margin": 64,
+      "createdAt": "2026-06-03T11:16:23.033Z"
+    }
+  ],
+  "sales": [
+    {
+      "id": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 4,
+          "price": 10000,
+          "subtotal": 40000,
+          "estimatedHpp": 13572
+        },
+        {
+          "productId": "PRD-1780154402571",
+          "name": "Butterscotch Coffee",
+          "qty": 2,
+          "price": 20000,
+          "subtotal": 40000,
+          "estimatedHpp": 12718
+        }
+      ],
+      "total": 80000,
+      "paymentMethod": "qris",
+      "user": "Partner",
+      "estimatedHpp": 26290
+    },
+    {
+      "id": "TRX-1780229949650",
+      "date": "2026-05-31T12:19:09.650Z",
+      "items": [
+        {
+          "productId": "PRD-1780154320189",
+          "name": "Americano",
+          "qty": 2,
+          "price": 10000,
+          "subtotal": 20000,
+          "estimatedHpp": 6644
+        }
+      ],
+      "total": 20000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 6644
+    },
+    {
+      "id": "TRX-1780230015033",
+      "date": "2026-05-31T12:20:15.033Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 1,
+          "price": 13000,
+          "subtotal": 13000,
+          "estimatedHpp": 4023
+        }
+      ],
+      "total": 13000,
+      "paymentMethod": "qris",
+      "user": "Partner",
+      "estimatedHpp": 4023
+    },
+    {
+      "id": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 5,
+          "price": 13000,
+          "subtotal": 65000,
+          "estimatedHpp": 20115
+        },
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 2,
+          "price": 10000,
+          "subtotal": 20000,
+          "estimatedHpp": 6786
+        }
+      ],
+      "total": 85000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 26901
+    },
+    {
+      "id": "TRX-1780235415946",
+      "date": "2026-05-31T13:50:15.946Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 1,
+          "price": 13000,
+          "subtotal": 13000,
+          "estimatedHpp": 4023
+        }
+      ],
+      "total": 13000,
+      "paymentMethod": "qris",
+      "user": "Partner",
+      "estimatedHpp": 4023
+    },
+    {
+      "id": "TRX-1780290319630",
+      "date": "2026-06-01T05:05:19.630Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 3,
+          "price": 13000,
+          "subtotal": 39000,
+          "estimatedHpp": 12069
+        }
+      ],
+      "total": 39000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 12069
+    },
+    {
+      "id": "TRX-1780290335062",
+      "date": "2026-06-01T05:05:35.062Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 3,
+          "price": 10000,
+          "subtotal": 30000,
+          "estimatedHpp": 10179
+        }
+      ],
+      "total": 30000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 10179
+    },
+    {
+      "id": "TRX-1780292631492",
+      "date": "2026-06-01T05:43:51.492Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 1,
+          "price": 10000,
+          "subtotal": 10000,
+          "estimatedHpp": 3393
+        }
+      ],
+      "total": 10000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 3393
+    },
+    {
+      "id": "TRX-1780292635237",
+      "date": "2026-06-01T05:43:55.237Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 1,
+          "price": 13000,
+          "subtotal": 13000,
+          "estimatedHpp": 4023
+        }
+      ],
+      "total": 13000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 4023
+    },
+    {
+      "id": "TRX-1780294566287",
+      "date": "2026-06-01T06:16:06.287Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 3,
+          "price": 10000,
+          "subtotal": 30000,
+          "estimatedHpp": 10179
+        }
+      ],
+      "total": 30000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 10179
+    },
+    {
+      "id": "TRX-1780294818259",
+      "date": "2026-06-01T06:20:18.259Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 1,
+          "price": 10000,
+          "subtotal": 10000,
+          "estimatedHpp": 3393
+        }
+      ],
+      "total": 10000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 3393
+    },
+    {
+      "id": "TRX-1780312076914",
+      "date": "2026-06-01T11:07:56.914Z",
+      "items": [
+        {
+          "productId": "PRD-1780154402571",
+          "name": "Butterscotch Coffee",
+          "qty": 1,
+          "price": 20000,
+          "subtotal": 20000,
+          "estimatedHpp": 6359
+        }
+      ],
+      "total": 20000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 6359
+    },
+    {
+      "id": "TRX-1780471787177",
+      "date": "2026-06-01T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 20,
+          "price": 10000,
+          "subtotal": 200000,
+          "estimatedHpp": 67860
+        },
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 8,
+          "price": 13000,
+          "subtotal": 104000,
+          "estimatedHpp": 32184
+        },
+        {
+          "productId": "PRD-1780154402571",
+          "name": "Butterscotch Coffee",
+          "qty": 3,
+          "price": 20000,
+          "subtotal": 60000,
+          "estimatedHpp": 19077
+        },
+        {
+          "productId": "PRD-1780154320189",
+          "name": "Americano",
+          "qty": 2,
+          "price": 10000,
+          "subtotal": 20000,
+          "estimatedHpp": 6644
+        },
+        {
+          "productId": "PRD-1780231525220",
+          "name": "COKLAT",
+          "qty": 2,
+          "price": 15000,
+          "subtotal": 30000,
+          "estimatedHpp": 11200
+        }
+      ],
+      "total": 414000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 136965
+    },
+    {
+      "id": "TRX-1780471791513",
+      "date": "2026-06-01T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 1,
+          "price": 13000,
+          "subtotal": 13000,
+          "estimatedHpp": 4023
+        }
+      ],
+      "total": 13000,
+      "paymentMethod": "qris",
+      "user": "Partner",
+      "estimatedHpp": 4023
+    },
+    {
+      "id": "TRX-1780472313316",
+      "date": "2026-06-02T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 5,
+          "price": 13000,
+          "subtotal": 65000,
+          "estimatedHpp": 20115
+        },
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 13,
+          "price": 10000,
+          "subtotal": 130000,
+          "estimatedHpp": 44109
+        },
+        {
+          "productId": "PRD-1780231235920",
+          "name": "RED VELVET",
+          "qty": 1,
+          "price": 15000,
+          "subtotal": 15000,
+          "estimatedHpp": 5605
+        },
+        {
+          "productId": "PRD-1780154320189",
+          "name": "Americano",
+          "qty": 1,
+          "price": 10000,
+          "subtotal": 10000,
+          "estimatedHpp": 3322
+        },
+        {
+          "productId": "PRD-1780231525220",
+          "name": "COKLAT",
+          "qty": 2,
+          "price": 15000,
+          "subtotal": 30000,
+          "estimatedHpp": 11200
+        }
+      ],
+      "total": 250000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 84351
+    },
+    {
+      "id": "TRX-1780472318368",
+      "date": "2026-06-02T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 2,
+          "price": 13000,
+          "subtotal": 26000,
+          "estimatedHpp": 8046
+        }
+      ],
+      "total": 26000,
+      "paymentMethod": "qris",
+      "user": "Partner",
+      "estimatedHpp": 8046
+    },
+    {
+      "id": "TRX-1780484446671",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 1,
+          "price": 10000,
+          "subtotal": 10000,
+          "estimatedHpp": 3393
+        }
+      ],
+      "total": 10000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 3393
+    },
+    {
+      "id": "TRX-1780484452232",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 3,
+          "price": 10000,
+          "subtotal": 30000,
+          "estimatedHpp": 10179
+        }
+      ],
+      "total": 30000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 10179
+    },
+    {
+      "id": "TRX-1780484463197",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 2,
+          "price": 10000,
+          "subtotal": 20000,
+          "estimatedHpp": 6786
+        }
+      ],
+      "total": 20000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 6786
+    },
+    {
+      "id": "TRX-1780484491778",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780154402571",
+          "name": "Butterscotch Coffee",
+          "qty": 1,
+          "price": 20000,
+          "subtotal": 20000,
+          "estimatedHpp": 6359
+        }
+      ],
+      "total": 20000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 6359
+    },
+    {
+      "id": "TRX-1780484497556",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 2,
+          "price": 13000,
+          "subtotal": 26000,
+          "estimatedHpp": 8046
+        }
+      ],
+      "total": 26000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 8046
+    },
+    {
+      "id": "TRX-1780484502627",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780231525220",
+          "name": "COKLAT",
+          "qty": 1,
+          "price": 15000,
+          "subtotal": 15000,
+          "estimatedHpp": 5600
+        }
+      ],
+      "total": 15000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 5600
+    },
+    {
+      "id": "TRX-1780484507027",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 2,
+          "price": 13000,
+          "subtotal": 26000,
+          "estimatedHpp": 8046
+        }
+      ],
+      "total": 26000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 8046
+    },
+    {
+      "id": "TRX-1780484511979",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 1,
+          "price": 10000,
+          "subtotal": 10000,
+          "estimatedHpp": 3393
+        }
+      ],
+      "total": 10000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 3393
+    },
+    {
+      "id": "TRX-1780484518760",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 2,
+          "price": 10000,
+          "subtotal": 20000,
+          "estimatedHpp": 6786
+        }
+      ],
+      "total": 20000,
+      "paymentMethod": "qris",
+      "user": "Partner",
+      "estimatedHpp": 6786
+    },
+    {
+      "id": "TRX-1780484526130",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780231525220",
+          "name": "COKLAT",
+          "qty": 1,
+          "price": 15000,
+          "subtotal": 15000,
+          "estimatedHpp": 5600
+        }
+      ],
+      "total": 15000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 5600
+    },
+    {
+      "id": "TRX-1780484528862",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780230491297",
+          "name": "Matcha",
+          "qty": 1,
+          "price": 20000,
+          "subtotal": 20000,
+          "estimatedHpp": 5857
+        }
+      ],
+      "total": 20000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 5857
+    },
+    {
+      "id": "TRX-1780485404080",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780485383033",
+          "name": "Lychee Tea",
+          "qty": 1,
+          "price": 18000,
+          "subtotal": 18000,
+          "estimatedHpp": 6500
+        }
+      ],
+      "total": 18000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 6500
+    },
+    {
+      "id": "TRX-1780495074758",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780153433944",
+          "name": "Ruang Coffee",
+          "qty": 6,
+          "price": 10000,
+          "subtotal": 60000,
+          "estimatedHpp": 20358
+        }
+      ],
+      "total": 60000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 20358
+    },
+    {
+      "id": "TRX-1780495079140",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780154183616",
+          "name": "Tengah Coffee",
+          "qty": 1,
+          "price": 13000,
+          "subtotal": 13000,
+          "estimatedHpp": 4023
+        }
+      ],
+      "total": 13000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 4023
+    },
+    {
+      "id": "TRX-1780495085820",
+      "date": "2026-06-03T12:00:00.000Z",
+      "items": [
+        {
+          "productId": "PRD-1780154402571",
+          "name": "Butterscotch Coffee",
+          "qty": 1,
+          "price": 20000,
+          "subtotal": 20000,
+          "estimatedHpp": 6359
+        }
+      ],
+      "total": 20000,
+      "paymentMethod": "cash",
+      "user": "Partner",
+      "estimatedHpp": 6359
+    }
+  ],
+  "expenses": [
+    {
+      "id": "EXP-1780485954891-140",
+      "date": "2026-06-03T12:00:00.000Z",
+      "category": "lainnya",
+      "description": "Admin Bank",
+      "items": [
+        {
+          "name": "Admin Bank",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 22000,
+          "total": 22000,
+          "addsStock": false
+        }
+      ],
+      "total": 22000,
+      "status": "approved",
+      "photoUrl": null,
+      "proofUrl": null,
+      "sourceType": "manual",
+      "cashAccountId": "qris-bni",
+      "user": "Owner RUTE",
+      "updatedAt": "2026-06-03T11:25:59.507Z"
+    },
+    {
+      "id": "EXP-1780484621646-36",
+      "date": "2026-06-03T12:00:00.000Z",
+      "category": "bahan_baku",
+      "description": "Creamer Fiber",
+      "items": [
+        {
+          "name": "Creamer Fiber",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 42000,
+          "total": 42000,
+          "addsStock": false,
+          "amount": 42000
+        }
+      ],
+      "total": 42000,
+      "status": "approved",
+      "photoUrl": null,
+      "proofUrl": null,
+      "sourceType": "manual",
+      "cashAccountId": "kas-utama",
+      "user": "Partner Malinau"
+    },
+    {
+      "date": "2026-06-02T12:00:00.000Z",
+      "description": "ES BATU",
+      "total": 30000,
+      "category": "bahan_baku",
+      "items": [
+        {
+          "name": "ES BATU",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 30000,
+          "total": 30000,
+          "addsStock": false
+        }
+      ],
+      "user": "Owner RUTE",
+      "id": "EXP-1780473445729",
+      "cashAccountId": "kas-utama"
+    },
+    {
+      "date": "2026-06-02T12:00:00.000Z",
+      "description": "CREAMER 280Gr",
+      "total": 42000,
+      "category": "bahan_baku",
+      "items": [
+        {
+          "name": "CREAMER 280Gr",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 42000,
+          "total": 42000,
+          "addsStock": false
+        }
+      ],
+      "user": "Owner RUTE",
+      "id": "EXP-1780473444729",
+      "cashAccountId": "qris-bni",
+      "updatedAt": "2026-06-03T11:21:03.223Z"
+    },
+    {
+      "date": "2026-06-02T12:00:00.000Z",
+      "description": "SUSU UHT",
+      "total": 25000,
+      "category": "operasional",
+      "items": [
+        {
+          "name": "SUSU UHT",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 25000,
+          "total": 25000,
+          "addsStock": false
+        }
+      ],
+      "user": "Owner RUTE",
+      "id": "EXP-1780473443730",
+      "cashAccountId": "kas-utama"
+    },
+    {
+      "date": "2026-06-02T12:00:00.000Z",
+      "description": "SUSU UHT",
+      "total": 25000,
+      "category": "operasional",
+      "items": [
+        {
+          "name": "SUSU UHT",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 25000,
+          "total": 25000,
+          "addsStock": false
+        }
+      ],
+      "user": "Owner RUTE",
+      "id": "EXP-1780473442730",
+      "cashAccountId": "qris-bni",
+      "updatedAt": "2026-06-03T11:20:55.902Z"
+    },
+    {
+      "date": "2026-06-02T12:00:00.000Z",
+      "description": "Tisu",
+      "total": 43000,
+      "category": "operasional",
+      "items": [
+        {
+          "name": "Tisu",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 43000,
+          "total": 43000,
+          "addsStock": false
+        }
+      ],
+      "user": "Owner RUTE",
+      "id": "EXP-1780473441730",
+      "cashAccountId": "qris-bni",
+      "updatedAt": "2026-06-03T11:20:35.170Z"
+    },
+    {
+      "date": "2026-06-02T12:00:00.000Z",
+      "description": "SKM",
+      "total": 68000,
+      "category": "bahan_baku",
+      "items": [
+        {
+          "name": "SKM",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 68000,
+          "total": 68000,
+          "addsStock": false
+        }
+      ],
+      "user": "Owner RUTE",
+      "id": "EXP-1780473440730",
+      "cashAccountId": "qris-bni",
+      "updatedAt": "2026-06-03T11:20:18.918Z"
+    },
+    {
+      "date": "2026-06-01T12:00:00.000Z",
+      "description": "Es Batu",
+      "total": 15000,
+      "category": "bahan_baku",
+      "items": [
+        {
+          "name": "Es Batu",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 15000,
+          "total": 15000,
+          "addsStock": false
+        }
+      ],
+      "user": "Owner RUTE",
+      "id": "EXP-1780473439730",
+      "cashAccountId": "kas-utama"
+    },
+    {
+      "date": "2026-06-01T12:00:00.000Z",
+      "description": "Gelas 12oz (Oval)",
+      "total": 33000,
+      "category": "packaging",
+      "items": [
+        {
+          "name": "Gelas 12oz (Oval)",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 33000,
+          "total": 33000,
+          "addsStock": false
+        }
+      ],
+      "user": "Owner RUTE",
+      "id": "EXP-1780473438730",
+      "cashAccountId": "kas-utama"
+    },
+    {
+      "date": "2026-06-01T12:00:00.000Z",
+      "description": "Gelas 16oz (Oval)",
+      "total": 33000,
+      "category": "packaging",
+      "items": [
+        {
+          "name": "Gelas 16oz (Oval)",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 33000,
+          "total": 33000,
+          "addsStock": false
+        }
+      ],
+      "user": "Partner Malinau",
+      "id": "EXP-1780473437730",
+      "cashAccountId": "kas-utama"
+    },
+    {
+      "id": "EXP-1779544307006",
+      "date": "2026-05-15T04:00:00.000Z",
+      "category": "bahan_baku",
+      "description": "Resi Perlengkapan Kopi Ringkas",
+      "items": [
+        {
+          "id": 1,
+          "name": "Rokpresso",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 4200000,
+          "total": 4200000,
+          "amount": 4200000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 2,
+          "name": "Grinder Rockwood HK-021 Hitam",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 2450000,
+          "total": 2450000,
+          "amount": 2450000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 3,
+          "name": "Cup Holder 4 Grind",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 180000,
+          "total": 180000,
+          "amount": 180000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 4,
+          "name": "Timbangan 3kg",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 88000,
+          "total": 88000,
+          "amount": 88000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 5,
+          "name": "Knockbox Transparant Besar",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 92000,
+          "total": 92000,
+          "amount": 92000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 6,
+          "name": "Tamping Mat Sedang",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 34000,
+          "total": 34000,
+          "amount": 34000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 7,
+          "name": "Makaron ROK Brown 49MM",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 220000,
+          "total": 220000,
+          "amount": 220000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 8,
+          "name": "Set Matcha Bering White New",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 195000,
+          "total": 195000,
+          "amount": 195000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 9,
+          "name": "Ketel Gooseneck 350ml Silver No Tutup OTC",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 72000,
+          "total": 72000,
+          "amount": 72000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 10,
+          "name": "Cup Sealer OSSEL",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 940000,
+          "total": 940000,
+          "amount": 940000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 11,
+          "name": "Bar Mat Besar 30 x 60",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 105000,
+          "total": 105000,
+          "amount": 105000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        },
+        {
+          "id": 12,
+          "name": "Jigger Bening Besar 40/20",
+          "category": "lainnya",
+          "qty": 1,
+          "unit": "pcs",
+          "price": 19000,
+          "total": 19000,
+          "amount": 19000,
+          "addsStock": false,
+          "ingredientId": null,
+          "stockQty": 0,
+          "stockUnit": null
+        }
+      ],
+      "total": 8595000,
+      "status": "rejected",
+      "photoUrl": "/uploads/receipts/1779544222771-06bb7a0a198f.jpg",
+      "proofUrl": "/uploads/receipts/1779544222771-06bb7a0a198f.jpg",
+      "sourceType": "receipt_ai",
+      "cashAccountId": "kas-utama",
+      "receiptUploadId": "RCPT-1779544307006",
+      "user": "Owner RUTE",
+      "cashTransactionId": null
+    }
+  ],
+  "ingredients": [
+    {
+      "id": 1,
+      "name": "GELAS 16 OZ",
+      "category": "packaging",
+      "unit": "pcs",
+      "stock": 39,
+      "minStock": 0,
+      "costPerUnit": 390,
+      "status": "aman",
+      "unitConversions": {},
+      "createdAt": "2026-05-23T14:00:35.646Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 2,
+      "name": "GELAS 14 0Z",
+      "category": "packaging",
+      "unit": "pcs",
+      "stock": 40,
+      "minStock": 0,
+      "costPerUnit": 390,
+      "status": "aman",
+      "unitConversions": {},
+      "createdAt": "2026-05-23T14:04:15.767Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 4,
+      "name": "REDVELVET POWDER",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 800,
+      "minStock": 0,
+      "costPerUnit": 138.75,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-23T14:07:39.005Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 5,
+      "name": "COKLAT POWDER",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 800,
+      "minStock": 0,
+      "costPerUnit": 144.375,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-23T14:07:58.051Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 6,
+      "name": "TUTUP 8OZ",
+      "category": "packaging",
+      "unit": "pcs",
+      "stock": 20,
+      "minStock": 0,
+      "costPerUnit": 550,
+      "status": "aman",
+      "unitConversions": {},
+      "createdAt": "2026-05-23T14:09:21.378Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 7,
+      "name": "GELAS 8 OZ (HOT)",
+      "category": "packaging",
+      "unit": "pcs",
+      "stock": 40,
+      "minStock": 0,
+      "costPerUnit": 525,
+      "status": "aman",
+      "unitConversions": {},
+      "createdAt": "2026-05-23T14:14:17.527Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 8,
+      "name": "GREENTEA",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 200,
+      "minStock": 0,
+      "costPerUnit": 335,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-23T14:15:04.175Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 9,
+      "name": "THAITEA",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 400,
+      "minStock": 0,
+      "costPerUnit": 167.5,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-23T14:15:11.869Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 11,
+      "name": "MATCHA POWDER",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 270,
+      "minStock": 0,
+      "costPerUnit": 311.111,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-24T09:02:26.679Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 12,
+      "name": "SUSU UHT",
+      "category": "bahan_baku",
+      "unit": "ml",
+      "stock": 1600,
+      "minStock": 0,
+      "costPerUnit": 21,
+      "status": "aman",
+      "unitConversions": {
+        "l": 1000,
+        "liter": 1000
+      },
+      "createdAt": "2026-05-24T09:02:48.746Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 13,
+      "name": "CREAMER BUBUK",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 360,
+      "minStock": 0,
+      "costPerUnit": 85,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-24T09:03:08.964Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 14,
+      "name": "SUSU SKM",
+      "category": "bahan_baku",
+      "unit": "ml",
+      "stock": 1765,
+      "minStock": 0,
+      "costPerUnit": 23.6,
+      "status": "aman",
+      "unitConversions": {
+        "l": 1000,
+        "liter": 1000
+      },
+      "createdAt": "2026-05-24T09:03:27.496Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 15,
+      "name": "ROBUSTA",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 811,
+      "minStock": 0,
+      "costPerUnit": 170,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-24T09:12:59.263Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 16,
+      "name": "ARABICA",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 500,
+      "minStock": 0,
+      "costPerUnit": 180,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-24T09:13:11.299Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 17,
+      "name": "BUTTERSCOTCH SYRUP",
+      "category": "bahan_baku",
+      "unit": "ml",
+      "stock": 750,
+      "minStock": 0,
+      "costPerUnit": 151.316,
+      "status": "aman",
+      "unitConversions": {
+        "l": 1000,
+        "liter": 1000
+      },
+      "createdAt": "2026-05-24T12:14:59.946Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 18,
+      "name": "Sedotan",
+      "category": "bahan_baku",
+      "unit": "pcs",
+      "stock": 480,
+      "minStock": 1,
+      "costPerUnit": 52,
+      "status": "aman",
+      "unitConversions": {},
+      "createdAt": "2026-05-30T15:00:36.499Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 19,
+      "name": "TARO POWDER",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 500,
+      "minStock": 0,
+      "costPerUnit": 90,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-31T12:36:35.586Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 20,
+      "name": "LYCHEE POWDER",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 500,
+      "minStock": 0,
+      "costPerUnit": 90,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-31T12:37:18.238Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    },
+    {
+      "id": 21,
+      "name": "LEMON TEA POWDER",
+      "category": "bahan_baku",
+      "unit": "gram",
+      "stock": 500,
+      "minStock": 0,
+      "costPerUnit": 90,
+      "status": "aman",
+      "unitConversions": {
+        "kg": 1000
+      },
+      "createdAt": "2026-05-31T12:37:51.013Z",
+      "updatedAt": "2026-05-31T12:42:14.001Z"
+    }
+  ],
+  "stockMovements": [
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-2-0",
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 4,
+      "unit": "pcs",
+      "source": "Penjualan (4x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 28,
+      "unit": "gram",
+      "source": "Penjualan (4x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-18-2",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 4,
+      "unit": "pcs",
+      "source": "Penjualan (4x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-15-3",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 36,
+      "unit": "gram",
+      "source": "Penjualan (4x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-14-4",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 140,
+      "unit": "ml",
+      "source": "Penjualan (4x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-1-0",
+      "ingredientId": 1,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 2,
+      "unit": "pcs",
+      "source": "Penjualan (2x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-12-1",
+      "ingredientId": 12,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 200,
+      "unit": "ml",
+      "source": "Penjualan (2x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-15-2",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 18,
+      "unit": "gram",
+      "source": "Penjualan (2x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-14-3",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 70,
+      "unit": "ml",
+      "source": "Penjualan (2x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780209677703-TRX-1780209677703-17-4",
+      "ingredientId": 17,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 20,
+      "unit": "ml",
+      "source": "Penjualan (2x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780229949651-TRX-1780229949650-2-0",
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 2,
+      "unit": "pcs",
+      "source": "Penjualan (2x Americano)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780229949650",
+      "date": "2026-05-31T12:19:09.650Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780229949651-TRX-1780229949650-16-1",
+      "ingredientId": 16,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 32,
+      "unit": "gram",
+      "source": "Penjualan (2x Americano)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780229949650",
+      "date": "2026-05-31T12:19:09.650Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780229949651-TRX-1780229949650-18-2",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 2,
+      "unit": "pcs",
+      "source": "Penjualan (2x Americano)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780229949650",
+      "date": "2026-05-31T12:19:09.650Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780230015034-TRX-1780230015033-1-0",
+      "ingredientId": 1,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780230015033",
+      "date": "2026-05-31T12:20:15.033Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780230015034-TRX-1780230015033-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 7,
+      "unit": "gram",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780230015033",
+      "date": "2026-05-31T12:20:15.033Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780230015034-TRX-1780230015033-15-2",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 9,
+      "unit": "gram",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780230015033",
+      "date": "2026-05-31T12:20:15.033Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780230015034-TRX-1780230015033-18-3",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780230015033",
+      "date": "2026-05-31T12:20:15.033Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780230015034-TRX-1780230015033-12-4",
+      "ingredientId": 12,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 30,
+      "unit": "ml",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780230015033",
+      "date": "2026-05-31T12:20:15.033Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780230015034-TRX-1780230015033-14-5",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 35,
+      "unit": "ml",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780230015033",
+      "date": "2026-05-31T12:20:15.033Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-1-0",
+      "ingredientId": 1,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 5,
+      "unit": "pcs",
+      "source": "Penjualan (5x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 35,
+      "unit": "gram",
+      "source": "Penjualan (5x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-15-2",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 45,
+      "unit": "gram",
+      "source": "Penjualan (5x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-18-3",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 5,
+      "unit": "pcs",
+      "source": "Penjualan (5x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-12-4",
+      "ingredientId": 12,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 150,
+      "unit": "ml",
+      "source": "Penjualan (5x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-14-5",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 175,
+      "unit": "ml",
+      "source": "Penjualan (5x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-2-0",
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 2,
+      "unit": "pcs",
+      "source": "Penjualan (2x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 14,
+      "unit": "gram",
+      "source": "Penjualan (2x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-18-2",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 2,
+      "unit": "pcs",
+      "source": "Penjualan (2x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-15-3",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 18,
+      "unit": "gram",
+      "source": "Penjualan (2x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235406962-TRX-1780235406961-14-4",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 70,
+      "unit": "ml",
+      "source": "Penjualan (2x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235415946-TRX-1780235415946-1-0",
+      "ingredientId": 1,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235415946",
+      "date": "2026-05-31T13:50:15.946Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235415946-TRX-1780235415946-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 7,
+      "unit": "gram",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235415946",
+      "date": "2026-05-31T13:50:15.946Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235415946-TRX-1780235415946-15-2",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 9,
+      "unit": "gram",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235415946",
+      "date": "2026-05-31T13:50:15.946Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235415946-TRX-1780235415946-18-3",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235415946",
+      "date": "2026-05-31T13:50:15.946Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235415946-TRX-1780235415946-12-4",
+      "ingredientId": 12,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 30,
+      "unit": "ml",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235415946",
+      "date": "2026-05-31T13:50:15.946Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780235415946-TRX-1780235415946-14-5",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 35,
+      "unit": "ml",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235415946",
+      "date": "2026-05-31T13:50:15.946Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290319630-TRX-1780290319630-1-0",
+      "ingredientId": 1,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 3,
+      "unit": "pcs",
+      "source": "Penjualan (3x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290319630",
+      "date": "2026-06-01T05:05:19.630Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290319630-TRX-1780290319630-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 21,
+      "unit": "gram",
+      "source": "Penjualan (3x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290319630",
+      "date": "2026-06-01T05:05:19.630Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290319630-TRX-1780290319630-15-2",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 27,
+      "unit": "gram",
+      "source": "Penjualan (3x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290319630",
+      "date": "2026-06-01T05:05:19.630Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290319630-TRX-1780290319630-18-3",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 3,
+      "unit": "pcs",
+      "source": "Penjualan (3x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290319630",
+      "date": "2026-06-01T05:05:19.630Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290319630-TRX-1780290319630-12-4",
+      "ingredientId": 12,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 90,
+      "unit": "ml",
+      "source": "Penjualan (3x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290319630",
+      "date": "2026-06-01T05:05:19.630Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290319630-TRX-1780290319630-14-5",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 105,
+      "unit": "ml",
+      "source": "Penjualan (3x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290319630",
+      "date": "2026-06-01T05:05:19.630Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290335063-TRX-1780290335062-2-0",
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 3,
+      "unit": "pcs",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290335062",
+      "date": "2026-06-01T05:05:35.062Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290335063-TRX-1780290335062-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 21,
+      "unit": "gram",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290335062",
+      "date": "2026-06-01T05:05:35.062Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290335063-TRX-1780290335062-18-2",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 3,
+      "unit": "pcs",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290335062",
+      "date": "2026-06-01T05:05:35.062Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290335063-TRX-1780290335062-15-3",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 27,
+      "unit": "gram",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290335062",
+      "date": "2026-06-01T05:05:35.062Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780290335063-TRX-1780290335062-14-4",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 105,
+      "unit": "ml",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780290335062",
+      "date": "2026-06-01T05:05:35.062Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292631492-TRX-1780292631492-2-0",
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292631492",
+      "date": "2026-06-01T05:43:51.492Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292631492-TRX-1780292631492-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 7,
+      "unit": "gram",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292631492",
+      "date": "2026-06-01T05:43:51.492Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292631492-TRX-1780292631492-18-2",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292631492",
+      "date": "2026-06-01T05:43:51.492Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292631492-TRX-1780292631492-15-3",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 9,
+      "unit": "gram",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292631492",
+      "date": "2026-06-01T05:43:51.492Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292631492-TRX-1780292631492-14-4",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 35,
+      "unit": "ml",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292631492",
+      "date": "2026-06-01T05:43:51.492Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292635238-TRX-1780292635237-1-0",
+      "ingredientId": 1,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292635237",
+      "date": "2026-06-01T05:43:55.237Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292635238-TRX-1780292635237-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 7,
+      "unit": "gram",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292635237",
+      "date": "2026-06-01T05:43:55.237Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292635238-TRX-1780292635237-15-2",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 9,
+      "unit": "gram",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292635237",
+      "date": "2026-06-01T05:43:55.237Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292635238-TRX-1780292635237-18-3",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292635237",
+      "date": "2026-06-01T05:43:55.237Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292635238-TRX-1780292635237-12-4",
+      "ingredientId": 12,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 30,
+      "unit": "ml",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292635237",
+      "date": "2026-06-01T05:43:55.237Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780292635238-TRX-1780292635237-14-5",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 35,
+      "unit": "ml",
+      "source": "Penjualan (1x Tengah Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780292635237",
+      "date": "2026-06-01T05:43:55.237Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294566287-TRX-1780294566287-2-0",
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 3,
+      "unit": "pcs",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294566287",
+      "date": "2026-06-01T06:16:06.287Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294566287-TRX-1780294566287-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 21,
+      "unit": "gram",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294566287",
+      "date": "2026-06-01T06:16:06.287Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294566287-TRX-1780294566287-18-2",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 3,
+      "unit": "pcs",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294566287",
+      "date": "2026-06-01T06:16:06.287Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294566287-TRX-1780294566287-15-3",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 27,
+      "unit": "gram",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294566287",
+      "date": "2026-06-01T06:16:06.287Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294566287-TRX-1780294566287-14-4",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 105,
+      "unit": "ml",
+      "source": "Penjualan (3x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294566287",
+      "date": "2026-06-01T06:16:06.287Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294818259-TRX-1780294818259-2-0",
+      "ingredientId": 2,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294818259",
+      "date": "2026-06-01T06:20:18.259Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294818259-TRX-1780294818259-13-1",
+      "ingredientId": 13,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 7,
+      "unit": "gram",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294818259",
+      "date": "2026-06-01T06:20:18.259Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294818259-TRX-1780294818259-18-2",
+      "ingredientId": 18,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294818259",
+      "date": "2026-06-01T06:20:18.259Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294818259-TRX-1780294818259-15-3",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 9,
+      "unit": "gram",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294818259",
+      "date": "2026-06-01T06:20:18.259Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780294818259-TRX-1780294818259-14-4",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 35,
+      "unit": "ml",
+      "source": "Penjualan (1x Ruang Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780294818259",
+      "date": "2026-06-01T06:20:18.259Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780312076914-TRX-1780312076914-1-0",
+      "ingredientId": 1,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 1,
+      "unit": "pcs",
+      "source": "Penjualan (1x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780312076914",
+      "date": "2026-06-01T11:07:56.914Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780312076914-TRX-1780312076914-12-1",
+      "ingredientId": 12,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 100,
+      "unit": "ml",
+      "source": "Penjualan (1x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780312076914",
+      "date": "2026-06-01T11:07:56.914Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780312076914-TRX-1780312076914-15-2",
+      "ingredientId": 15,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 9,
+      "unit": "gram",
+      "source": "Penjualan (1x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780312076914",
+      "date": "2026-06-01T11:07:56.914Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780312076914-TRX-1780312076914-14-3",
+      "ingredientId": 14,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 35,
+      "unit": "ml",
+      "source": "Penjualan (1x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780312076914",
+      "date": "2026-06-01T11:07:56.914Z",
+      "user": "Sistem"
+    },
+    {
+      "id": "SM-1780312076914-TRX-1780312076914-17-4",
+      "ingredientId": 17,
+      "type": "keluar",
+      "movementType": "out",
+      "qty": 10,
+      "unit": "ml",
+      "source": "Penjualan (1x Butterscotch Coffee)",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780312076914",
+      "date": "2026-06-01T11:07:56.914Z",
+      "user": "Sistem"
+    }
+  ],
+  "activityLog": [
+    {
+      "id": "ACT-1779114965153",
+      "time": "2026-05-18T14:36:05.153Z",
+      "action": "Bahan baku baru ditambahkan: Robusta Kopi",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779114993183",
+      "time": "2026-05-18T14:36:33.183Z",
+      "action": "Bahan baku baru ditambahkan: Arabica Kopi",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779375138704",
+      "time": "2026-05-21T14:52:18.704Z",
+      "action": "Bahan baku dihapus: Arabica Kopi",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779375140461",
+      "time": "2026-05-21T14:52:20.461Z",
+      "action": "Bahan baku dihapus: Robusta Kopi",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779544307007",
+      "time": "2026-05-15T04:00:00.000Z",
+      "action": "Upload resi Resi Perlengkapan Kopi Ringkas Rp 8.595.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1779544323321",
+      "time": "2026-05-23T13:52:03.321Z",
+      "action": "Pengeluaran EXP-1779544307006 ditolak",
+      "user": "Owner",
+      "type": "approval"
+    },
+    {
+      "id": "ACT-1779544668612",
+      "time": "2026-05-23T13:57:48.612Z",
+      "action": "Update modal awal usaha: Rp 8.871.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779544835646",
+      "time": "2026-05-23T14:00:35.646Z",
+      "action": "Bahan baku baru ditambahkan: GELAS 16 OZ",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545055767",
+      "time": "2026-05-23T14:04:15.767Z",
+      "action": "Bahan baku baru ditambahkan: GELAS 14 0Z",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545135346",
+      "time": "2026-05-23T14:05:35.346Z",
+      "action": "Bahan baku baru ditambahkan: GELAS 8OZ (HOT)",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545259005",
+      "time": "2026-05-23T14:07:39.005Z",
+      "action": "Bahan baku baru ditambahkan: REDVELVET POWDER",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545278051",
+      "time": "2026-05-23T14:07:58.051Z",
+      "action": "Bahan baku baru ditambahkan: COKLAT POWDER",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545330139",
+      "time": "2026-05-23T14:08:50.139Z",
+      "action": "Update modal awal usaha: Rp 8.931.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779545361378",
+      "time": "2026-05-23T14:09:21.378Z",
+      "action": "Bahan baku baru ditambahkan: TUTUP 8OZ",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545437786",
+      "time": "2026-05-23T14:10:37.786Z",
+      "action": "Update modal awal usaha: Rp 8.942.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779545491416",
+      "time": "2026-05-23T14:11:31.416Z",
+      "action": "Update modal awal usaha: Rp 8.979.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779545558944",
+      "time": "2026-05-23T14:12:38.944Z",
+      "action": "Update modal awal usaha: Rp 9.206.000",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779545643473",
+      "time": "2026-05-23T14:14:03.473Z",
+      "action": "Bahan baku dihapus: GELAS 8OZ (HOT)",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545657527",
+      "time": "2026-05-23T14:14:17.527Z",
+      "action": "Bahan baku baru ditambahkan: GELAS 8 OZ (HOT)",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545670730",
+      "time": "2026-05-23T14:14:30.730Z",
+      "action": "Update modal awal usaha: Rp 9.206.000",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779545704175",
+      "time": "2026-05-23T14:15:04.175Z",
+      "action": "Bahan baku baru ditambahkan: GREENTEA",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545711869",
+      "time": "2026-05-23T14:15:11.869Z",
+      "action": "Bahan baku baru ditambahkan: THAITEA",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545756156",
+      "time": "2026-05-23T14:15:56.155Z",
+      "action": "Update modal awal usaha: Rp 9.340.000",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779545818423",
+      "time": "2026-05-23T14:16:58.423Z",
+      "action": "Bahan baku baru ditambahkan: MILO MALAY",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779545841412",
+      "time": "2026-05-23T14:17:21.411Z",
+      "action": "Update modal awal usaha: Rp 9.389.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779613346679",
+      "time": "2026-05-24T09:02:26.679Z",
+      "action": "Bahan baku baru ditambahkan: MATCHA POWDER",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779613368746",
+      "time": "2026-05-24T09:02:48.746Z",
+      "action": "Bahan baku baru ditambahkan: SUSU UHT",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779613388964",
+      "time": "2026-05-24T09:03:08.964Z",
+      "action": "Bahan baku baru ditambahkan: CREAMER BUBUK",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779613407496",
+      "time": "2026-05-24T09:03:27.496Z",
+      "action": "Bahan baku baru ditambahkan: SUSU SKM",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779613435151",
+      "time": "2026-05-24T09:03:55.151Z",
+      "action": "Update modal awal usaha: Rp 9.473.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779613451596",
+      "time": "2026-05-24T09:04:11.596Z",
+      "action": "Update modal awal usaha: Rp 9.515.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779613498106",
+      "time": "2026-05-24T09:04:58.106Z",
+      "action": "Update modal awal usaha: Rp 9.617.000",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779613979263",
+      "time": "2026-05-24T09:12:59.263Z",
+      "action": "Bahan baku baru ditambahkan: ROBUSTA",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779613991299",
+      "time": "2026-05-24T09:13:11.299Z",
+      "action": "Bahan baku baru ditambahkan: ARABICA",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779614130108",
+      "time": "2026-05-24T09:15:30.108Z",
+      "action": "Update modal awal usaha: Rp 9.877.000",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779624809145",
+      "time": "2026-05-24T12:13:29.145Z",
+      "action": "Bahan baku dihapus: MILO MALAY",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779624819043",
+      "time": "2026-05-24T12:13:39.042Z",
+      "action": "Update modal awal usaha: Rp 9.827.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779624899946",
+      "time": "2026-05-24T12:14:59.946Z",
+      "action": "Bahan baku baru ditambahkan: BUTTERSCOTCH SYRUP",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1779624925555",
+      "time": "2026-05-24T12:15:25.555Z",
+      "action": "Update modal awal usaha: Rp 9.942.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1779625020058",
+      "time": "2026-05-24T12:17:00.058Z",
+      "action": "Update modal awal usaha: Rp 9.942.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780153236500",
+      "time": "2026-05-30T15:00:36.499Z",
+      "action": "Bahan baku baru ditambahkan: Sedotan",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1780153279527",
+      "time": "2026-05-30T15:01:19.526Z",
+      "action": "Update modal awal usaha: Rp 9.968.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780153334355",
+      "time": "2026-05-30T15:02:14.355Z",
+      "action": "Update modal awal usaha: Rp 9.968.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780153335658",
+      "time": "2026-05-30T15:02:15.658Z",
+      "action": "Update modal awal usaha: Rp 9.968.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780153433945",
+      "time": "2026-05-30T15:03:53.945Z",
+      "action": "Menu baru ditambahkan: Ruang Coffee",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780154088481",
+      "time": "2026-05-30T15:14:48.481Z",
+      "action": "Menu diperbarui: Ruang Coffee",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780154183617",
+      "time": "2026-05-30T15:16:23.616Z",
+      "action": "Menu baru ditambahkan: Tengah Coffee",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780154320189",
+      "time": "2026-05-30T15:18:40.189Z",
+      "action": "Menu baru ditambahkan: Americano",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780154402571",
+      "time": "2026-05-30T15:20:02.571Z",
+      "action": "Menu baru ditambahkan: Butterscotch Coffee",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780209677704",
+      "time": "2026-05-31T06:41:17.703Z",
+      "action": "Input penjualan: Ruang Coffee 4x, Butterscotch Coffee 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780229949651",
+      "time": "2026-05-31T12:19:09.650Z",
+      "action": "Input penjualan: Americano 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780230015034",
+      "time": "2026-05-31T12:20:15.033Z",
+      "action": "Input penjualan: Tengah Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780230491298",
+      "time": "2026-05-31T12:28:11.298Z",
+      "action": "Menu baru ditambahkan: Matcha",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780230995587",
+      "time": "2026-05-31T12:36:35.586Z",
+      "action": "Bahan baku baru ditambahkan: TARO POWDER",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1780231038238",
+      "time": "2026-05-31T12:37:18.238Z",
+      "action": "Bahan baku baru ditambahkan: LYCHEE POWDER",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1780231051656",
+      "time": "2026-05-31T12:37:31.656Z",
+      "action": "Bahan baku baru ditambahkan: LEMON TEA POWDER",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1780231057913",
+      "time": "2026-05-31T12:37:37.913Z",
+      "action": "Bahan baku dihapus: LEMON TEA POWDER",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1780231071013",
+      "time": "2026-05-31T12:37:51.013Z",
+      "action": "Bahan baku baru ditambahkan: LEMON TEA POWDER",
+      "user": "Owner RUTE",
+      "type": "stok"
+    },
+    {
+      "id": "ACT-1780231235920",
+      "time": "2026-05-31T12:40:35.920Z",
+      "action": "Menu baru ditambahkan: TARO",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780231260268",
+      "time": "2026-05-31T12:41:00.268Z",
+      "action": "Menu diperbarui: RED VELVET",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780231334001",
+      "time": "2026-05-31T12:42:14.001Z",
+      "action": "Update modal awal usaha: Rp 10.103.500",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780231427332",
+      "time": "2026-05-31T12:43:47.332Z",
+      "action": "Menu baru ditambahkan: TARO",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780231453044",
+      "time": "2026-05-31T12:44:13.044Z",
+      "action": "Menu diperbarui: Ruang Coffee",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780231525220",
+      "time": "2026-05-31T12:45:25.220Z",
+      "action": "Menu baru ditambahkan: COKLAT",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780235406962",
+      "time": "2026-05-31T13:50:06.961Z",
+      "action": "Input penjualan: Tengah Coffee 5x, Ruang Coffee 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780235415946",
+      "time": "2026-05-31T13:50:15.946Z",
+      "action": "Input penjualan: Tengah Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780236116974",
+      "time": "2026-05-31T14:01:56.974Z",
+      "action": "Tutup kas harian dengan selisih Rp -10.000",
+      "user": "Partner Malinau",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780290319631",
+      "time": "2026-06-01T05:05:19.630Z",
+      "action": "Input penjualan: Tengah Coffee 3x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780290335063",
+      "time": "2026-06-01T05:05:35.062Z",
+      "action": "Input penjualan: Ruang Coffee 3x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780292631492",
+      "time": "2026-06-01T05:43:51.492Z",
+      "action": "Input penjualan: Ruang Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780292635238",
+      "time": "2026-06-01T05:43:55.237Z",
+      "action": "Input penjualan: Tengah Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780294566287",
+      "time": "2026-06-01T06:16:06.287Z",
+      "action": "Input penjualan: Ruang Coffee 3x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780294818259",
+      "time": "2026-06-01T06:20:18.259Z",
+      "action": "Input penjualan: Ruang Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780312076914",
+      "time": "2026-06-01T11:07:56.914Z",
+      "action": "Input penjualan: Butterscotch Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780471787177",
+      "time": "2026-06-01T12:00:00.000Z",
+      "action": "Input penjualan: Ruang Coffee 20x, Tengah Coffee 8x, Butterscotch Coffee 3x, Americano 2x, COKLAT 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780471791513",
+      "time": "2026-06-01T12:00:00.000Z",
+      "action": "Input penjualan: Tengah Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780471849820",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input pengeluaran: Gelas 16oz (Oval) Rp 33.000",
+      "user": "Partner Malinau",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780471898954",
+      "time": "2026-06-01T12:00:00.000Z",
+      "action": "Input pengeluaran: Gelas 12oz (Oval) Rp 33.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780471915873",
+      "time": "2026-06-01T12:00:00.000Z",
+      "action": "Input pengeluaran: Es Batu Rp 15.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780472057262",
+      "time": "2026-06-02T12:00:00.000Z",
+      "action": "Input pengeluaran: SKM Rp 68.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780472071337",
+      "time": "2026-06-02T12:00:00.000Z",
+      "action": "Input pengeluaran: Tisu Rp 43.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780472089410",
+      "time": "2026-06-02T12:00:00.000Z",
+      "action": "Input pengeluaran: SUSU UHT Rp 25.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780472091197",
+      "time": "2026-06-02T12:00:00.000Z",
+      "action": "Input pengeluaran: SUSU UHT Rp 25.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780472127173",
+      "time": "2026-06-02T12:00:00.000Z",
+      "action": "Input pengeluaran: CREAMER 280Gr Rp 42.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780472141103",
+      "time": "2026-06-02T12:00:00.000Z",
+      "action": "Input pengeluaran: ES BATU Rp 30.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780472313316",
+      "time": "2026-06-02T12:00:00.000Z",
+      "action": "Input penjualan: Tengah Coffee 5x, Ruang Coffee 13x, RED VELVET 1x, Americano 1x, COKLAT 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780472318368",
+      "time": "2026-06-02T12:00:00.000Z",
+      "action": "Input penjualan: Tengah Coffee 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780472812949",
+      "time": "2026-06-03T07:46:52.949Z",
+      "action": "Perbarui pengeluaran: ES BATU (Rp 30000) menjadi Gelas 16oz (Oval) (Rp 33000) tanggal 2026-06-01",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780472945549",
+      "time": "2026-06-03T07:49:05.549Z",
+      "action": "Perbarui pengeluaran: Gelas 16oz (Oval) (Rp 33000) menjadi Es batu (Rp 30000) tanggal 2026-06-02",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780473284319",
+      "time": "2026-06-03T07:54:44.319Z",
+      "action": "Perbarui pengeluaran: Es batu (Rp 30000) menjadi Gelas 16oz (Oval) (Rp 33000) tanggal 2026-06-01",
+      "user": "Partner Malinau",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780476508914",
+      "time": "2026-06-03T08:48:28.914Z",
+      "action": "Mutasi kas koreksi: bonus",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780479890431",
+      "time": "2026-06-03T09:44:50.430Z",
+      "action": "Update modal awal usaha: Rp 9.095.650",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780483623708",
+      "time": "2026-06-03T10:47:03.708Z",
+      "action": "Menu baru ditambahkan: Espresso",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780484446672",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Ruang Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484452232",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Ruang Coffee 3x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484463197",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Ruang Coffee 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484491778",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Butterscotch Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484497557",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Tengah Coffee 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484502627",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: COKLAT 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484507027",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Tengah Coffee 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484511979",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Ruang Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484518760",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Ruang Coffee 2x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484526130",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: COKLAT 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484528862",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Matcha 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780484621646",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input pengeluaran: Creamer Fiber Rp 42.000",
+      "user": "Partner Malinau",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780484824066",
+      "time": "2026-06-03T11:07:04.066Z",
+      "action": "Menu baru ditambahkan: Lychee Tea",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780484844386",
+      "time": "2026-06-03T11:07:24.386Z",
+      "action": "Menu diperbarui: Lychee Tea",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780484859383",
+      "time": "2026-06-03T11:07:39.383Z",
+      "action": "Menu dihapus: Lychee Tea",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780484865278",
+      "time": "2026-06-03T11:07:45.278Z",
+      "action": "Menu dihapus: Espresso",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780485383033",
+      "time": "2026-06-03T11:16:23.033Z",
+      "action": "Menu baru ditambahkan: Lychee Tea",
+      "user": "Owner",
+      "type": "menu"
+    },
+    {
+      "id": "ACT-1780485404080",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Lychee Tea 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780485602682",
+      "time": "2026-06-03T11:20:02.682Z",
+      "action": "Mutasi kas transfer: TUKAR",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780485618918",
+      "time": "2026-06-03T11:20:18.918Z",
+      "action": "Perbarui pengeluaran: SKM (Rp 68000) menjadi SKM (Rp 68000) tanggal 2026-06-02",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780485635170",
+      "time": "2026-06-03T11:20:35.170Z",
+      "action": "Perbarui pengeluaran: Tisu (Rp 43000) menjadi Tisu (Rp 43000) tanggal 2026-06-02",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780485655902",
+      "time": "2026-06-03T11:20:55.902Z",
+      "action": "Perbarui pengeluaran: SUSU UHT (Rp 25000) menjadi SUSU UHT (Rp 25000) tanggal 2026-06-02",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780485663223",
+      "time": "2026-06-03T11:21:03.223Z",
+      "action": "Perbarui pengeluaran: CREAMER 280Gr (Rp 42000) menjadi CREAMER 280Gr (Rp 42000) tanggal 2026-06-02",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780485954891",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input pengeluaran: Admin Bank Rp 22.000",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780485959507",
+      "time": "2026-06-03T11:25:59.507Z",
+      "action": "Perbarui pengeluaran: Admin Bank (Rp 22000) menjadi Admin Bank (Rp 22000) tanggal 2026-06-03",
+      "user": "Owner RUTE",
+      "type": "pengeluaran"
+    },
+    {
+      "id": "ACT-1780486075675",
+      "time": "2026-06-03T11:27:55.675Z",
+      "action": "Mutasi kas transfer: BELI BEANS (KURANG 25000)",
+      "user": "Owner RUTE",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780495074758",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Ruang Coffee 6x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780495079140",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Tengah Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780495085820",
+      "time": "2026-06-03T12:00:00.000Z",
+      "action": "Input penjualan: Butterscotch Coffee 1x",
+      "user": "Partner",
+      "type": "penjualan"
+    },
+    {
+      "id": "ACT-1780495745396",
+      "time": "2026-06-03T14:09:05.396Z",
+      "action": "Tutup kas harian dengan selisih Rp 0",
+      "user": "Partner Malinau",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780495876962",
+      "time": "2026-06-03T14:11:16.962Z",
+      "action": "Tutup kas harian dengan selisih Rp 30.000",
+      "user": "Partner Malinau",
+      "type": "kas"
+    },
+    {
+      "id": "ACT-1780495973854",
+      "time": "2026-06-03T14:12:53.854Z",
+      "action": "Tutup kas harian dengan selisih Rp 0",
+      "user": "Partner Malinau",
+      "type": "kas"
+    }
+  ],
+  "cashSessions": [
+    {
+      "date": "2026-06-01",
+      "openingCash": 0,
+      "closingCash": 485000,
+      "expectedCash": 485000,
+      "difference": 0,
+      "differenceStatus": "balanced",
+      "qris": 13000,
+      "transfer": 0,
+      "totalExpenseCash": 81000,
+      "status": "closed",
+      "notes": "",
+      "closedBy": "Partner Malinau",
+      "closedAt": "2026-06-03T14:12:53.854Z"
+    },
+    {
+      "date": "2026-06-02",
+      "openingCash": 0,
+      "closingCash": 225000,
+      "expectedCash": 195000,
+      "difference": 30000,
+      "differenceStatus": "over",
+      "qris": 26000,
+      "transfer": 0,
+      "totalExpenseCash": 55000,
+      "status": "closed",
+      "notes": "",
+      "closedBy": "Partner Malinau",
+      "closedAt": "2026-06-03T14:11:16.962Z"
+    },
+    {
+      "date": "2026-06-03",
+      "openingCash": 0,
+      "closingCash": 261000,
+      "expectedCash": 261000,
+      "difference": 0,
+      "differenceStatus": "balanced",
+      "qris": 20000,
+      "transfer": 0,
+      "totalExpenseCash": 42000,
+      "status": "closed",
+      "notes": "",
+      "closedBy": "Partner Malinau",
+      "closedAt": "2026-06-03T14:09:05.396Z"
+    },
+    {
+      "date": "2026-05-31",
+      "openingCash": 0,
+      "closingCash": 95000,
+      "expectedCash": 105000,
+      "difference": -10000,
+      "differenceStatus": "short",
+      "qris": 106000,
+      "transfer": 0,
+      "totalExpenseCash": 0,
+      "status": "closed",
+      "notes": "penglaris",
+      "closedBy": "Partner Malinau",
+      "closedAt": "2026-05-31T14:01:56.974Z"
+    }
+  ],
+  "cashAccounts": [
+    {
+      "id": "kas-utama",
+      "name": "Kas Utama (Laci)",
+      "type": "cash",
+      "balance": 748000,
+      "status": "active"
+    },
+    {
+      "id": "rek-bca",
+      "name": "Rekening BCA",
+      "type": "bank",
+      "balance": 145000,
+      "status": "active"
+    },
+    {
+      "id": "qris-bni",
+      "name": "QRIS BNI",
+      "type": "qris",
+      "balance": 20000,
+      "status": "active",
+      "description": "Penerimaan QRIS BNI"
+    }
+  ],
+  "cashTransactions": [
+    {
+      "id": "CTX-DIFF-1780495876962",
+      "date": "2026-06-03T14:11:16.962Z",
+      "type": "koreksi",
+      "amount": 30000,
+      "category": "koreksi",
+      "description": "Koreksi selisih tutup kas tanggal 2026-06-02: Selisih kas",
+      "accountId": "kas-utama",
+      "adjustmentType": "plus",
+      "user": "Partner Malinau"
+    },
+    {
+      "id": "CTX-SALE-1780495085820-TRX-1780495085820",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 20000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Butterscotch Coffee 1x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780495085820",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780495079140-TRX-1780495079140",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 13000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Tengah Coffee 1x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780495079140",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780495074758-TRX-1780495074758",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 60000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Ruang Coffee 6x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780495074758",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-1780486075675",
+      "date": "2026-06-03T11:27:55.675Z",
+      "type": "transfer",
+      "amount": 145000,
+      "category": "transfer",
+      "description": "BELI BEANS (KURANG 25000)",
+      "user": "Owner RUTE",
+      "fromAccountId": "qris-bni",
+      "toAccountId": "rek-bca"
+    },
+    {
+      "id": "CTX-EXP-1780485954891-EXP-1780485954891-140",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "out",
+      "amount": 22000,
+      "category": "pengeluaran",
+      "description": "Admin Bank",
+      "accountId": "qris-bni",
+      "sourceType": "expense",
+      "sourceId": "EXP-1780485954891-140",
+      "user": "Owner RUTE"
+    },
+    {
+      "id": "CTX-1780485602682",
+      "date": "2026-06-03T11:20:02.682Z",
+      "type": "transfer",
+      "amount": 200000,
+      "category": "transfer",
+      "description": "TUKAR",
+      "user": "Owner RUTE",
+      "fromAccountId": "kas-utama",
+      "toAccountId": "qris-bni"
+    },
+    {
+      "id": "CTX-SALE-1780485404080-TRX-1780485404080",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 18000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Lychee Tea 1x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780485404080",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-EXP-1780484621646-EXP-1780484621646-36",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "out",
+      "amount": 42000,
+      "category": "pengeluaran",
+      "description": "Creamer Fiber",
+      "accountId": "kas-utama",
+      "sourceType": "expense",
+      "sourceId": "EXP-1780484621646-36",
+      "user": "Partner Malinau"
+    },
+    {
+      "id": "CTX-SALE-1780484528862-TRX-1780484528862",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 20000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Matcha 1x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484528862",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484526130-TRX-1780484526130",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 15000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: COKLAT 1x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484526130",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484518760-TRX-1780484518760",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 20000,
+      "category": "penjualan",
+      "description": "Penjualan QRIS: Ruang Coffee 2x",
+      "accountId": "qris-bni",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484518760",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484511979-TRX-1780484511979",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 10000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Ruang Coffee 1x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484511979",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484507027-TRX-1780484507027",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 26000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Tengah Coffee 2x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484507027",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484502627-TRX-1780484502627",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 15000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: COKLAT 1x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484502627",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484497557-TRX-1780484497556",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 26000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Tengah Coffee 2x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484497556",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484491778-TRX-1780484491778",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 20000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Butterscotch Coffee 1x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484491778",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484463197-TRX-1780484463197",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 20000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Ruang Coffee 2x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484463197",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484452232-TRX-1780484452232",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 30000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Ruang Coffee 3x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484452232",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780484446671-TRX-1780484446671",
+      "date": "2026-06-03T12:00:00.000Z",
+      "type": "in",
+      "amount": 10000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Ruang Coffee 1x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780484446671",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-1780476508914",
+      "date": "2026-06-03T08:48:28.914Z",
+      "type": "koreksi",
+      "amount": 42000,
+      "category": "koreksi",
+      "description": "bonus",
+      "user": "Owner RUTE",
+      "accountId": "kas-utama",
+      "adjustmentType": "plus"
+    },
+    {
+      "id": "CTX-SALE-1780209677703-TRX-1780209677703",
+      "date": "2026-05-31T06:41:17.703Z",
+      "type": "in",
+      "amount": 80000,
+      "category": "penjualan",
+      "description": "Penjualan QRIS: Ruang Coffee 4x, Butterscotch Coffee 2x",
+      "accountId": "qris-bni",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780209677703",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780229949650-TRX-1780229949650",
+      "date": "2026-05-31T12:19:09.650Z",
+      "type": "in",
+      "amount": 20000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Americano 2x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780229949650",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780230015033-TRX-1780230015033",
+      "date": "2026-05-31T12:20:15.033Z",
+      "type": "in",
+      "amount": 13000,
+      "category": "penjualan",
+      "description": "Penjualan QRIS: Tengah Coffee 1x",
+      "accountId": "qris-bni",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780230015033",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780235406961-TRX-1780235406961",
+      "date": "2026-05-31T13:50:06.961Z",
+      "type": "in",
+      "amount": 85000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Tengah Coffee 5x, Ruang Coffee 2x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235406961",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780235415946-TRX-1780235415946",
+      "date": "2026-05-31T13:50:15.946Z",
+      "type": "in",
+      "amount": 13000,
+      "category": "penjualan",
+      "description": "Penjualan QRIS: Tengah Coffee 1x",
+      "accountId": "qris-bni",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780235415946",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-DIFF-1780236116974",
+      "date": "2026-05-31T14:01:56.974Z",
+      "type": "koreksi",
+      "amount": 10000,
+      "category": "koreksi",
+      "description": "Koreksi selisih tutup kas tanggal 2026-05-31: penglaris",
+      "accountId": "kas-utama",
+      "adjustmentType": "minus",
+      "user": "Partner Malinau"
+    },
+    {
+      "id": "CTX-SALE-1780472318368-TRX-1780472318368",
+      "date": "2026-06-02T12:00:00.000Z",
+      "type": "in",
+      "amount": 26000,
+      "category": "penjualan",
+      "description": "Penjualan QRIS: Tengah Coffee 2x",
+      "accountId": "qris-bni",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780472318368",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780472313316-TRX-1780472313316",
+      "date": "2026-06-02T12:00:00.000Z",
+      "type": "in",
+      "amount": 250000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Tengah Coffee 5x, Ruang Coffee 13x, RED VELVET 1x, Americano 1x, COKLAT 2x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780472313316",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-EXP-1780472141103EXP-1780473445729",
+      "date": "2026-06-02T12:00:00.000Z",
+      "type": "out",
+      "amount": 30000,
+      "category": "pengeluaran",
+      "description": "ES BATU",
+      "accountId": "kas-utama",
+      "sourceType": "expense",
+      "user": "Owner RUTE",
+      "sourceId": "EXP-1780473445729"
+    },
+    {
+      "id": "CTX-EXP-1780472127173EXP-1780473444729",
+      "date": "2026-06-02T12:00:00.000Z",
+      "type": "out",
+      "amount": 42000,
+      "category": "pengeluaran",
+      "description": "CREAMER 280Gr",
+      "accountId": "qris-bni",
+      "sourceType": "expense",
+      "user": "Owner RUTE",
+      "sourceId": "EXP-1780473444729"
+    },
+    {
+      "id": "CTX-EXP-1780472091197EXP-1780473443730",
+      "date": "2026-06-02T12:00:00.000Z",
+      "type": "out",
+      "amount": 25000,
+      "category": "pengeluaran",
+      "description": "SUSU UHT",
+      "accountId": "kas-utama",
+      "sourceType": "expense",
+      "user": "Owner RUTE",
+      "sourceId": "EXP-1780473443730"
+    },
+    {
+      "id": "CTX-EXP-1780472089410EXP-1780473443730",
+      "date": "2026-06-02T12:00:00.000Z",
+      "type": "out",
+      "amount": 25000,
+      "category": "pengeluaran",
+      "description": "SUSU UHT",
+      "accountId": "kas-utama",
+      "sourceType": "expense",
+      "user": "Owner RUTE",
+      "sourceId": "EXP-1780473443730"
+    },
+    {
+      "id": "CTX-EXP-1780472071337EXP-1780473441730",
+      "date": "2026-06-02T12:00:00.000Z",
+      "type": "out",
+      "amount": 43000,
+      "category": "pengeluaran",
+      "description": "Tisu",
+      "accountId": "qris-bni",
+      "sourceType": "expense",
+      "user": "Owner RUTE",
+      "sourceId": "EXP-1780473441730"
+    },
+    {
+      "id": "CTX-EXP-1780472057262EXP-1780473440730",
+      "date": "2026-06-02T12:00:00.000Z",
+      "type": "out",
+      "amount": 68000,
+      "category": "pengeluaran",
+      "description": "SKM",
+      "accountId": "qris-bni",
+      "sourceType": "expense",
+      "user": "Owner RUTE",
+      "sourceId": "EXP-1780473440730"
+    },
+    {
+      "id": "CTX-EXP-1780471915873EXP-1780473439730",
+      "date": "2026-06-01T12:00:00.000Z",
+      "type": "out",
+      "amount": 15000,
+      "category": "pengeluaran",
+      "description": "Es Batu",
+      "accountId": "kas-utama",
+      "sourceType": "expense",
+      "user": "Owner RUTE",
+      "sourceId": "EXP-1780473439730"
+    },
+    {
+      "id": "CTX-EXP-1780471898954EXP-1780473438730",
+      "date": "2026-06-01T12:00:00.000Z",
+      "type": "out",
+      "amount": 33000,
+      "category": "pengeluaran",
+      "description": "Gelas 12oz (Oval)",
+      "accountId": "kas-utama",
+      "sourceType": "expense",
+      "user": "Owner RUTE",
+      "sourceId": "EXP-1780473438730"
+    },
+    {
+      "id": "CTX-EXP-1780471849820-EXP-1780473437730",
+      "date": "2026-06-01T12:00:00.000Z",
+      "type": "out",
+      "amount": 33000,
+      "category": "pengeluaran",
+      "description": "Gelas 16oz (Oval)",
+      "accountId": "kas-utama",
+      "sourceType": "expense",
+      "user": "Partner Malinau",
+      "sourceId": "EXP-1780473437730"
+    },
+    {
+      "id": "CTX-SALE-1780471791513-TRX-1780471791513",
+      "date": "2026-06-01T12:00:00.000Z",
+      "type": "in",
+      "amount": 13000,
+      "category": "penjualan",
+      "description": "Penjualan QRIS: Tengah Coffee 1x",
+      "accountId": "qris-bni",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780471791513",
+      "user": "Partner"
+    },
+    {
+      "id": "CTX-SALE-1780471787177-TRX-1780471787177",
+      "date": "2026-06-01T12:00:00.000Z",
+      "type": "in",
+      "amount": 414000,
+      "category": "penjualan",
+      "description": "Penjualan CASH: Ruang Coffee 20x, Tengah Coffee 8x, Butterscotch Coffee 3x, Americano 2x, COKLAT 2x",
+      "accountId": "kas-utama",
+      "sourceType": "sale",
+      "sourceId": "TRX-1780471787177",
+      "user": "Partner"
+    }
+  ],
+  "openingCapital": {
+    "businessStartDate": "2026-06-01",
+    "cashCapital": 0,
+    "assetContributions": [
+      {
+        "id": "ASSET-1779544338032-0.5710242825362087",
+        "name": "ROK PRESSO GC",
+        "estimatedValue": 4200000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544340044-0.9960178254009248",
+        "name": "GRINDER",
+        "estimatedValue": 2450000,
+        "notes": "HK-021",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544340182-0.4564897976477116",
+        "name": "CUP HOLDER",
+        "estimatedValue": 180000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544340326-0.49816501540501534",
+        "name": "TIMBANGAN",
+        "estimatedValue": 88000,
+        "notes": "3KG",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544340466-0.7381120075709531",
+        "name": "KNOCKBOX",
+        "estimatedValue": 92000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544340598-0.9026475364064298",
+        "name": "TAMPING MAT SEDANG",
+        "estimatedValue": 34000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544340730-0.435011658938255",
+        "name": "MAKARON ROK BROWN",
+        "estimatedValue": 220000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544340838-0.2325665702841494",
+        "name": "SET MATCHA BENING",
+        "estimatedValue": 195000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544450294-0.11086549593671924",
+        "name": "KETTLE GOOSENECK",
+        "estimatedValue": 72000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544450410-0.42068379225687624",
+        "name": "CUP SEALER",
+        "estimatedValue": 940000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544486442-0.848431356078806",
+        "name": "BAR MAT BESAR",
+        "estimatedValue": 105000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544486558-0.7241556256210766",
+        "name": "JIGGER",
+        "estimatedValue": 19000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544511902-0.7202857920540486",
+        "name": "TEKO LISTRIK",
+        "estimatedValue": 165000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544518848-0.6373581793877714",
+        "name": "SENDOK KECIL",
+        "estimatedValue": 22000,
+        "notes": "",
+        "quantity": 2,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544591408-0.5074230166414568",
+        "name": "TEMPAT SKM",
+        "estimatedValue": 25000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779544620322-0.30402068653293546",
+        "name": "TOPLES",
+        "estimatedValue": 64500,
+        "notes": "",
+        "quantity": 3,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1779545475126-0.3530295658835436",
+        "name": "SENDOK ES BATU",
+        "estimatedValue": 37000,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      },
+      {
+        "id": "ASSET-1780479868364-0.656736324612685",
+        "name": "TAMPER ROK",
+        "estimatedValue": 187150,
+        "notes": "",
+        "quantity": 1,
+        "unit": "unit"
+      }
+    ],
+    "inventoryContributions": [],
+    "personalExcludedItems": [],
+    "notes": "",
+    "createdBy": "System",
+    "createdAt": "2026-05-18T14:31:24.620Z",
+    "updatedBy": "Owner RUTE",
+    "updatedAt": "2026-06-03T09:44:50.430Z"
+  },
+  "dailyNotes": [],
+  "receiptUploads": [
+    {
+      "id": "RCPT-1779544307006",
+      "originalFileName": "WhatsApp Image 2026-05-18 at 19.48.06.jpeg",
+      "imageUrl": "/uploads/receipts/1779544222771-06bb7a0a198f.jpg",
+      "fileName": "1779544222771-06bb7a0a198f.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 58960,
+      "aiStatus": "confirmed",
+      "aiSource": "ai",
+      "aiConfidence": 0.98,
+      "aiRaw": {
+        "merchantName": "Perlengkapan Kopi Ringkas",
+        "transactionDate": "2026-05-15T04:00:00.000Z",
+        "confidence": 0.98,
+        "originalFileName": "WhatsApp Image 2026-05-18 at 19.48.06.jpeg",
+        "fileSize": 58960,
+        "imageUrl": "/uploads/receipts/1779544222771-06bb7a0a198f.jpg",
+        "upload": {
+          "originalFileName": "WhatsApp Image 2026-05-18 at 19.48.06.jpeg",
+          "fileName": "1779544222771-06bb7a0a198f.jpg",
+          "mimeType": "image/jpeg",
+          "fileSize": 58960,
+          "storagePath": "/data/uploads/receipts/1779544222771-06bb7a0a198f.jpg",
+          "imageUrl": "/uploads/receipts/1779544222771-06bb7a0a198f.jpg"
+        },
+        "items": [
+          {
+            "name": "Rokpresso",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 4200000,
+            "total": 4200000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Grinder Rockwood HK-021 Hitam",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 2450000,
+            "total": 2450000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Cup Holder 4 Grind",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 180000,
+            "total": 180000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Timbangan 3kg",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 88000,
+            "total": 88000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Knockbox Transparant Besar",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 92000,
+            "total": 92000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Tamping Mat Sedang",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 34000,
+            "total": 34000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Makaron ROK Brown 49MM",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 220000,
+            "total": 220000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Set Matcha Bering White New",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 195000,
+            "total": 195000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Ketel Gooseneck 350ml Silver No Tutup OTC",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 72000,
+            "total": 72000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Cup Sealer OSSEL",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 940000,
+            "total": 940000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Bar Mat Besar 30 x 60",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 105000,
+            "total": 105000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          },
+          {
+            "name": "Jigger Bening Besar 40/20",
+            "category": "peralatan",
+            "qty": 1,
+            "unit": "pcs",
+            "price": 19000,
+            "total": 19000,
+            "addsStock": false,
+            "ingredientId": null,
+            "stockQty": 0,
+            "stockUnit": null
+          }
+        ],
+        "source": "ai",
+        "aiStatus": "parsed",
+        "requiresManualReview": false
+      },
+      "createdAt": "2026-05-23T13:51:47.006Z",
+      "user": "Owner RUTE",
+      "expenseId": "EXP-1779544307006"
+    }
+  ]
+}

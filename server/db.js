@@ -7,6 +7,7 @@ import { expenses } from '../src/data/mock/expenses.js';
 import { ingredients, stockMovements } from '../src/data/mock/ingredients.js';
 import { activityLog, cashSessions, dailyNotes } from '../src/data/mock/activity.js';
 import { cashAccounts, cashTransactions } from '../src/data/mock/cashAccounts.js';
+import { promotions } from '../src/data/mock/promotions.js';
 import { convertQuantityToIngredientUnit, getIngredientStatus } from './rules.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -66,6 +67,7 @@ function seedData() {
     },
     dailyNotes: clone(dailyNotes),
     receiptUploads: [],
+    promotions: clone(promotions),
   };
 }
 
@@ -204,6 +206,7 @@ function normalizeDb(db) {
       : seed.openingCapital,
     dailyNotes: Array.isArray(db.dailyNotes) ? db.dailyNotes : seed.dailyNotes,
     receiptUploads: Array.isArray(db.receiptUploads) ? db.receiptUploads : [],
+    promotions: Array.isArray(db.promotions) ? db.promotions : seed.promotions,
   };
 }
 
@@ -215,7 +218,8 @@ export function readDb() {
     JSON.stringify(normalized.ingredients) !== JSON.stringify(db.ingredients) ||
     JSON.stringify(normalized.users) !== JSON.stringify(db.users) ||
     JSON.stringify(normalized.openingCapital) !== JSON.stringify(db.openingCapital) ||
-    JSON.stringify(normalized.cashAccounts) !== JSON.stringify(db.cashAccounts)
+    JSON.stringify(normalized.cashAccounts) !== JSON.stringify(db.cashAccounts) ||
+    JSON.stringify(normalized.promotions) !== JSON.stringify(db.promotions)
   ) {
     fs.writeFileSync(dataFile, JSON.stringify(normalized, null, 2));
   }

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Taro">
+  <rect width="240" height="240" rx="28" fill="#EFEAF9"/>
+  <ellipse cx="120" cy="196" rx="58" ry="12" fill="#7E6AB0" opacity=".2"/>
+  <path d="M80 68h80l-10 125H90z" fill="#FCFAFF" stroke="#5E4C85" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M89 92h62l-6 86H95z" fill="#8D79BC"/>
+  <path d="M90 107c18-10 28 6 45-1 7-3 12-8 16-13l-3 39c-16 10-29-7-47 2-5 3-9 7-13 12z" fill="#C9B7E8"/>
+  <path d="M83 68c13-14 87-14 100 0-18 12-82 12-100 0z" fill="#FFFDFD" stroke="#5E4C85" stroke-width="5"/>
+  <path d="M105 62c12 8 31 8 45 0" fill="none" stroke="#8D79BC" stroke-width="6" stroke-linecap="round"/>
+</svg>
