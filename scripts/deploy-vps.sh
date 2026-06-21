@@ -84,7 +84,6 @@ RUTE_UPLOAD_DIR=$DATA_DIR/uploads
 JWT_SECRET=replace-with-long-random-secret
 JWT_EXPIRES_SECONDS=43200
 RUTE_OWNER_PIN=replace-owner-pin
-RUTE_PARTNER_PIN=replace-partner-pin
 AI_MODEL=gpt-4o-mini
 AI_BASE_URL=https://api.openai.com/v1
 RECEIPT_AI_MODEL=gpt-4o-mini
@@ -94,7 +93,6 @@ ENVEOF
   echo "  *** PENTING: Edit $APP_ENV sebelum production dipakai:"
   echo "  JWT_SECRET=isi-dengan-string-acak-panjang"
   echo "  RUTE_OWNER_PIN=isi-pin-owner"
-  echo "  RUTE_PARTNER_PIN=isi-pin-partner"
   echo "  RUTE_CORS_ORIGIN=$PUBLIC_ORIGIN atau domain frontend resmi"
   echo "  OPENAI_API_KEY=opsional"
   echo ""
@@ -111,7 +109,7 @@ set_env_var RUTE_DATA_FILE "$DATA_DIR/rute-db.json"
 set_env_var RUTE_UPLOAD_DIR "$DATA_DIR/uploads"
 set_env_var JWT_EXPIRES_SECONDS 43200
 
-if grep -Eq 'replace-with-long-random-secret|change-this-long-random-secret-before-production|RUTE_OWNER_PIN=123456|RUTE_PARTNER_PIN=654321|replace-owner-pin|replace-partner-pin' "$APP_ENV"; then
+if grep -Eq 'replace-with-long-random-secret|change-this-long-random-secret-before-production|RUTE_OWNER_PIN=123456|replace-owner-pin' "$APP_ENV"; then
   echo ""
   echo "WARNING: $APP_ENV masih berisi secret/PIN placeholder atau PIN dev."
   echo "Edit nilai production sebelum memberikan akses ke user asli."

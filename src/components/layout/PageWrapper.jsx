@@ -3,16 +3,17 @@ import useAuthStore from '../../store/useAuthStore';
 import useSettingsStore from '../../store/useSettingsStore';
 import useAppStore from '../../store/useAppStore';
 import { getBusinessDate } from '../../utils/businessDate';
-import { motion, useScroll, useSpring } from 'framer-motion';
+import { motion, useReducedMotion, useScroll, useSpring } from 'framer-motion';
+import { pageVariants } from '../../utils/motion';
 
 export default function PageWrapper({ children, title, subtitle }) {
   const { user, logout } = useAuthStore();
-  const isOwner = user?.role === 'owner';
   const { theme, updateSettings, sidebarCollapsed } = useSettingsStore();
   const isDarkMode = theme === 'dark';
   const apiStatus = useAppStore((state) => state.apiStatus);
   const businessDate = getBusinessDate();
   const statusLabel = apiStatus === 'connected' ? 'Sinkron' : apiStatus === 'loading' ? 'Memuat' : apiStatus === 'offline' ? 'Offline' : 'Lokal';
+  const shouldReduceMotion = useReducedMotion();
 
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -34,7 +35,7 @@ export default function PageWrapper({ children, title, subtitle }) {
   };
 
   return (
-    <div className={`min-h-screen bg-[var(--color-bg-primary)] transition-all duration-300 ${isOwner ? (sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64') : ''} pb-24 lg:pb-8`}>
+    <div className={`min-h-screen bg-[var(--color-bg-primary)] transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} pb-32 lg:pb-8`}>
       {title && (
         <header className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]/92 backdrop-blur-xl">
           <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-8 lg:py-4">
@@ -43,11 +44,11 @@ export default function PageWrapper({ children, title, subtitle }) {
                 <CalendarDays size={13} />
                 <span>{businessDate}</span>
                 <span className="hidden sm:inline">/</span>
-                <span className="hidden sm:inline">{user?.role === 'owner' ? 'Owner' : 'Partner'} RUTE</span>
+                <span className="hidden sm:inline">Owner RUTE</span>
               </div>
-              <h1 className="truncate text-xl font-extrabold tracking-tight text-[var(--color-text-primary)] lg:text-2xl">{title}</h1>
+              <h1 className="page-title truncate text-[1.35rem] font-semibold leading-tight text-[var(--color-text-primary)] lg:text-[1.75rem]">{title}</h1>
               {subtitle && (
-                <p className="mt-0.5 truncate text-xs font-medium text-[var(--color-text-muted)]">{subtitle}</p>
+                <p className="mt-1 truncate text-xs font-semibold text-[var(--color-text-muted)]">{subtitle}</p>
               )}
             </div>
             
@@ -71,7 +72,7 @@ export default function PageWrapper({ children, title, subtitle }) {
               {user && (
                 <button 
                   onClick={logout} 
-                  className={`touch-target flex items-center justify-center rounded-[var(--radius-button)] border border-[var(--color-border)] bg-white text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-accent-red)] ${isOwner ? 'lg:hidden' : ''}`}
+                  className="touch-target flex items-center justify-center rounded-[var(--radius-button)] border border-[var(--color-border)] bg-white text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-accent-red)] lg:hidden"
                   title="Keluar"
                 >
                   <LogOut size={18} />
@@ -82,16 +83,17 @@ export default function PageWrapper({ children, title, subtitle }) {
           {/* Scroll progress bar at bottom of sticky header */}
           <motion.div
             className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[var(--color-band-1)] via-[var(--color-accent-warm)] to-[var(--color-band-1)] origin-left"
-            style={{ scaleX }}
+            style={{ scaleX: shouldReduceMotion ? 1 : scaleX }}
           />
         </header>
       )}
 
       <motion.main
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -15 }}
-        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        id="main-content"
+        variants={shouldReduceMotion ? undefined : pageVariants}
+        initial={shouldReduceMotion ? false : 'hidden'}
+        animate="show"
+        exit={shouldReduceMotion ? undefined : 'exit'}
         className="mx-auto w-full max-w-[1320px] px-4 py-4 lg:px-8 lg:py-6"
       >
         {children}

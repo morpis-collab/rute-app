@@ -30,7 +30,7 @@ export default function PurchaseHistoryModal({ isOpen, onClose, ingredientId }) 
         unit: item?.stockUnit || item?.unit || ingredient.unit,
         price: item?.price || (item ? item.total / item.qty : 0),
         total: item?.total || item?.subtotal || 0,
-        user: exp.user || 'Partner',
+        user: exp.user || 'Owner',
         cashAccountName: cashAccount ? cashAccount.name : 'Kas Utama'
       };
     })

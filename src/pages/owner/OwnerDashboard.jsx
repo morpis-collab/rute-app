@@ -5,6 +5,7 @@ import {
   Check,
   Coffee,
   FileText,
+  Gift,
   Package,
   ReceiptText,
   TrendingUp,
@@ -27,6 +28,7 @@ import { getBusinessDate, isSameBusinessDate } from '../../utils/businessDate';
 import EmptyState from '../../components/common/EmptyState';
 import AnimatedNumber from '../../components/common/AnimatedNumber';
 import { motion } from 'framer-motion';
+import { getPromotionPerformance, getPromotionStatus } from '../../utils/promotions';
 
 const BUSINESS_TIME_ZONE = 'Asia/Makassar';
 
@@ -68,6 +70,7 @@ export default function OwnerDashboard() {
   const cashAccounts = useAppStore((state) => state.cashAccounts);
   const cashSessions = useAppStore((state) => state.cashSessions);
   const ingredients = useAppStore((state) => state.ingredients);
+  const promotions = useAppStore((state) => state.promotions);
   const getSalesSummary = useAppStore((state) => state.getSalesSummary);
   const getEstimatedHpp = useAppStore((state) => state.getEstimatedHpp);
   const getCashExpected = useAppStore((state) => state.getCashExpected);
@@ -101,6 +104,11 @@ export default function OwnerDashboard() {
   const hasDiscrepancy = todaySession && todaySession.status === 'closed' && Number(todaySession.difference || 0) !== 0;
   const criticalStockList = (ingredients || []).filter((item) => item.status === 'kritis' || Number(item.stock || 0) <= Number(item.minStock || 0));
   const isCashNotClosed = !todaySession || todaySession.status !== 'closed';
+  const activePromotions = (promotions || []).filter((promotion) => getPromotionStatus(promotion, businessDate) === 'active');
+  const scheduledPromotions = (promotions || []).filter((promotion) => getPromotionStatus(promotion, businessDate) === 'scheduled');
+  const todayPromoOmzet = activePromotions.reduce((sum, promotion) => (
+    sum + Number(getPromotionPerformance(promotion, summary ? (sales || []).filter((sale) => isSameBusinessDate(sale.date, businessDate)) : []).totalOmzet || 0)
+  ), 0);
 
   const trendData = Array.from({ length: 7 }, (_, index) => {
     const date = dateKey(6 - index);
@@ -128,20 +136,20 @@ export default function OwnerDashboard() {
 
   const alerts = [];
   if (criticalStockList.length > 0) {
-    alerts.push({ level: 'danger', title: `${criticalStockList.length} bahan stok kritis`, message: 'Perlu pembelian segera', link: '/owner/stock' });
+    alerts.push({ level: 'danger', title: `${criticalStockList.length} bahan stok kritis`, message: 'Buka rekomendasi restock', link: '/owner/restock-planner' });
   }
   if (pendingApprovalsCount > 0) {
     alerts.push({ level: 'warning', title: `${pendingApprovalsCount} pengeluaran pending`, message: 'Menunggu approval owner', link: '/owner/approval' });
   }
   if (isCashNotClosed) {
-    alerts.push({ level: 'info', title: 'Partner belum tutup kas', message: `Ekspektasi laci ${formatRupiah(systemExpectedCash)}`, link: '/owner/cash' });
+    alerts.push({ level: 'info', title: 'Kas belum ditutup', message: `Ekspektasi laci ${formatRupiah(systemExpectedCash)}`, link: '/owner/close-cash' });
   }
   if (hasDiscrepancy) {
     alerts.push({ level: 'danger', title: 'Selisih kas terdeteksi', message: formatRupiah(todaySession.difference), link: '/owner/cash' });
   }
 
   return (
-    <PageWrapper title="Ringkasan Operasional" subtitle="Pantau penjualan, kas, stok, dan aktivitas partner hari ini">
+    <PageWrapper title="Ringkasan Operasional" subtitle="Pantau penjualan, kas, stok, dan aktivitas outlet hari ini">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -174,8 +182,8 @@ export default function OwnerDashboard() {
         <motion.div variants={itemVariants} className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
           {/* Left Column Content */}
           <div className="space-y-6">
-            <section className="glass-card bg-white/70 p-5 rounded-2xl border border-[var(--color-border)] shadow-sm">
-              <SectionHeader title="Tren Live Penjualan" subtitle="Omzet dan estimasi laba 7 hari terakhir">
+            <section className="glass-card p-5">
+              <SectionHeader title="Tren Penjualan" subtitle="Omzet dan estimasi laba 7 hari terakhir">
                 <span className="rounded-[var(--radius-button)] border border-[var(--color-border)] bg-white px-3 py-2 text-xs font-bold text-[var(--color-text-secondary)]">7 Hari Terakhir</span>
               </SectionHeader>
               <div className="h-[310px] mt-4">
@@ -202,7 +210,7 @@ export default function OwnerDashboard() {
               </div>
             </section>
 
-            <section className="glass-card bg-white/70 p-5 rounded-2xl border border-[var(--color-border)] shadow-sm">
+            <section className="glass-card p-5">
               <SectionHeader title="Kas Usaha" subtitle="Saldo akun keuangan dan rekonsiliasi terbaru" />
               <div className="grid gap-3.5 md:grid-cols-4 mt-4">
                 <div className="rounded-[var(--radius-card)] bg-[var(--color-band-4)] p-4 md:col-span-1 border border-[var(--color-border)]">
@@ -220,13 +228,13 @@ export default function OwnerDashboard() {
               </div>
             </section>
 
-            <section className="glass-card bg-white/70 p-5 rounded-2xl border border-[var(--color-border)] shadow-sm">
-              <SectionHeader title="Status Partner & Shift" subtitle="Ringkasan pengerjaan operasional hari ini" />
+            <section className="glass-card p-5">
+              <SectionHeader title="Status Operasional & Shift" subtitle="Ringkasan pengerjaan outlet hari ini" />
               <div className="overflow-x-auto mt-4">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Partner / Outlet</th>
+                      <th>Outlet</th>
                       <th>Omzet Hari Ini</th>
                       <th>Status Tutup Kas</th>
                       <th>Catatan Harian</th>
@@ -251,7 +259,7 @@ export default function OwnerDashboard() {
 
           {/* Right Column Content */}
           <div className="space-y-6">
-            <section className="glass-card bg-white/70 p-5 rounded-2xl border border-[var(--color-border)] shadow-sm">
+            <section className="glass-card p-5">
               <SectionHeader title="Metode Pembayaran" subtitle="Rasio transaksi masuk hari ini" />
               <div className="space-y-3.5 mt-4">
                 {paymentRows.map((row) => {
@@ -271,7 +279,30 @@ export default function OwnerDashboard() {
               </div>
             </section>
 
-            <section className="glass-card bg-white/70 p-5 rounded-2xl border border-[var(--color-border)] shadow-sm">
+            <section className="glass-card p-5">
+              <SectionHeader
+                title="Promo Penjualan"
+                subtitle="Promo aktif dan omzet dari rekap hari ini"
+                action={<Link className="text-xs font-bold text-[var(--color-band-1)] hover:underline" to="/owner/promotions">Kelola</Link>}
+              />
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="rounded-[var(--radius-card)] bg-[var(--color-band-4)] p-3">
+                  <Gift size={16} className="mb-2 text-[var(--color-band-1)]" />
+                  <p className="text-[10px] font-extrabold uppercase text-[var(--color-text-muted)]">Aktif</p>
+                  <p className="font-mono text-lg font-black text-[var(--color-text-primary)]">{activePromotions.length}</p>
+                </div>
+                <div className="rounded-[var(--radius-card)] bg-white p-3 border border-[var(--color-border)]">
+                  <p className="text-[10px] font-extrabold uppercase text-[var(--color-text-muted)]">Terjadwal</p>
+                  <p className="mt-2 font-mono text-lg font-black text-[var(--color-text-primary)]">{scheduledPromotions.length}</p>
+                </div>
+                <div className="rounded-[var(--radius-card)] bg-white p-3 border border-[var(--color-border)]">
+                  <p className="text-[10px] font-extrabold uppercase text-[var(--color-text-muted)]">Omzet</p>
+                  <p className="mt-2 font-mono text-sm font-black text-[var(--color-band-1)]">{formatRupiah(todayPromoOmzet)}</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="glass-card p-5">
               <SectionHeader title="Menu Terlaris" subtitle="Top 5 menu terjual hari ini" />
               <div className="space-y-2 mt-4">
                 {(summary.menuTerlaris || []).slice(0, 5).map((menu, index) => {
@@ -293,20 +324,20 @@ export default function OwnerDashboard() {
               </div>
             </section>
 
-            <section className="glass-card bg-white/70 p-5 rounded-2xl border border-[var(--color-border)] shadow-sm">
-              <SectionHeader title="Catatan Partner" action={<Link className="text-xs font-bold text-[var(--color-band-1)] hover:underline" to="/owner/activity">Lihat Semua</Link>} />
+            <section className="glass-card p-5">
+              <SectionHeader title="Catatan Operasional" action={<Link className="text-xs font-bold text-[var(--color-band-1)] hover:underline" to="/owner/activity">Lihat Semua</Link>} />
               <div className="mt-4">
                 {todayNote ? (
                   <div className="rounded-[var(--radius-card)] bg-[var(--color-coffee-milk)] p-3.5 text-xs font-medium leading-relaxed text-[var(--color-text-secondary)] border border-[var(--color-border)]">
                     {todayNote.note}
                   </div>
                 ) : (
-                  <EmptyState message="Tidak ada catatan hari ini." sub="Partner belum membuat catatan" icon={<FileText size={20} />} size="sm" showParticles={false} />
+                  <EmptyState message="Tidak ada catatan hari ini." sub="Belum ada catatan operasional" icon={<FileText size={20} />} size="sm" showParticles={false} />
                 )}
               </div>
             </section>
 
-            <section className="glass-card bg-white/70 p-5 rounded-2xl border border-[var(--color-border)] shadow-sm">
+            <section className="glass-card p-5">
               <SectionHeader title="Aktivitas Terkini" />
               <div className="space-y-2 mt-4">
                 {recentActivity.map((activity) => (

@@ -1,33 +1,35 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, TrendingUp, Receipt, Package,
-  Wallet, BookOpen, BarChart3, Bot, Settings, Camera, Clock, Briefcase,
-  Percent, Users, ChevronLeft, ChevronRight, LogOut
+  Wallet, BookOpen, BarChart3, Settings, Clock, Briefcase,
+  Percent, Users, ChevronLeft, ChevronRight, LogOut, Gift, ClipboardList
 } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 import useSettingsStore from '../../store/useSettingsStore';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { softSpring } from '../../utils/motion';
 
 const ownerMenu = [
   { to: '/owner/dashboard', icon: LayoutDashboard, label: 'Dasbor' },
-  { to: '/owner/live-sales', icon: TrendingUp, label: 'Live Penjualan' },
+  { to: '/owner/live-sales', icon: TrendingUp, label: 'Rekap Penjualan' },
+  { to: '/owner/close-cash', icon: Clock, label: 'Tutup Kas' },
   { to: '/owner/expenses', icon: Receipt, label: 'Pengeluaran' },
-  { to: '/owner/receipt', icon: Camera, label: 'Upload Resi' },
   { to: '/owner/cash', icon: Wallet, label: 'Kas Usaha' },
   { to: '/owner/stock', icon: Package, label: 'Gudang Bahan' },
+  { to: '/owner/restock-planner', icon: ClipboardList, label: 'Restock Planner' },
   { to: '/owner/opening-capital', icon: Briefcase, label: 'Modal Awal' },
   { to: '/owner/menu-hpp', icon: BookOpen, label: 'Menu & HPP' },
-  { to: '/owner/promotions', icon: Percent, label: 'Promo' },
+  { to: '/owner/promotions', icon: Gift, label: 'Promo' },
   { to: '/owner/reports', icon: BarChart3, label: 'Laporan' },
   { to: '/owner/revenue-allocation', icon: Percent, label: 'Bagi Omzet' },
   { to: '/owner/activity', icon: Clock, label: 'Riwayat Aktivitas' },
-  { to: '/owner/ai', icon: Bot, label: 'Asisten AI' },
   { to: '/owner/settings', icon: Settings, label: 'Pengaturan' },
 ];
 
 export default function Sidebar() {
   const { user, logout } = useAuthStore();
   const { sidebarCollapsed, updateSettings } = useSettingsStore();
+  const shouldReduceMotion = useReducedMotion();
 
   if (user?.role !== 'owner') return null;
 
@@ -38,7 +40,7 @@ export default function Sidebar() {
   return (
     <motion.aside
       animate={{ width: sidebarCollapsed ? 80 : 256 }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className="fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-[var(--color-border)] bg-white/92 text-[var(--color-text-primary)] shadow-[var(--shadow-sm)] backdrop-blur-xl lg:flex"
     >
       {/* Sidebar Header */}
@@ -47,17 +49,20 @@ export default function Sidebar() {
           <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-1.5 shadow-sm">
             <img src="/rute-logo.png" alt="RUTE Logo" className="h-full w-full object-contain" />
           </div>
-          {!sidebarCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="min-w-0"
-            >
-              <h1 className="text-lg font-black tracking-tight text-[var(--color-text-primary)]">RUTE Coffee</h1>
-              <p className="truncate text-[11px] font-semibold text-[var(--color-text-muted)]">Owner Command Center</p>
-            </motion.div>
-          )}
+          <AnimatePresence initial={false}>
+            {!sidebarCollapsed && (
+              <motion.div
+                initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={shouldReduceMotion ? undefined : { opacity: 0, x: -8 }}
+                transition={softSpring}
+                className="min-w-0"
+              >
+                <h1 className="brand-title text-lg font-semibold leading-tight text-[var(--color-text-primary)]">RUTE Coffee</h1>
+                <p className="truncate text-[11px] font-semibold text-[var(--color-text-muted)]">Panel owner operasional</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Collapse Toggle Button */}
@@ -94,19 +99,23 @@ export default function Sidebar() {
                   <motion.div
                     layoutId="activeIndicator"
                     className="absolute left-0 top-1/4 h-1/2 w-1.5 rounded-r-full bg-[var(--color-band-1)]"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    transition={softSpring}
                   />
                 )}
                 <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={`shrink-0 ${isActive ? 'text-[var(--color-band-1)]' : 'text-[var(--color-text-secondary)]'}`} />
-                {!sidebarCollapsed && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="truncate"
-                  >
-                    {label}
-                  </motion.span>
-                )}
+                <AnimatePresence initial={false}>
+                  {!sidebarCollapsed && (
+                    <motion.span
+                      initial={shouldReduceMotion ? false : { opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={shouldReduceMotion ? undefined : { opacity: 0 }}
+                      transition={{ duration: 0.16 }}
+                      className="truncate"
+                    >
+                      {label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </>
             )}
           </NavLink>
@@ -117,8 +126,9 @@ export default function Sidebar() {
       <div className="border-t border-[var(--color-border)] p-3">
         {!sidebarCollapsed ? (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
+            transition={softSpring}
             className="mb-2 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-coffee-milk)] p-3"
           >
             <div className="mb-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.06em] text-[var(--color-text-muted)]">
@@ -139,7 +149,7 @@ export default function Sidebar() {
           </div>
           {!sidebarCollapsed && (
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={shouldReduceMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex-1 min-w-0"
             >

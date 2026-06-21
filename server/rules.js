@@ -39,15 +39,22 @@ export function getSalesSummary(sales = []) {
   const totalOmzet = sales.reduce((sum, sale) => sum + Number(sale.total || 0), 0);
   const totalTransaksi = sales.length;
   const totalCup = sales.reduce(
-    (sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + Number(item.qty || 0), 0),
+    (sum, sale) => sum + (sale.items || []).reduce((itemSum, item) => itemSum + Number(item.qty || 0), 0),
     0,
   );
   const byMethod = { cash: 0, qris: 0, transfer: 0 };
   const menuCount = {};
 
   sales.forEach((sale) => {
-    byMethod[sale.paymentMethod] = (byMethod[sale.paymentMethod] || 0) + Number(sale.total || 0);
-    sale.items.forEach((item) => {
+    if (sale.paymentBreakdown && typeof sale.paymentBreakdown === 'object') {
+      byMethod.cash += Number(sale.paymentBreakdown.cash || 0);
+      byMethod.qris += Number(sale.paymentBreakdown.qris || 0);
+      byMethod.transfer += Number(sale.paymentBreakdown.transfer || 0);
+    } else {
+      const method = sale.paymentMethod || 'cash';
+      byMethod[method] = (byMethod[method] || 0) + Number(sale.total || 0);
+    }
+    (sale.items || []).forEach((item) => {
       menuCount[item.name] = (menuCount[item.name] || 0) + Number(item.qty || 0);
     });
   });
@@ -65,7 +72,7 @@ export function getExpenseTotal(expenses = []) {
 
 export function getEstimatedHpp(sales = [], products = []) {
   return sales.reduce((saleSum, sale) => {
-    const saleHpp = sale.items.reduce((itemSum, item) => {
+    const saleHpp = (sale.items || []).reduce((itemSum, item) => {
       if (item.estimatedHpp != null) return itemSum + Number(item.estimatedHpp || 0);
       const product = products.find((candidate) => String(candidate.id) === String(item.productId));
       return itemSum + Number(product?.hpp || 0) * Number(item.qty || 0);
@@ -117,7 +124,7 @@ export function refreshProductCosts(products = [], ingredients = []) {
 }
 
 export function buildSaleStockMovements(transaction, products = []) {
-  return transaction.items.flatMap((item) => {
+  return (transaction.items || []).flatMap((item) => {
     const product = products.find((candidate) => String(candidate.id) === String(item.productId));
     if (!product?.recipe) return [];
 
@@ -219,8 +226,13 @@ export function getCashExpected({ sales = [], expenses = [], openingCash = 0, bu
     timeZone: process.env.RUTE_BUSINESS_TZ || 'Asia/Makassar',
   });
   const cashSales = sales
-    .filter((sale) => sale.date?.startsWith(date) && sale.paymentMethod === 'cash')
-    .reduce((sum, sale) => sum + Number(sale.total || 0), 0);
+    .filter((sale) => sale.date?.startsWith(date))
+    .reduce((sum, sale) => {
+      if (sale.paymentBreakdown && typeof sale.paymentBreakdown === 'object') {
+        return sum + Number(sale.paymentBreakdown.cash || 0);
+      }
+      return sum + (sale.paymentMethod === 'cash' ? Number(sale.total || 0) : 0);
+    }, 0);
   const cashExpenses = expenses
     .filter((expense) => expense.date?.startsWith(date))
     .reduce((sum, expense) => sum + Number(expense.total || 0), 0);

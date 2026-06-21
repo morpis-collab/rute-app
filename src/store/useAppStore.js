@@ -18,6 +18,7 @@ import {
   postSale,
   postExpense,
   putExpense,
+  postExpenseStockItem,
   postProduct,
   putProduct,
   deleteProduct,
@@ -119,7 +120,7 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-  saveReceiptExpense: async ({ receipt, imageUrl, cashAccountId, user = 'Partner' }) => {
+  saveReceiptExpense: async ({ receipt, imageUrl, cashAccountId, user = 'Owner' }) => {
     try {
       const result = await postReceiptExpense({
         receipt: {
@@ -194,6 +195,36 @@ const useAppStore = create((set, get) => ({
       await get().loadRemoteData();
     } catch (err) {
       console.error('Failed to update expense', err);
+      throw err;
+    }
+  },
+
+  reconcileExpenseStock: async (expenseId, payload) => {
+    try {
+      const result = await postExpenseStockItem(expenseId, payload);
+      if (result?.state) {
+        set((state) => ({
+          ...state,
+          products: result.state.products || state.products,
+          sales: result.state.sales || state.sales,
+          expenses: result.state.expenses || state.expenses,
+          ingredients: result.state.ingredients || state.ingredients,
+          stockMovements: result.state.stockMovements || state.stockMovements,
+          activityLog: result.state.activityLog || state.activityLog,
+          cashSessions: result.state.cashSessions || state.cashSessions,
+          cashAccounts: result.state.cashAccounts || state.cashAccounts,
+          cashTransactions: result.state.cashTransactions || state.cashTransactions,
+          dailyNotes: result.state.dailyNotes || state.dailyNotes,
+          receiptUploads: result.state.receiptUploads || state.receiptUploads,
+          promotions: result.state.promotions || state.promotions,
+        }));
+      } else {
+        await get().loadRemoteData();
+      }
+      return result?.expense;
+    } catch (err) {
+      console.error('Failed to reconcile expense stock', err);
+      await get().loadRemoteData();
       throw err;
     }
   },
@@ -348,7 +379,7 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-  closeCash: ({ actualCash, qris, transfer, notes, user = 'Partner' }) => {
+  closeCash: ({ actualCash, qris, transfer, notes, user = 'Owner' }) => {
     const businessDate = getBusinessDate();
     const session = get().cashSessions.find((cash) => cash.date === businessDate);
     const expectedCash = get().getCashExpected(businessDate);
@@ -409,7 +440,7 @@ const useAppStore = create((set, get) => ({
     return closedSession;
   },
 
-  addDailyNote: (note, user = 'Partner') => {
+  addDailyNote: (note, user = 'Owner') => {
     if (!note.trim()) return null;
     const businessDate = getBusinessDate();
 
@@ -427,7 +458,7 @@ const useAppStore = create((set, get) => ({
         {
           id: `ACT-${Date.now()}`,
           time: entry.createdAt,
-          action: 'Partner memperbarui catatan harian',
+          action: 'Owner memperbarui catatan operasional',
           user,
           type: 'catatan',
         },

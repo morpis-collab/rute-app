@@ -52,15 +52,13 @@ function getJwtSecret() {
   return 'rute-dev-jwt-secret-change-before-production';
 }
 
-function getUserPin(role) {
-  const normalizedRole = String(role || '').toLowerCase();
-  const envKey = normalizedRole === 'owner' ? 'RUTE_OWNER_PIN' : 'RUTE_PARTNER_PIN';
-  const pin = process.env[envKey];
+function getOwnerPin() {
+  const pin = process.env.RUTE_OWNER_PIN;
   if (pin) return pin;
   if (isProduction) {
-    throw new Error(`${envKey} wajib diset untuk production.`);
+    throw new Error('RUTE_OWNER_PIN wajib diset untuk production.');
   }
-  return normalizedRole === 'owner' ? '123456' : '654321';
+  return '123456';
 }
 
 function safeUser(user) {
@@ -91,10 +89,11 @@ function validPin(inputPin, expectedPin) {
 }
 
 export function loginWithRolePin(db, { role, pin } = {}) {
-  const user = findUserByRole(db, role);
+  if (role && String(role).trim().toLowerCase() !== 'owner') return null;
+  const user = findUserByRole(db, 'owner');
   if (!user) return null;
   if (user.active === false) return null;
-  if (!pin || !validPin(pin, getUserPin(user.role))) return null;
+  if (!pin || !validPin(pin, getOwnerPin())) return null;
 
   const publicUser = safeUser(user);
   const token = signJwt(

@@ -14,7 +14,7 @@ Env penting untuk development/production:
 - `RUTE_DATA_FILE`: path file JSON database. Set ke persistent disk saat deploy.
 - `JWT_SECRET`: secret JWT. Wajib panjang dan random di production.
 - `JWT_EXPIRES_SECONDS`: durasi token.
-- `RUTE_OWNER_PIN` dan `RUTE_PARTNER_PIN`: PIN login role.
+- `RUTE_OWNER_PIN`: PIN login owner.
 - `AI_API_KEY` atau `OPENAI_API_KEY`: key provider AI Copilot.
 - `AI_MODEL` dan `AI_BASE_URL`: opsional untuk model/provider kompatibel OpenAI chat completions.
 
@@ -36,12 +36,11 @@ Endpoint publik:
 Request:
 ```json
 {
-  "role": "owner",
   "pin": "123456"
 }
 ```
 
-Role valid: `owner` atau `partner`.
+Auth sekarang owner-only. Request lama dengan `role: "partner"` ditolak `401`.
 
 Response:
 ```json
@@ -109,6 +108,8 @@ Response:
     "endDate": "2026-06-30",
     "targetProductIds": ["1"],
     "discountValue": 2000,
+    "bundleQty": 0,
+    "bundlePrice": 0,
     "targetSales": 100,
     "budget": 200000,
     "objective": "Dorong transaksi jam sore",
@@ -121,7 +122,7 @@ Response:
 
 Khusus owner. Membuat promo baru. `type` valid: `percentage`, `nominal`, `fixed_price`, `bundle`, `bogo`. `status` valid: `draft`, `scheduled`, `active`, `completed`, `canceled`.
 
-Request minimal:
+Request minimal untuk diskon biasa:
 ```json
 {
   "name": "Hemat Sore",
@@ -131,6 +132,22 @@ Request minimal:
   "endDate": "2026-06-30",
   "targetProductIds": ["1"],
   "discountValue": 2000,
+  "targetSales": 100,
+  "budget": 200000
+}
+```
+
+Request promo paket satu menu:
+```json
+{
+  "name": "Beli 2 Kopi Susu 18K",
+  "type": "bundle",
+  "status": "active",
+  "startDate": "2026-06-15",
+  "endDate": "2026-06-30",
+  "targetProductIds": ["1"],
+  "bundleQty": 2,
+  "bundlePrice": 18000,
   "targetSales": 100,
   "budget": 200000
 }
@@ -164,7 +181,7 @@ Response:
     ],
     "total": 10000,
     "paymentMethod": "cash",
-    "user": "Partner"
+    "user": "Owner"
   }
 ]
 ```
@@ -179,9 +196,33 @@ Request minimal:
   ],
   "total": 10000,
   "paymentMethod": "cash",
-  "user": "Partner"
+  "user": "Owner"
 }
 ```
+
+Request rekap closing owner dengan pembayaran campuran:
+```json
+{
+  "entrySource": "owner_closing",
+  "date": "2026-06-14T12:00:00.000Z",
+  "items": [
+    { "productId": 1, "name": "Kopi Susu RUTE", "qty": 12, "price": 10000, "subtotal": 120000 }
+  ],
+  "total": 120000,
+  "paymentBreakdown": {
+    "cash": 80000,
+    "qris": 40000,
+    "transfer": 0
+  },
+  "user": "Owner RUTE"
+}
+```
+
+Catatan kontrak:
+
+- `paymentBreakdown` opsional untuk transaksi lama, tetapi wajib disamakan dengan `total` jika dikirim.
+- Jika `paymentBreakdown` berisi lebih dari satu metode, backend menyimpan `paymentMethod: "mixed"` dan tetap membuat mutasi kas per metode.
+- Penjualan membuat stock movement keluar dari resep menu dan menghitung `estimatedHpp`.
 
 Response berisi transaksi, HPP transaksi, stock movement keluar, dan snapshot state terbaru.
 
@@ -251,7 +292,7 @@ Response berisi bahan baru, daftar stok terbaru, dan snapshot state. Nama bahan 
 
 `POST /stock/adjust`
 
-Dipakai owner/operator untuk koreksi stok manual, barang rusak, atau stok masuk non-resi.
+Dipakai owner untuk koreksi stok manual, barang rusak, atau stok masuk non-resi.
 
 Request:
 ```json
@@ -283,7 +324,7 @@ Response:
   {
     "id": "EXP-001",
     "date": "2026-05-18T08:30:00.000Z",
-    "user": "Partner",
+    "user": "Owner",
     "items": [{ "name": "Susu UHT", "amount": 216000 }],
     "total": 216000,
     "status": "approved",
@@ -299,12 +340,43 @@ Request minimal:
 {
   "items": [{ "name": "Susu UHT", "amount": 216000 }],
   "total": 216000,
-  "user": "Partner",
+  "user": "Owner",
   "proofUrl": null
 }
 ```
 
 Response berisi pengeluaran baru, stock movement bila item menambah stok, dan snapshot state terbaru.
+
+`POST /expenses/:id/stock-items`
+
+Khusus owner. Dipakai untuk rekonsiliasi pengeluaran manual yang sudah pernah dicatat sebelum bahan tersedia di Gudang Bahan. Endpoint ini menambahkan item stok ke pengeluaran existing, membuat stock movement masuk, dan memperbarui harga modal rata-rata tanpa membuat pengeluaran baru atau transaksi kas keluar baru.
+
+Request:
+```json
+{
+  "item": {
+    "name": "Lekor",
+    "qty": 10,
+    "unit": "pcs",
+    "price": 5000,
+    "total": 50000,
+    "addsStock": true,
+    "ingredientId": 12,
+    "stockQty": 10,
+    "stockUnit": "pcs"
+  },
+  "user": "Owner"
+}
+```
+
+Catatan validasi:
+
+- `ingredientId` harus cocok dengan bahan yang sudah ada.
+- `total` item tidak boleh melebihi sisa nominal pengeluaran yang belum terhubung ke stok.
+- Bahan yang sama tidak boleh dihubungkan dua kali ke pengeluaran yang sama.
+- Pengeluaran berstatus `rejected` tidak bisa direkonsiliasi.
+
+Response berisi pengeluaran yang sudah diperbarui, stock movement baru, dan snapshot state terbaru.
 
 ## Receipt OCR
 
@@ -360,7 +432,7 @@ Jika API key belum ada, provider gagal, confidence rendah, atau item tidak terba
 
 `POST /receipt-expenses`
 
-Dipanggil setelah operator mengonfirmasi preview AI. Backend menyimpan pengeluaran, receipt upload termasuk `imageUrl` file permanen, stock movement masuk, dan activity log.
+Dipanggil setelah owner mengonfirmasi preview AI. Backend menyimpan pengeluaran, receipt upload termasuk `imageUrl` file permanen, stock movement masuk, dan activity log.
 
 Kontrak penting:
 
@@ -401,7 +473,7 @@ Request minimal setelah preview dikoreksi:
     ]
   },
   "cashAccountId": "kas-utama",
-  "user": "Partner"
+  "user": "Owner"
 }
 ```
 
@@ -556,11 +628,11 @@ Validasi backend:
 - `description` wajib diisi.
 - Transfer tidak boleh ke akun yang sama.
 - Kas keluar/koreksi minus/transfer ditolak jika saldo tidak cukup.
-- Mutasi ditolak `403` jika tanggal transaksi sudah punya sesi kas berstatus `closed`.
+- Mutasi manual owner tetap boleh dicatat setelah laci ditutup agar pembagian Brankas Bahan Baku, Operasional, dan Keuntungan bisa dilakukan setelah closing.
 
 `GET /cash/expected?date=2026-05-17&openingCash=100000`
 
-Mengambil angka kas seharusnya sebelum Partner menutup kas. Endpoint ini sudah memakai data transaksi backend, jadi frontend tidak perlu menghitung ulang.
+Mengambil angka kas seharusnya sebelum owner menutup kas. Endpoint ini sudah memakai data transaksi backend, jadi frontend tidak perlu menghitung ulang.
 
 Query:
 
@@ -601,11 +673,11 @@ Request:
   "date": "2026-05-17",
   "openingCash": 100000,
   "sourceCashAccountId": "kas-brankas",
-  "user": "Partner"
+  "user": "Owner"
 }
 ```
 
-Membuka sesi kas harian dan mengisi laci kasir dengan modal awal. `sourceCashAccountId` opsional untuk kompatibilitas lama, tetapi frontend Partner mengirimnya agar uang laci tercatat diambil dari akun kas yang dipilih. Jika sumber dikirim, backend menolak sumber yang tidak ditemukan, sumber yang sama dengan laci, dan saldo sumber yang tidak cukup. Backend juga menolak tanggal yang sudah punya sesi kas.
+Membuka sesi kas harian dan mengisi laci kasir dengan modal awal. `sourceCashAccountId` opsional untuk kompatibilitas lama, tetapi frontend owner mengirimnya agar uang laci tercatat diambil dari akun kas yang dipilih. Jika sumber dikirim, backend menolak sumber yang tidak ditemukan, sumber yang sama dengan laci, dan saldo sumber yang tidak cukup. Backend juga menolak tanggal yang sudah punya sesi kas.
 
 Response sukses `201`:
 ```json
@@ -616,7 +688,7 @@ Response sukses `201`:
     "openingCashSourceAccountId": "kas-brankas",
     "openingCashSourceAccountName": "Brankas",
     "status": "open",
-    "openedBy": "Partner",
+    "openedBy": "Owner",
     "openedAt": "2026-05-17T01:00:00.000Z"
   },
   "state": {}
@@ -633,11 +705,11 @@ Request:
   "qris": 120000,
   "transfer": 0,
   "notes": "Tidak ada kendala",
-  "user": "Partner"
+  "user": "Owner RUTE"
 }
 ```
 
-Backend menghitung ulang `expectedCash` dari data transaksi dan menolak tutup kas ganda untuk tanggal yang sudah `closed`.
+Backend menghitung ulang `expectedCash` dari data transaksi, menolak tutup kas ganda untuk tanggal yang sudah `closed`, lalu memindahkan cash aktual dari laci ke Brankas utama.
 
 Response sukses `201`:
 ```json
@@ -654,7 +726,7 @@ Response sukses `201`:
     "totalExpenseCash": 70000,
     "status": "closed",
     "notes": "Tidak ada kendala",
-    "closedBy": "Partner",
+    "closedBy": "Owner",
     "closedAt": "2026-05-18T02:25:00.000Z"
   },
   "state": {}
@@ -679,7 +751,7 @@ Request:
 {
   "date": "2026-05-17",
   "note": "Hari ini ramai mulai jam 11.",
-  "user": "Partner"
+  "user": "Owner"
 }
 ```
 

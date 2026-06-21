@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useAnimation } from 'framer-motion';
+import { motion, useAnimation, useReducedMotion } from 'framer-motion';
 
 /**
  * AnimatedNumber - Angka yang beranimasi counting saat value berubah.
@@ -32,10 +32,21 @@ export default function AnimatedNumber({
   const prevValueRef = useRef(value);
   
   const controls = useAnimation();
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     const targetValue = Number(value) || 0;
     const startValue = currentValueRef.current;
+
+    if (shouldReduceMotion) {
+      currentValueRef.current = targetValue;
+      prevValueRef.current = targetValue;
+      const frame = requestAnimationFrame(() => {
+        setDisplayValue(targetValue);
+        setTrend('stable');
+      });
+      return () => cancelAnimationFrame(frame);
+    }
 
     // Jangan animate kalau nilainya sama
     if (startValue === targetValue) {
@@ -90,7 +101,7 @@ export default function AnimatedNumber({
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [value, duration, controls]);
+  }, [value, duration, controls, shouldReduceMotion]);
 
   const getColorClass = () => {
     if (trend === 'up') return 'text-success dark:text-success';

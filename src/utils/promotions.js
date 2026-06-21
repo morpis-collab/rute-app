@@ -36,6 +36,8 @@ export function isProductInPromotion(productId, promotion) {
 export function getPromotionPrice(product, promotion) {
   const normalPrice = Number(product?.sellingPrice ?? product?.price ?? 0);
   const discountValue = Number(promotion?.discountValue || 0);
+  const bundleQty = Number(promotion?.bundleQty || 0);
+  const bundlePrice = Number(promotion?.bundlePrice || 0);
   let promoPrice = normalPrice;
 
   if (promotion?.type === 'percentage') {
@@ -44,6 +46,8 @@ export function getPromotionPrice(product, promotion) {
     promoPrice = normalPrice - discountValue;
   } else if (promotion?.type === 'fixed_price') {
     promoPrice = discountValue;
+  } else if (promotion?.type === 'bundle' && bundleQty > 0 && bundlePrice > 0) {
+    promoPrice = Math.round(bundlePrice / bundleQty);
   }
 
   promoPrice = Math.max(0, Math.round(Number(promoPrice || 0)));
@@ -51,6 +55,8 @@ export function getPromotionPrice(product, promotion) {
     normalPrice,
     promoPrice,
     discountAmount: Math.max(0, normalPrice - promoPrice),
+    bundleQty,
+    bundlePrice,
   };
 }
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, History, Package, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, History, Package, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { KpiTile, SectionHeader } from '../../components/common/DashboardPrimitives';
 import useAppStore from '../../store/useAppStore';
@@ -9,6 +9,7 @@ import { getIngredientTone } from '../../utils/productVisuals';
 import RecordPurchaseModal from '../../components/shared/RecordPurchaseModal';
 import PurchaseHistoryModal from '../../components/shared/PurchaseHistoryModal';
 import IngredientModal from '../../components/shared/IngredientModal';
+import StockAdjustmentModal from '../../components/shared/StockAdjustmentModal';
 import useToastStore from '../../store/useToastStore';
 import { getBusinessDate } from '../../utils/businessDate';
 
@@ -16,13 +17,16 @@ export default function OwnerStock() {
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isIngredientModalOpen, setIsIngredientModalOpen] = useState(false);
+  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [selectedIngredientId, setSelectedIngredientId] = useState(null);
 
   const ingredients = useAppStore((state) => state.ingredients);
   const cashSessions = useAppStore((state) => state.cashSessions);
   const addExpense = useAppStore((state) => state.addExpense);
+  const reconcileExpenseStock = useAppStore((state) => state.reconcileExpenseStock);
   const addIngredient = useAppStore((state) => state.addIngredient);
   const removeIngredient = useAppStore((state) => state.removeIngredient);
+  const adjustStock = useAppStore((state) => state.adjustStock);
   const { user } = useAuthStore();
 
   const todayBusinessDate = getBusinessDate();
@@ -35,15 +39,24 @@ export default function OwnerStock() {
   }, [ingredients]);
 
   const handleSavePurchase = async (expenseData) => {
-    if (isClosed) {
+    if (isClosed && !expenseData.existingExpenseId) {
       useToastStore.getState().addToast('Gagal mencatat: Kas hari ini sudah ditutup.', 'error');
-      return;
+      throw new Error('Kas hari ini sudah ditutup');
     }
     try {
-      await addExpense(expenseData);
-      useToastStore.getState().addToast('Belanja bahan berhasil dicatat', 'success');
-    } catch {
-      // Error handled globally
+      if (expenseData.existingExpenseId) {
+        await reconcileExpenseStock(expenseData.existingExpenseId, {
+          item: expenseData.item,
+          user: user?.name || 'Owner',
+        });
+        useToastStore.getState().addToast('Pengeluaran manual berhasil dihubungkan ke stok', 'success');
+      } else {
+        await addExpense(expenseData);
+        useToastStore.getState().addToast('Belanja bahan berhasil dicatat', 'success');
+      }
+    } catch (error) {
+      const message = error.response?.data?.error || 'Belanja bahan gagal dicatat';
+      useToastStore.getState().addToast(message, 'error');
     }
   };
 
@@ -53,6 +66,17 @@ export default function OwnerStock() {
       useToastStore.getState().addToast('Bahan baku berhasil ditambahkan', 'success');
     } catch (error) {
       const message = error.response?.data?.error || 'Bahan baku gagal ditambahkan';
+      useToastStore.getState().addToast(message, 'error');
+      throw error;
+    }
+  };
+
+  const handleAdjustStock = async (data) => {
+    try {
+      await adjustStock(data);
+      useToastStore.getState().addToast('Koreksi stok berhasil disimpan', 'success');
+    } catch (error) {
+      const message = error.response?.data?.error || error.message || 'Koreksi stok gagal disimpan';
       useToastStore.getState().addToast(message, 'error');
       throw error;
     }
@@ -95,11 +119,13 @@ export default function OwnerStock() {
 
       <SectionHeader title="Daftar Bahan" subtitle="Harga modal rata-rata mengikuti riwayat belanja">
         <button
-          onClick={() => !isClosed && setIsPurchaseModalOpen(true)}
-          disabled={isClosed}
+          onClick={() => setIsPurchaseModalOpen(true)}
           className="btn btn-primary text-xs"
         >
           <Plus size={16} /> Catat Belanja
+        </button>
+        <button onClick={() => setIsAdjustmentModalOpen(true)} className="btn btn-secondary text-xs">
+          <SlidersHorizontal size={16} /> Koreksi Stok
         </button>
         <button onClick={() => setIsIngredientModalOpen(true)} className="btn btn-secondary text-xs">
           <Package size={16} /> Tambah Bahan
@@ -134,6 +160,13 @@ export default function OwnerStock() {
       )}
 
       <IngredientModal isOpen={isIngredientModalOpen} onClose={() => setIsIngredientModalOpen(false)} onSave={handleSaveIngredient} />
+      <StockAdjustmentModal
+        isOpen={isAdjustmentModalOpen}
+        onClose={() => setIsAdjustmentModalOpen(false)}
+        onSave={handleAdjustStock}
+        ingredients={ingredients}
+        user={user?.name || 'Owner'}
+      />
     </PageWrapper>
   );
 }

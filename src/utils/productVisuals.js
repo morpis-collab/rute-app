@@ -2,29 +2,29 @@ const visualCatalog = [
   {
     keys: ['ruang coffee', 'kopi susu', 'aren'],
     image: '/menu/ruang-coffee.svg',
-    accent: '#B86F2E',
-    tone: '#FFF0DD',
+    accent: '#4F684F',
+    tone: '#E9F1E6',
     label: 'Kopi susu',
   },
   {
     keys: ['tengah coffee'],
     image: '/menu/tengah-coffee.svg',
-    accent: '#8A5635',
-    tone: '#F6E8DC',
+    accent: '#526B55',
+    tone: '#EDF4EA',
     label: 'Signature',
   },
   {
     keys: ['americano'],
     image: '/menu/americano.svg',
-    accent: '#5F3B24',
-    tone: '#EFE4DA',
+    accent: '#2F4634',
+    tone: '#E1EADF',
     label: 'Espresso',
   },
   {
     keys: ['butterscotch'],
     image: '/menu/butterscotch-coffee.svg',
-    accent: '#C98237',
-    tone: '#FFF2D8',
+    accent: '#7D9078',
+    tone: '#F1F5EF',
     label: 'Creamy',
   },
   {
@@ -44,8 +44,8 @@ const visualCatalog = [
   {
     keys: ['taro'],
     image: '/menu/taro.svg',
-    accent: '#7E6AB0',
-    tone: '#EFEAF9',
+    accent: '#7C6F58',
+    tone: '#F0E8DC',
     label: 'Non-kopi',
   },
   {
@@ -58,8 +58,8 @@ const visualCatalog = [
   {
     keys: ['lychee', 'tea', 'teh'],
     image: '/menu/lychee-tea.svg',
-    accent: '#D08B42',
-    tone: '#FFF1D9',
+    accent: '#667C62',
+    tone: '#EDF4EA',
     label: 'Tea',
   },
 ];
@@ -72,8 +72,8 @@ export function getProductVisual(product = {}) {
   if (product.imageUrl) {
     return {
       image: product.imageUrl,
-      accent: '#A96835',
-      tone: '#FFF0DD',
+      accent: '#4F684F',
+      tone: '#E9F1E6',
       label: product.category || 'Menu',
     };
   }
@@ -93,8 +93,8 @@ export function getProductVisual(product = {}) {
 
   return {
     image: '/menu/fallback.svg',
-    accent: '#A96835',
-    tone: '#F5E9DD',
+    accent: '#4F684F',
+    tone: '#F1F5EF',
     label: product.category || 'Menu',
   };
 }
@@ -105,7 +105,7 @@ export function getIngredientTone(item = {}) {
     return { accent: '#C45F4E', tone: '#FFF0EC', label: 'Kritis' };
   }
   if (String(item.category || '').includes('packaging')) {
-    return { accent: '#5F83A5', tone: '#EAF3FA', label: 'Packaging' };
+    return { accent: '#78906F', tone: '#EEF4E8', label: 'Packaging' };
   }
   return { accent: '#5D8D63', tone: '#ECF6EA', label: 'Aman' };
 }

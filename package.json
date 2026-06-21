@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:smoke": "node scripts/smoke-test.mjs",
+    "test:owner-only": "node scripts/owner-only-check.mjs",
     "deploy": "node scripts/deploy-via-ssh.mjs"
   },
   "dependencies": {

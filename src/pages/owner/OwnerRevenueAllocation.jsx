@@ -67,7 +67,7 @@ export default function OwnerRevenueAllocation() {
         {/* Left Column - Controls & Ratios */}
         <div className="lg:col-span-5 space-y-5">
           {/* Card 1: Input & Mode */}
-          <div className="p-4 rounded-2xl bg-white border border-[var(--color-border)] shadow-xs space-y-4">
+          <div className="p-4 rounded-[var(--radius-card)] bg-white border border-[var(--color-border)] shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-[var(--color-text-primary)] flex items-center gap-2">
               <Calendar size={16} className="text-[var(--color-accent-primary)]" />
               <span>Sumber Data Omzet</span>
@@ -145,7 +145,7 @@ export default function OwnerRevenueAllocation() {
           </div>
 
           {/* Card 2: Allocation Percentage Settings */}
-          <div className="p-4 rounded-2xl bg-white border border-[var(--color-border)] shadow-xs space-y-4">
+          <div className="p-4 rounded-[var(--radius-card)] bg-white border border-[var(--color-border)] shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-[var(--color-text-primary)] flex items-center gap-2">
               <Percent size={16} className="text-[var(--color-accent-primary)]" />
               <span>Rasio Anggaran</span>
@@ -270,7 +270,7 @@ export default function OwnerRevenueAllocation() {
 
         {/* Right Column - Visual splits breakdown */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="p-5 rounded-2xl bg-white border border-[var(--color-border)] shadow-xs space-y-5">
+          <div className="p-5 rounded-[var(--radius-card)] bg-white border border-[var(--color-border)] shadow-xs space-y-5">
             <div className="flex justify-between items-start border-b border-gray-100 pb-3">
               <div>
                 <h3 className="text-base font-bold text-[var(--color-text-primary)]">Hasil Pembagian Alokasi</h3>

@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+function getInitialTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme) return savedTheme;
+  return 'light';
+}
+
 const useSettingsStore = create(
   persist(
     (set) => ({
@@ -9,7 +15,7 @@ const useSettingsStore = create(
       receiptPhone: '0812-3456-7890',
       receiptFooter: 'TERIMA KASIH\nRUTE Coffee Management System',
       receiptPaperSize: '58mm',
-      theme: localStorage.getItem('theme') || 'light',
+      theme: getInitialTheme(),
       allocationRawMaterials: 50,
       allocationOperations: 20,
       allocationProfit: 30,
@@ -21,6 +27,11 @@ const useSettingsStore = create(
     }),
     {
       name: 'rute-settings-storage',
+      version: 2,
+      migrate: (persistedState) => ({
+        ...persistedState,
+        theme: 'light',
+      }),
     }
   )
 );

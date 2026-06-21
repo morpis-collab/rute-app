@@ -12,14 +12,6 @@
       "role": "owner",
       "authMethod": "pin",
       "active": true
-    },
-    "partner": {
-      "id": 2,
-      "name": "Partner RUTE",
-      "email": "partner@rute.coffee",
-      "role": "partner",
-      "authMethod": "pin",
-      "active": true
     }
   },
   "products": [

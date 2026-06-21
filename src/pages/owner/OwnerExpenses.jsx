@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -8,12 +9,14 @@ import { APPROVAL_STATUS } from '../../utils/constants';
 import ExpenseModal from '../../components/shared/ExpenseModal';
 import useToastStore from '../../store/useToastStore';
 import { getBusinessDate } from '../../utils/businessDate';
+import { expandCollapse, fadeScale, softSpring, tapPress } from '../../utils/motion';
 
 export default function OwnerExpenses() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [expandedExpenseId, setExpandedExpenseId] = useState(null);
   const [activePhotoUrl, setActivePhotoUrl] = useState(null);
+  const shouldReduceMotion = useReducedMotion();
   const expenses = useAppStore((state) => state.expenses);
   const cashAccounts = useAppStore((state) => state.cashAccounts);
   const cashSessions = useAppStore((state) => state.cashSessions);
@@ -23,6 +26,11 @@ export default function OwnerExpenses() {
   const { user } = useAuthStore();
 
   const todayBusinessDate = getBusinessDate();
+  const isDrawerAccount = (cashAccountId) => {
+    if (!cashAccountId) return true;
+    const account = cashAccounts.find(a => String(a.id) === String(cashAccountId));
+    return ['kas-utama', 'acc-01'].includes(String(account?.id || ''));
+  };
   const isDateClosed = (dateStr) => {
     if (!dateStr) return false;
     const targetDate = String(dateStr).substring(0, 10);
@@ -33,15 +41,14 @@ export default function OwnerExpenses() {
   const getCashAccountLabel = (cashAccountId) => {
     const account = cashAccounts.find(a => String(a.id) === String(cashAccountId));
     if (!account) return 'Tunai';
-    if (account.type === 'cash') return 'Tunai';
     if (account.type === 'qris') return 'QRIS';
     return account.name;
   };
 
   const handleSaveExpense = async (data) => {
     const targetDate = data.date || new Date().toISOString();
-    if (isDateClosed(targetDate)) {
-      useToastStore.getState().addToast('Gagal menyimpan: Kas pada tanggal tersebut sudah ditutup.', 'error');
+    if (isDateClosed(targetDate) && isDrawerAccount(data.cashAccountId)) {
+      useToastStore.getState().addToast('Gagal menyimpan: pengeluaran dari laci tidak bisa dicatat setelah kas ditutup. Pilih Brankas atau rekening yang sesuai.', 'error');
       return;
     }
     try {
@@ -97,29 +104,29 @@ export default function OwnerExpenses() {
   };
 
   return (
-    <PageWrapper title="Pengeluaran" subtitle="Semua pengeluaran usaha">
+      <PageWrapper title="Pengeluaran" subtitle="Semua pengeluaran usaha">
       {isTodayClosed && (
         <div className="mb-6 rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-4 py-3.5 text-sm text-[#a34f39] flex items-start gap-2.5 shadow-sm">
           <AlertTriangle className="shrink-0 text-[#a34f39] mt-0.5" size={16} />
           <div className="space-y-1">
             <p className="font-semibold">Sesi Kasir Hari Ini Sudah Ditutup</p>
-            <p className="text-xs opacity-90 font-medium">Pemilik / Owner tidak dapat menambahkan pengeluaran manual baru setelah laci kas ditutup oleh partner.</p>
+            <p className="text-xs opacity-90 font-medium">Pengeluaran dari laci terkunci. Pengeluaran dari Brankas Bahan Baku, Operasional, Keuntungan, atau rekening tetap bisa dicatat.</p>
           </div>
         </div>
       )}
 
-      <button 
+      <motion.button
         onClick={() => {
-          if (isTodayClosed) return;
           setEditingExpense(null);
           setIsModalOpen(true);
         }}
-        disabled={isTodayClosed}
-        className="w-full lg:w-auto px-4 py-2.5 rounded-xl border-2 border-[var(--color-accent-warm)] bg-[var(--color-accent-light)]/20 flex items-center justify-center gap-2 mb-6 hover:bg-[var(--color-accent-light)]/40 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        whileTap={shouldReduceMotion ? undefined : tapPress}
+        transition={softSpring}
+        className="w-full lg:w-auto px-4 py-2.5 rounded-xl border-2 border-[var(--color-accent-warm)] bg-[var(--color-accent-light)]/20 flex items-center justify-center gap-2 mb-6 hover:bg-[var(--color-accent-light)]/40 transition-colors cursor-pointer"
       >
         <Plus size={18} className="text-[var(--color-accent-primary)]" />
         <span className="text-sm font-medium text-[var(--color-accent-primary)]">Tambah Pengeluaran Manual</span>
-      </button>
+      </motion.button>
 
       <div className="space-y-2">
         {expenses.map(exp => {
@@ -127,8 +134,10 @@ export default function OwnerExpenses() {
           const isExpanded = expandedExpenseId === exp.id;
           const isExpenseClosed = isDateClosed(exp.date);
           return (
-            <div 
-              key={exp.id} 
+            <motion.div
+              key={exp.id}
+              layout={!shouldReduceMotion}
+              transition={softSpring}
               className={`rounded-xl bg-white border ${
                 isExpanded ? 'border-[var(--color-accent-warm)] shadow-sm' : 'border-[var(--color-border)]'
               } transition-all duration-200 overflow-hidden`}
@@ -151,7 +160,7 @@ export default function OwnerExpenses() {
                     <span className={`badge badge-${st.variant}`}>{st.label}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
-                    <span>{formatTanggalSingkat(exp.date)} · {(exp.category || '').replace('_', ' ')} · {getCashAccountLabel(exp.cashAccountId)}</span>
+                    <span>{formatTanggalSingkat(exp.date)} / {(exp.category || '').replace('_', ' ')} / {getCashAccountLabel(exp.cashAccountId)}</span>
                     <span className="font-mono font-bold text-sm text-[var(--color-accent-primary)]">{formatRupiah(exp.total)}</span>
                   </div>
                 </div>
@@ -163,8 +172,13 @@ export default function OwnerExpenses() {
               </div>
 
               {/* Expanded Area */}
-              {isExpanded && (
-                <div className="px-3.5 pb-4 border-t border-[var(--color-border)] space-y-3.5 bg-gray-50/30 pt-3.5 fade-in">
+              <AnimatePresence initial={false}>
+                {isExpanded && (
+                  <motion.div
+                    {...(shouldReduceMotion ? {} : expandCollapse)}
+                    className="overflow-hidden"
+                  >
+                <div className="px-3.5 pb-4 border-t border-[var(--color-border)] space-y-3.5 bg-gray-50/30 pt-3.5">
                   {/* Item Details */}
                   <div>
                     <h4 className="text-[10px] font-bold uppercase text-[var(--color-text-secondary)] tracking-wider mb-2">Rincian Item</h4>
@@ -225,11 +239,11 @@ export default function OwnerExpenses() {
                   {/* Metadata */}
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[var(--color-text-muted)] bg-gray-100/50 p-2.5 rounded-lg border border-gray-100">
                     <span>Dicatat oleh: <strong className="text-[var(--color-text-secondary)]">{exp.user || 'Sistem'}</strong></span>
-                    <span>•</span>
+                    <span>-</span>
                     <span>Metode: <strong className="text-[var(--color-text-secondary)]">{exp.sourceType === 'receipt_ai' ? 'Scan Resi AI' : 'Input Manual'}</strong></span>
                     {exp.receiptUploadId && (
                       <>
-                        <span>•</span>
+                        <span>-</span>
                         <span>ID Resi: <strong className="text-[var(--color-text-secondary)] font-mono">{exp.receiptUploadId.substring(0, 8)}...</strong></span>
                       </>
                     )}
@@ -268,8 +282,10 @@ export default function OwnerExpenses() {
                     )}
                   </div>
                 </div>
-              )}
-            </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           );
         })}
       </div>
@@ -284,26 +300,33 @@ export default function OwnerExpenses() {
       )}
 
       {/* Lightbox / Foto Portal */}
-      {activePhotoUrl && (
-        <div 
-          onClick={() => setActivePhotoUrl(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs transition-all duration-200 cursor-zoom-out"
-        >
-          <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-xl p-2 shadow-2xl animate-scale-up" onClick={e => e.stopPropagation()}>
-            <img 
-              src={getPhotoUrl(activePhotoUrl)} 
-              alt="Bukti Resi Besar" 
-              className="max-w-full max-h-[80vh] object-contain rounded-lg" 
-            />
-            <button 
-              onClick={() => setActivePhotoUrl(null)}
-              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-gray-800 shadow-md flex items-center justify-center font-bold text-sm border hover:bg-gray-100 cursor-pointer"
+      <AnimatePresence>
+        {activePhotoUrl && (
+          <motion.div
+            {...(shouldReduceMotion ? {} : fadeScale)}
+            onClick={() => setActivePhotoUrl(null)}
+            className="fixed inset-0 z-50 flex cursor-zoom-out items-center justify-center bg-black/80 p-4 backdrop-blur-xs"
+          >
+            <motion.div
+              {...(shouldReduceMotion ? {} : fadeScale)}
+              className="relative max-h-[90vh] max-w-4xl rounded-[var(--radius-card)] bg-white p-2 shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
             >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
+              <img
+                src={getPhotoUrl(activePhotoUrl)}
+                alt="Bukti Resi Besar"
+                className="max-h-[80vh] max-w-full rounded-[var(--radius-card)] object-contain"
+              />
+              <button
+                onClick={() => setActivePhotoUrl(null)}
+                className="absolute -right-3 -top-3 flex h-9 w-9 items-center justify-center rounded-full border bg-white text-sm font-bold text-gray-800 shadow-md hover:bg-gray-100"
+              >
+                X
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </PageWrapper>
   );
 }

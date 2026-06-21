@@ -1,27 +1,33 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Users, Loader2, ArrowLeft, Delete } from 'lucide-react';
+import { Delete, Loader2, ShieldCheck, Wifi } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import useAuthStore from '../store/useAuthStore';
 import useToastStore from '../store/useToastStore';
 import { postLogin } from '../services/apiClient';
-import { motion, AnimatePresence } from 'framer-motion';
+import { softSpring, staggerContainer, staggerItem, tapPress } from '../utils/motion';
 
 export default function Login() {
-  const [selectedRole, setSelectedRole] = useState(null);
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [shake, setShake] = useState(false);
-  
+
   const { login } = useAuthStore();
   const { addToast } = useToastStore();
   const navigate = useNavigate();
+  const shouldReduceMotion = useReducedMotion();
+
+  const triggerError = (msg) => {
+    setErrorMsg(msg);
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  };
 
   const handleLogin = async (currentPin = pin) => {
-    if (!selectedRole) return;
     const normalizedPin = currentPin.trim();
     if (!normalizedPin) {
-      triggerError('PIN harus diisi');
+      triggerError('PIN owner harus diisi');
       return;
     }
 
@@ -29,21 +35,15 @@ export default function Login() {
     setErrorMsg('');
 
     try {
-      const response = await postLogin({ role: selectedRole, pin: normalizedPin });
+      const response = await postLogin({ pin: normalizedPin });
       login(response.user, response.token);
-      addToast(`Berhasil masuk sebagai ${response.user.role === 'owner' ? 'Owner' : 'Partner'}`, 'success');
-      navigate(selectedRole === 'owner' ? '/owner/dashboard' : '/partner/sales');
+      addToast('Berhasil masuk sebagai Owner', 'success');
+      navigate('/owner/dashboard');
     } catch (error) {
-      triggerError(error.response?.data?.error || error.response?.data?.message || 'Login gagal, periksa PIN Anda');
+      triggerError(error.response?.data?.error || error.response?.data?.message || 'Login gagal, periksa PIN owner');
     } finally {
       setLoading(false);
     }
-  };
-
-  const triggerError = (msg) => {
-    setErrorMsg(msg);
-    setShake(true);
-    setTimeout(() => setShake(false), 500);
   };
 
   const handlePinKeyPress = (num) => {
@@ -52,10 +52,7 @@ export default function Login() {
     if (pin.length < 6) {
       const newPin = pin + num;
       setPin(newPin);
-      if (newPin.length === 6) {
-        // Automatically submit when 6 digits are typed
-        handleLogin(newPin);
-      }
+      if (newPin.length === 6) handleLogin(newPin);
     }
   };
 
@@ -72,214 +69,161 @@ export default function Login() {
   };
 
   return (
-    <div className="relative flex min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
-      {/* LEFT SIDE: Branding Area (Desktop only) */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-[var(--color-band-1)] to-[var(--color-band-2)] p-12 text-white md:flex">
-        {/* Floating background shapes */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute -left-20 -top-20 h-80 w-80 rounded-full bg-white/5 blur-2xl" />
-          <div className="absolute -bottom-40 -right-20 h-[500px] w-[500px] rounded-full bg-black/10 blur-3xl" />
-        </div>
+    <main id="main-content" className="relative flex min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
+      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-[var(--color-coffee-dark)] p-12 text-white md:flex">
+        <div className="absolute inset-0 z-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:42px_42px]" />
+        <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/25 to-transparent" />
 
         <div className="relative z-10 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 p-1.5 backdrop-blur-md">
             <img src="/rute-logo.png" alt="RUTE Logo" className="h-full w-full object-contain brightness-0 invert" />
           </div>
-          <span className="text-lg font-black tracking-wider uppercase">RUTE Coffee</span>
+          <span className="brand-title text-lg font-semibold uppercase tracking-[0.08em]">RUTE Cash Tracer</span>
         </div>
 
-        <div className="relative z-10 my-auto max-w-md space-y-6">
-          <h2 className="text-4xl font-extrabold leading-tight tracking-tight lg:text-5xl">
-            Command Center <br />
-            & Operasional Usaha
+        <div className="relative z-10 my-auto max-w-md space-y-7">
+          <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-white/55">brief operasional</p>
+          <h2 className="font-display text-4xl font-semibold leading-[0.98] lg:text-5xl">
+            Satu panel untuk closing dan brankas usaha
           </h2>
-          <p className="text-white/80 text-sm font-medium leading-relaxed">
-            Menghubungkan partner/operator outlet dengan owner secara real-time. Kelola transaksi, stok gudang, dan keuangan dengan ringkas dalam satu aplikasi.
+          <p className="max-w-sm text-sm font-medium leading-relaxed text-white/72">
+            Owner menginput penjualan dari buku closing, mencocokkan uang laci, lalu membagi dana ke brankas bahan baku, operasional, dan keuntungan.
           </p>
-          <div className="flex items-center gap-6 pt-4 text-xs font-bold text-white/60">
-            <div className="flex flex-col">
-              <span className="text-xl font-extrabold text-white">100%</span>
-              <span>Real-Time Sync</span>
+          <div className="grid grid-cols-2 gap-3 pt-2 text-xs font-bold text-white/70">
+            <div className="border border-white/12 bg-white/[0.06] p-3">
+              <span className="mb-2 flex h-8 w-8 items-center justify-center bg-white/10 text-white">
+                <Wifi size={16} />
+              </span>
+              <span className="block text-lg font-semibold text-white">API aktif</span>
+              <span>Fallback mock tersedia</span>
             </div>
-            <div className="h-8 w-px bg-white/20" />
-            <div className="flex flex-col">
-              <span className="text-xl font-extrabold text-white">AI-Powered</span>
-              <span>Scan Resi Pintar</span>
+            <div className="border border-white/12 bg-white/[0.06] p-3">
+              <span className="mb-2 flex h-8 w-8 items-center justify-center bg-white/10 text-white">
+                <ShieldCheck size={16} />
+              </span>
+              <span className="block text-lg font-semibold text-white">PIN owner</span>
+              <span>Akses tunggal operasional</span>
             </div>
           </div>
         </div>
 
         <div className="relative z-10 text-xs font-semibold text-white/50">
-          &copy; {new Date().getFullYear()} RUTE Coffee. All rights reserved.
+          {new Date().getFullYear()} - RUTE Coffee Operations
         </div>
       </div>
 
-      {/* RIGHT SIDE: Login Widget Panel */}
-      <div className="flex w-full flex-col justify-center px-4 py-8 md:w-1/2 lg:px-16">
+      <div className="flex min-w-0 w-full flex-col justify-center overflow-hidden px-4 py-8 md:w-1/2 lg:px-16">
         <motion.div
-          animate={shake ? { x: [0, -10, 10, -10, 10, -5, 5, 0] } : { x: 0 }}
+          animate={!shouldReduceMotion && shake ? { x: [0, -10, 10, -10, 10, -5, 5, 0] } : { x: 0 }}
           transition={{ duration: 0.4 }}
-          className="mx-auto w-full max-w-sm rounded-[24px] border border-[var(--color-border)] bg-white/90 p-8 shadow-[var(--shadow-lg)] backdrop-blur-xl md:border-0 md:bg-transparent md:shadow-none"
+          className="mx-0 w-full max-w-[21.5rem] rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white/90 p-6 shadow-[var(--shadow-lg)] backdrop-blur-xl sm:mx-auto sm:p-8 md:bg-white/78"
         >
-          {/* Header Mobile Logo */}
           <div className="mb-8 text-center md:text-left">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white p-2.5 shadow-sm md:mx-0">
+            <div className="mx-auto mb-4 flex h-18 w-18 items-center justify-center overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-2.5 shadow-sm md:mx-0">
               <img src="/rute-logo.png" alt="RUTE Logo" className="h-full w-full object-contain" />
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-[var(--color-text-primary)]">Selamat Datang</h1>
-            <p className="mt-1 text-sm font-bold text-[var(--color-text-muted)]">RUTE Coffee Management System</p>
+            <h1 className="font-display text-2xl font-semibold leading-tight text-[var(--color-text-primary)]">Masuk ke Cash Tracer</h1>
+            <p className="mt-1 text-sm font-medium text-[var(--color-text-muted)]">Masukkan PIN owner untuk membuka panel operasional.</p>
           </div>
 
-          <AnimatePresence mode="wait">
-            {!selectedRole ? (
-              /* Role Selection View */
-              <motion.div
-                key="role-select"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
-              >
-                <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">
-                  PILIH HAK AKSES
-                </p>
+          <div className="space-y-6">
+            <div className="text-center">
+              <label className="mb-3 block text-sm font-bold text-[var(--color-text-secondary)]">
+                PIN Akses Owner
+              </label>
+              <div className="flex justify-center gap-3 py-2">
+                {[0, 1, 2, 3, 4, 5].map((idx) => (
+                  <div
+                    key={idx}
+                    className={`h-4.5 w-4.5 rounded-full border-2 transition-all ${
+                      pin.length > idx
+                        ? 'scale-110 border-[var(--color-band-1)] bg-[var(--color-band-1)] shadow-sm'
+                        : 'border-[var(--color-border)] bg-transparent'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
 
-                {/* Owner Card */}
-                <button
-                  onClick={() => setSelectedRole('owner')}
-                  className="group flex w-full items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-4 text-left shadow-sm transition-all duration-300 hover:border-[var(--color-band-1)] hover:shadow-md hover:-translate-y-0.5 active:scale-95"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--color-band-4)] text-[var(--color-band-1)] transition-colors group-hover:bg-[var(--color-band-1)] group-hover:text-white">
-                    <User size={22} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[var(--color-text-primary)]">Owner</h3>
-                    <p className="text-xs text-[var(--color-text-muted)]">Dasbor lengkap, laporan HPP, & approval</p>
-                  </div>
-                </button>
-
-                {/* Partner Card */}
-                <button
-                  onClick={() => setSelectedRole('partner')}
-                  className="group flex w-full items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-4 text-left shadow-sm transition-all duration-300 hover:border-[var(--color-band-1)] hover:shadow-md hover:-translate-y-0.5 active:scale-95"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--color-band-4)] text-[var(--color-band-1)] transition-colors group-hover:bg-[var(--color-band-1)] group-hover:text-white">
-                    <Users size={22} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[var(--color-text-primary)]">Partner / Kasir</h3>
-                    <p className="text-xs text-[var(--color-text-muted)]">Penjualan cepat, stok harian, & input resi</p>
-                  </div>
-                </button>
-              </motion.div>
-            ) : (
-              /* PIN Input & PIN Pad View */
-              <motion.div
-                key="pin-entry"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => { setSelectedRole(null); setPin(''); setErrorMsg(''); }}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]"
-                  >
-                    <ArrowLeft size={14} />
-                  </button>
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--color-text-muted)]">
-                    Masuk Sebagai: <span className="text-[var(--color-band-1)]">{selectedRole === 'owner' ? 'Owner' : 'Partner'}</span>
-                  </span>
-                </div>
-
-                <div className="text-center">
-                  <label className="block text-sm font-bold text-[var(--color-text-secondary)] mb-3">
-                    Masukkan PIN Akses
-                  </label>
-                  {/* Interactive Dot Display */}
-                  <div className="flex justify-center gap-3 py-2">
-                    {[0, 1, 2, 3, 4, 5].map((idx) => (
-                      <div
-                        key={idx}
-                        className={`h-4.5 w-4.5 rounded-full border-2 transition-all ${
-                          pin.length > idx
-                            ? 'bg-[var(--color-band-1)] border-[var(--color-band-1)] scale-110 shadow-sm'
-                            : 'border-[var(--color-border)] bg-transparent'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {errorMsg && (
-                  <p className="text-center text-xs font-bold text-[var(--color-accent-red)] slide-in">
-                    {errorMsg}
-                  </p>
-                )}
-
-                {/* Custom PIN Pad */}
-                <div className="grid grid-cols-3 gap-3">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                    <button
-                      key={num}
-                      onClick={() => handlePinKeyPress(num)}
-                      className="flex h-14 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-white text-lg font-bold text-[var(--color-text-primary)] shadow-sm hover:border-[var(--color-band-1)] hover:bg-[var(--color-band-4)] hover:text-[var(--color-band-1)] active:scale-90 select-none touch-manipulation"
-                    >
-                      {num}
-                    </button>
-                  ))}
-                  <button
-                    onClick={handleClear}
-                    className="flex h-14 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-white text-xs font-bold text-[var(--color-text-muted)] hover:bg-gray-50 active:scale-90 select-none touch-manipulation"
-                  >
-                    Hapus
-                  </button>
-                  <button
-                    onClick={() => handlePinKeyPress(0)}
-                    className="flex h-14 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-white text-lg font-bold text-[var(--color-text-primary)] shadow-sm hover:border-[var(--color-band-1)] hover:bg-[var(--color-band-4)] hover:text-[var(--color-band-1)] active:scale-90 select-none touch-manipulation"
-                  >
-                    0
-                  </button>
-                  <button
-                    onClick={handleBackspace}
-                    className="flex h-14 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-white text-[var(--color-text-muted)] hover:bg-gray-50 active:scale-90 select-none touch-manipulation"
-                    title="Backspace"
-                  >
-                    <Delete size={18} />
-                  </button>
-                </div>
-
-                {/* Standard submit button in case pad fails or auto-submit is not enough */}
-                <button
-                  onClick={() => handleLogin()}
-                  disabled={pin.length < 4 || loading}
-                  className={`w-full py-3.5 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                    pin.length >= 4 && !loading
-                      ? 'bg-gradient-to-r from-[var(--color-band-1)] to-[var(--color-band-2)] text-white shadow-md hover:shadow-lg'
-                      : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)] cursor-not-allowed'
-                  }`}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Memverifikasi...
-                    </>
-                  ) : (
-                    'Masuk Sekarang'
-                  )}
-                </button>
-              </motion.div>
+            {errorMsg && (
+              <p className="slide-in text-center text-xs font-bold text-[var(--color-accent-red)]">
+                {errorMsg}
+              </p>
             )}
-          </AnimatePresence>
 
-          <p className="text-center text-[10px] font-bold text-[var(--color-text-muted)] mt-8 uppercase tracking-widest">
-            SISTEM KEAMANAN TERVERIFIKASI
+            <motion.div
+              variants={shouldReduceMotion ? undefined : staggerContainer}
+              initial={shouldReduceMotion ? false : 'hidden'}
+              animate="show"
+              className="grid grid-cols-3 gap-3"
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                <motion.button
+                  key={num}
+                  variants={shouldReduceMotion ? undefined : staggerItem}
+                  whileTap={shouldReduceMotion ? undefined : tapPress}
+                  transition={softSpring}
+                  onClick={() => handlePinKeyPress(num)}
+                  className="flex h-14 select-none items-center justify-center rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white text-lg font-bold text-[var(--color-text-primary)] shadow-sm touch-manipulation hover:border-[var(--color-band-1)] hover:bg-[var(--color-band-4)] hover:text-[var(--color-band-1)] active:scale-[0.94]"
+                >
+                  {num}
+                </motion.button>
+              ))}
+              <motion.button
+                onClick={handleClear}
+                variants={shouldReduceMotion ? undefined : staggerItem}
+                whileTap={shouldReduceMotion ? undefined : tapPress}
+                transition={softSpring}
+                className="flex h-14 select-none items-center justify-center rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white text-xs font-bold text-[var(--color-text-muted)] touch-manipulation hover:bg-[var(--color-coffee-milk)] active:scale-[0.94]"
+              >
+                Hapus
+              </motion.button>
+              <motion.button
+                onClick={() => handlePinKeyPress(0)}
+                variants={shouldReduceMotion ? undefined : staggerItem}
+                whileTap={shouldReduceMotion ? undefined : tapPress}
+                transition={softSpring}
+                className="flex h-14 select-none items-center justify-center rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white text-lg font-bold text-[var(--color-text-primary)] shadow-sm touch-manipulation hover:border-[var(--color-band-1)] hover:bg-[var(--color-band-4)] hover:text-[var(--color-band-1)] active:scale-[0.94]"
+              >
+                0
+              </motion.button>
+              <motion.button
+                onClick={handleBackspace}
+                variants={shouldReduceMotion ? undefined : staggerItem}
+                whileTap={shouldReduceMotion ? undefined : tapPress}
+                transition={softSpring}
+                className="flex h-14 select-none items-center justify-center rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white text-[var(--color-text-muted)] touch-manipulation hover:bg-[var(--color-coffee-milk)] active:scale-[0.94]"
+                title="Backspace"
+              >
+                <Delete size={18} />
+              </motion.button>
+            </motion.div>
+
+            <button
+              onClick={() => handleLogin()}
+              disabled={pin.length < 4 || loading}
+              className={`flex w-full items-center justify-center gap-2 rounded-[var(--radius-button)] py-3.5 text-sm font-bold transition-all ${
+                pin.length >= 4 && !loading
+                  ? 'bg-gradient-to-r from-[var(--color-band-1)] to-[var(--color-band-2)] text-white shadow-md hover:shadow-lg'
+                  : 'cursor-not-allowed bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)]'
+              }`}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Memverifikasi...
+                </>
+              ) : (
+                'Masuk Sekarang'
+              )}
+            </button>
+          </div>
+
+          <p className="mt-8 text-center text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+            akses demo mengikuti koneksi backend aktif
           </p>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -31,7 +31,6 @@ RUTE_UPLOAD_DIR=/data/uploads
 JWT_SECRET=replace-with-long-random-secret
 JWT_EXPIRES_SECONDS=43200
 RUTE_OWNER_PIN=replace-owner-pin
-RUTE_PARTNER_PIN=replace-partner-pin
 OPENAI_API_KEY=optional-ai-key
 AI_MODEL=gpt-4o-mini
 RECEIPT_AI_API_KEY=optional-receipt-ai-key
@@ -45,7 +44,6 @@ AI_BASE_URL=https://api.openai.com/v1
 2. Set the unresolved secret values:
    - `RUTE_CORS_ORIGIN=https://your-frontend-host.example.com`
    - `RUTE_OWNER_PIN=<new-6-digit-owner-pin>`
-   - `RUTE_PARTNER_PIN=<new-6-digit-partner-pin>`
    - `OPENAI_API_KEY=<optional>`
    - `RECEIPT_AI_API_KEY=<optional>`
 3. Confirm the `rute-data` persistent disk is mounted at `/data`.
@@ -93,7 +91,6 @@ Set these values:
 ```bash
 JWT_SECRET=<long-random-secret>
 RUTE_OWNER_PIN=<new-6-digit-owner-pin>
-RUTE_PARTNER_PIN=<new-6-digit-partner-pin>
 RUTE_CORS_ORIGIN=http://202.10.34.42
 VITE_API_URL=/api
 ```
@@ -118,7 +115,7 @@ After deploy:
 curl https://your-api-host.example.com/api/health
 ```
 
-Then login through the frontend using Owner/Partner PIN and verify:
+Then login through the frontend using the Owner PIN and verify:
 
 - dashboard loads remote data,
 - sales submission updates stock,

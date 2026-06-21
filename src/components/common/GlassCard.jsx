@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { hoverLift, softSpring } from '../../utils/motion';
 
 /**
  * GlassCard - Reusable card with modern glassmorphism and subtle border glow.
@@ -16,6 +17,8 @@ export default function GlassCard({
   hoverEffect = true,
   ...props
 }) {
+  const shouldReduceMotion = useReducedMotion();
+
   const getVariantStyles = () => {
     switch (variant) {
       case 'prominent':
@@ -30,9 +33,9 @@ export default function GlassCard({
 
   return (
     <motion.div
-      whileHover={hoverEffect ? { y: -2, boxShadow: 'var(--shadow-md)', borderColor: 'var(--color-accent-primary)' } : undefined}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className={`rounded-2xl border p-5 transition-colors ${getVariantStyles()} ${className}`}
+      whileHover={!shouldReduceMotion && hoverEffect ? { ...hoverLift, borderColor: 'var(--color-accent-primary)' } : undefined}
+      transition={softSpring}
+      className={`rounded-[var(--radius-card)] border p-5 transition-colors ${getVariantStyles()} ${className}`}
       {...props}
     >
       {children}

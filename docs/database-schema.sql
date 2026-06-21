@@ -1,12 +1,12 @@
 -- RUTE Cash Tracer - PostgreSQL/Supabase schema draft
--- Scope: MVP data foundation for owner/partner operations, receipt AI, stock, HPP, and daily cash closing.
+-- Scope: MVP data foundation for owner-only operations, receipt AI, stock, HPP, and daily cash closing.
 
 create table if not exists profiles (
   id uuid primary key,
   auth_user_id uuid unique,
   name text not null,
   email text unique not null,
-  role text not null check (role in ('owner', 'partner')),
+  role text not null default 'owner' check (role = 'owner'),
   status text not null default 'active' check (status in ('active', 'inactive')),
   created_at timestamptz not null default now()
 );

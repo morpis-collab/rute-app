@@ -25,7 +25,7 @@ const getDefaultCashSourceId = (accounts) => (
   accounts.find((account) => vaultAccountIds.has(String(account.id)))?.id || accounts[0]?.id || ''
 );
 
-export default function PartnerCloseCash() {
+export default function OwnerCloseCash() {
   const pastDates = useMemo(() => {
     const dates = [];
     const today = new Date();
@@ -140,7 +140,7 @@ export default function PartnerCloseCash() {
         date: selectedDate,
         openingCash: val,
         sourceCashAccountId: selectedCashSourceId || undefined,
-        user: user?.name || 'Partner',
+        user: user?.name || 'Owner',
       });
       await loadRemoteData();
       // Reload expected data and update to open state
@@ -185,7 +185,7 @@ export default function PartnerCloseCash() {
         qris: Number(form.qris || 0),
         transfer: Number(form.transfer || 0),
         notes: form.notes,
-        user: user?.name || 'Partner',
+        user: user?.name || 'Owner',
       });
       setStatus('closed');
       setMessage('Kas berhasil ditutup.');
@@ -288,7 +288,7 @@ export default function PartnerCloseCash() {
           <button
             onClick={handleOpenCash}
             disabled={isSubmitting}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[var(--color-band-1)] to-[var(--color-band-2)] py-3.5 text-sm font-semibold text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
+            className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-gradient-to-r from-[var(--color-band-1)] to-[var(--color-band-2)] py-3.5 text-sm font-semibold text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
           >
             {isSubmitting && <Loader2 size={16} className="animate-spin" />}
             {isSubmitting ? 'Membuka Kas...' : 'Mulai Sesi Kasir (Buka Kas)'}
@@ -413,7 +413,7 @@ export default function PartnerCloseCash() {
           <button
             onClick={handleSubmit}
             disabled={status === 'closed' || isSubmitting}
-            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold transition-all duration-200 ${
+            className={`flex w-full items-center justify-center gap-2 rounded-[var(--radius-button)] py-3.5 text-sm font-semibold transition-all duration-200 ${
               status === 'closed' || isSubmitting
                 ? 'cursor-not-allowed bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)]'
                 : 'bg-gradient-to-r from-[var(--color-band-1)] to-[var(--color-band-2)] text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl'

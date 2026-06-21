@@ -129,6 +129,11 @@ export async function putExpense(id, payload) {
   return data;
 }
 
+export async function postExpenseStockItem(id, payload) {
+  const { data } = await api.post(`/expenses/${id}/stock-items`, payload);
+  return data;
+}
+
 export async function postProduct(payload) {
   const { data } = await api.post('/products', payload);
   return data;

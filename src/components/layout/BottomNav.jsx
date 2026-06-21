@@ -1,35 +1,28 @@
 import { NavLink } from 'react-router-dom';
-import { ShoppingCart, Camera, Receipt, Wallet, Bot, Package, FileText, Percent } from 'lucide-react';
+import { BarChart3, Clock, LayoutDashboard, TrendingUp, Wallet } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
-import { motion } from 'framer-motion';
-
-const partnerMenu = [
-  { to: '/partner/sales', icon: ShoppingCart, label: 'Jual' },
-  { to: '/partner/expenses', icon: Receipt, label: 'Pengeluaran' },
-  { to: '/partner/stock', icon: Package, label: 'Gudang' },
-  { to: '/partner/close-cash', icon: Wallet, label: 'Tutup' },
-  { to: '/partner/notes', icon: FileText, label: 'Catatan' },
-  { to: '/partner/ai', icon: Bot, label: 'Asisten' },
-];
+import { motion, useReducedMotion } from 'framer-motion';
+import { softSpring } from '../../utils/motion';
 
 const ownerMobileMenu = [
-  { to: '/owner/dashboard', icon: ShoppingCart, label: 'Dasbor' },
-  { to: '/owner/receipt', icon: Camera, label: 'Resi' },
-  { to: '/owner/promotions', icon: Percent, label: 'Promo' },
-  { to: '/owner/reports', icon: Wallet, label: 'Laporan' },
-  { to: '/owner/ai', icon: Bot, label: 'Asisten' },
+  { to: '/owner/dashboard', icon: LayoutDashboard, label: 'Dasbor' },
+  { to: '/owner/live-sales', icon: TrendingUp, label: 'Rekap' },
+  { to: '/owner/close-cash', icon: Clock, label: 'Tutup' },
+  { to: '/owner/cash', icon: Wallet, label: 'Kas' },
+  { to: '/owner/reports', icon: BarChart3, label: 'Laporan' },
 ];
 
 export default function BottomNav() {
   const { user } = useAuthStore();
+  const shouldReduceMotion = useReducedMotion();
 
   if (!user) return null;
 
-  const menu = user.role === 'partner' ? partnerMenu : ownerMobileMenu;
+  const menu = ownerMobileMenu;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 lg:hidden">
-      <nav className="mx-auto max-w-md rounded-2xl border border-[var(--color-border)] bg-white/90 px-2.5 py-1.5 shadow-[0_12px_30px_-5px_rgba(139,109,82,0.15)] backdrop-blur-xl">
+      <nav className="mx-auto max-w-md rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white/90 px-2.5 py-1.5 shadow-[var(--shadow-lg)] backdrop-blur-xl">
         <div className="flex items-center justify-between">
           {menu.map(({ to, icon: Icon, label }) => (
             <NavLink
@@ -50,14 +43,14 @@ export default function BottomNav() {
                     <motion.div
                       layoutId="activeBottomTab"
                       className="absolute inset-0 -z-10 bg-[var(--color-band-4)] rounded-xl"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      transition={shouldReduceMotion ? { duration: 0 } : softSpring}
                     />
                   )}
                   
                   {/* Scaling active icon */}
                   <motion.div
-                    animate={{ scale: isActive ? 1.12 : 1, y: isActive ? -1 : 0 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    animate={shouldReduceMotion ? undefined : { scale: isActive ? 1.1 : 1, y: isActive ? -1 : 0 }}
+                    transition={softSpring}
                     className="shrink-0"
                   >
                     <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />

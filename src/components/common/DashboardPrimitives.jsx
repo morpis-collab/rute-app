@@ -1,13 +1,14 @@
 import { AlertTriangle, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { getProductVisual } from '../../utils/productVisuals';
 import { formatRupiah } from '../../utils/formatters';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { hoverLift, softSpring, tapPress } from '../../utils/motion';
 
 export function SectionHeader({ title, subtitle, action, children }) {
   return (
     <div className="section-header">
       <div>
-        <h2 className="text-[var(--color-text-primary)] font-black tracking-tight">{title}</h2>
+        <h2 className="text-[var(--color-text-primary)] font-extrabold">{title}</h2>
         {subtitle && <p className="text-[var(--color-text-muted)] text-[11px] font-semibold">{subtitle}</p>}
       </div>
       <div className="section-header__actions">
@@ -19,13 +20,15 @@ export function SectionHeader({ title, subtitle, action, children }) {
 }
 
 export function KpiTile({ icon: Icon, label, value, helper, tone = 'caramel', compact = false }) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <motion.div
-      whileHover={{ y: -2, boxShadow: 'var(--shadow-md)' }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
+      whileHover={shouldReduceMotion ? undefined : hoverLift}
+      whileTap={shouldReduceMotion ? undefined : tapPress}
+      transition={softSpring}
       className={`metric-tile metric-tile--${tone} ${compact ? 'metric-tile--compact' : ''} relative overflow-hidden`}
     >
-      {/* Subtle indicator bar */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 bg-[var(--color-band-1)] opacity-70`} />
       
       {Icon && (
@@ -34,8 +37,8 @@ export function KpiTile({ icon: Icon, label, value, helper, tone = 'caramel', co
         </div>
       )}
       <div className="min-w-0 flex-1 pl-1">
-        <p className="metric-tile__label text-[9px] font-extrabold uppercase tracking-wider text-[var(--color-text-muted)]">{label}</p>
-        <p className="metric-tile__value text-lg font-black tracking-tight font-mono text-[var(--color-text-primary)] leading-none mt-1">{value}</p>
+        <p className="metric-tile__label text-[9px] font-extrabold uppercase tracking-[0.04em] text-[var(--color-text-muted)]">{label}</p>
+        <p className="metric-tile__value mt-1 font-mono text-lg font-black leading-none text-[var(--color-text-primary)]">{value}</p>
         {helper && <p className="metric-tile__helper text-[10px] font-semibold text-[var(--color-text-muted)] mt-1.5">{helper}</p>}
       </div>
     </motion.div>
@@ -44,10 +47,13 @@ export function KpiTile({ icon: Icon, label, value, helper, tone = 'caramel', co
 
 export function StatusAlert({ level = 'info', title, message, actionLabel, onClick }) {
   const Icon = level === 'success' ? CheckCircle2 : AlertTriangle;
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <motion.button
-      whileHover={{ y: -1, scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={shouldReduceMotion ? undefined : { y: -1 }}
+      whileTap={shouldReduceMotion ? undefined : tapPress}
+      transition={softSpring}
       type="button"
       onClick={onClick}
       className={`status-alert status-alert--${level} w-full flex items-center text-left transition-all p-3.5`}
@@ -71,7 +77,7 @@ export function ProductThumb({ product, size = 'md', className = '' }) {
   const visual = getProductVisual(product);
   return (
     <div className={`product-thumb product-thumb--${size} ${className}`} style={{ '--product-tone': visual.tone, '--product-accent': visual.accent }}>
-      <img src={visual.image} alt="" loading="lazy" />
+      <img src={visual.image} alt={`Visual ${product?.name || 'produk'}`} loading="lazy" />
     </div>
   );
 }
@@ -80,13 +86,16 @@ export function ProductTile({ product, qty = 0, onClick, promotionMatch }) {
   const visual = getProductVisual(product);
   const promoPrice = promotionMatch?.pricing?.promoPrice;
   const hasPromoPrice = Number(promotionMatch?.pricing?.discountAmount || 0) > 0;
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <motion.button
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.96 }}
+      whileHover={shouldReduceMotion ? undefined : { y: -2 }}
+      whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+      transition={softSpring}
       type="button"
       onClick={onClick}
-      className={`product-tile relative flex flex-col items-center p-3 rounded-xl border border-[var(--color-border)] shadow-sm bg-white ${qty > 0 ? 'is-selected' : ''}`}
+      className={`product-tile relative flex flex-col items-center rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-3 shadow-sm ${qty > 0 ? 'is-selected' : ''}`}
       style={{ '--product-tone': visual.tone, '--product-accent': visual.accent }}
     >
       <span className="product-tile__add shrink-0">+</span>
@@ -102,6 +111,7 @@ export function ProductTile({ product, qty = 0, onClick, promotionMatch }) {
             initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.6, opacity: 0 }}
+            transition={softSpring}
             key={qty}
             className="product-tile__qty"
           >
@@ -127,8 +137,10 @@ export function ProductTile({ product, qty = 0, onClick, promotionMatch }) {
 }
 
 export function PaymentSegmented({ value, options, onChange }) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <div className="payment-segmented relative flex p-1 bg-gray-50 border border-[var(--color-border)] rounded-xl overflow-hidden">
+    <div className="payment-segmented relative flex overflow-hidden rounded-[var(--radius-button)] border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-1">
       {options.map(({ id, label, icon: Icon }) => {
         const isActive = value === id;
         return (
@@ -144,7 +156,7 @@ export function PaymentSegmented({ value, options, onChange }) {
               <motion.div
                 layoutId="activeSegment"
                 className="absolute inset-0 bg-gradient-to-r from-[var(--color-band-1)] to-[var(--color-band-2)] rounded-lg -z-10 shadow-sm"
-                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                transition={shouldReduceMotion ? { duration: 0 } : softSpring}
               />
             )}
             {Icon && <Icon size={16} className="shrink-0" />}

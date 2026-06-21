@@ -1,6 +1,6 @@
 # RUTE Coffee Management System
 
-Sistem manajemen operasional RUTE Coffee yang dirancang untuk menjembatani operasional harian dan pemantauan pemilik (*owner*). Aplikasi ini bukan sekadar *landing page*, melainkan **dashboard operasional** lengkap dengan pencatatan kas, penjualan, inventaris, hingga kecerdasan buatan (*AI Copilot*).
+Sistem manajemen operasional RUTE Coffee untuk pemilik (*owner*) sebagai satu panel kerja outlet. Aplikasi ini bukan sekadar *landing page*, melainkan **dashboard operasional** lengkap dengan pencatatan kas, penjualan, inventaris, hingga kecerdasan buatan (*AI Copilot*).
 
 ## Tech Stack (Frontend)
 - **Framework**: React 19 + Vite
@@ -11,20 +11,16 @@ Sistem manajemen operasional RUTE Coffee yang dirancang untuk menjembatani opera
 - **Font**: Plus Jakarta Sans
 
 ## Modul Fungsional Utama
-Aplikasi ini memiliki *role-based access* untuk 2 pihak:
+Aplikasi ini berjalan owner-only, dengan layout desktop untuk dashboard dan input operasional yang tetap nyaman dipakai di HP.
 
-### 1. Owner (Desktop-First)
 - **Dashboard & Laporan**: Laba, rugi, HPP, omzet.
 - **Manajemen Kas Aktif**: Pencatatan kas masuk, keluar, dan transfer antar rekening.
 - **Recipe Builder**: Pembuatan menu dengan kalkulasi Harga Pokok Penjualan (HPP) otomatis.
-- **Activity Log**: Fitur audit untuk melacak jejak aktivitas operator.
+- **Activity Log**: Fitur audit untuk melacak jejak aktivitas operasional.
 - **AI Copilot**: Analisis performa bisnis melalui *prompt chat*.
-
-### 2. Partner / Operator (Mobile-First)
-- **Penjualan Cepat**: Mesin POS sederhana yang terhubung langsung ke pengurangan stok resep.
 - **Upload Resi AI**: Unggah foto resi belanja, dengan AI mengekstrak data item yang kemudian dikonfirmasi dan dipetakan (*mapping*) ke stok bahan baku.
 - **Tutup Kas Harian**: Rekonsiliasi kas sistem dengan fisik (tunai & digital).
-- **Catatan Harian**: Jurnal log operasional.
+- **Catatan Operasional**: Jurnal log kondisi outlet.
 
 ## Cara Menjalankan (Development)
 ```bash

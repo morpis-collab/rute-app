@@ -21,19 +21,18 @@ import {
   getPromotionPrice,
   getPromotionStatus,
   promotionStatusLabels,
-  promotionTypeLabels,
 } from '../../utils/promotions';
 
 const today = getBusinessDate();
 
 const emptyForm = {
   name: '',
-  type: 'nominal',
   status: 'draft',
   startDate: today,
   endDate: today,
   targetProductIds: [],
-  discountValue: '',
+  bundleQty: '2',
+  bundlePrice: '',
   targetSales: '',
   budget: '',
   objective: '',
@@ -48,12 +47,16 @@ function statusBadgeClass(status) {
   return 'bg-gray-100 text-gray-600';
 }
 
-function typeHelper(type) {
-  if (type === 'percentage') return 'Isi angka persen, contoh 15 untuk diskon 15%.';
-  if (type === 'nominal') return 'Isi potongan rupiah per item.';
-  if (type === 'fixed_price') return 'Isi harga jual khusus per item.';
-  if (type === 'bundle') return 'Catat bundling dan evaluasi performanya.';
-  return 'Catat promo beli 1 gratis 1 untuk tracking hasil.';
+function productPrice(product) {
+  return Number(product?.sellingPrice ?? product?.price ?? 0);
+}
+
+function promoValueLabel(promotion) {
+  if (promotion.type === 'bundle') {
+    return `${Number(promotion.bundleQty || 0)} cup = ${formatRupiah(promotion.bundlePrice || 0)}`;
+  }
+  if (promotion.type === 'percentage') return `${Number(promotion.discountValue || 0)}%`;
+  return formatRupiah(promotion.discountValue || 0);
 }
 
 export default function OwnerPromotions() {
@@ -63,16 +66,15 @@ export default function OwnerPromotions() {
   const addPromotion = useAppStore((state) => state.addPromotion);
   const updatePromotion = useAppStore((state) => state.updatePromotion);
   const removePromotion = useAppStore((state) => state.removePromotion);
+  const toast = useToastStore((state) => state.addToast);
 
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [productSearch, setProductSearch] = useState('');
 
-  const toast = useToastStore((state) => state.addToast);
-
-  const promoMetrics = useMemo(() => {
-    return (promotions || []).reduce((summary, promotion) => {
+  const promoMetrics = useMemo(() => (
+    (promotions || []).reduce((summary, promotion) => {
       const status = getPromotionStatus(promotion);
       const performance = getPromotionPerformance(promotion, sales);
       summary.total += 1;
@@ -81,33 +83,8 @@ export default function OwnerPromotions() {
       summary.omzet += performance.totalOmzet;
       summary.discount += performance.totalDiscount;
       return summary;
-    }, { total: 0, active: 0, scheduled: 0, omzet: 0, discount: 0 });
-  }, [promotions, sales]);
-
-  const selectedProducts = useMemo(() => {
-    if (!form.targetProductIds.length) return products || [];
-    return (products || []).filter((product) => (
-      form.targetProductIds.some((id) => String(id) === String(product.id))
-    ));
-  }, [form.targetProductIds, products]);
-
-  const pricePreview = useMemo(() => {
-    const rows = selectedProducts.slice(0, 4).map((product) => {
-      const pricing = getPromotionPrice(product, {
-        type: form.type,
-        discountValue: Number(form.discountValue || 0),
-      });
-      const hpp = Number(product.hpp || 0);
-      const margin = pricing.promoPrice > 0
-        ? Math.round(((pricing.promoPrice - hpp) / pricing.promoPrice) * 100)
-        : 0;
-      return { product, pricing, margin };
-    });
-    const avgMargin = rows.length
-      ? Math.round(rows.reduce((sum, row) => sum + row.margin, 0) / rows.length)
-      : 0;
-    return { rows, avgMargin };
-  }, [form.discountValue, form.type, selectedProducts]);
+    }, { total: 0, active: 0, scheduled: 0, omzet: 0, discount: 0 })
+  ), [promotions, sales]);
 
   const filteredProducts = useMemo(() => {
     const query = productSearch.trim().toLowerCase();
@@ -116,16 +93,39 @@ export default function OwnerPromotions() {
       String(product.name || '').toLowerCase().includes(query)
       || String(product.category || '').toLowerCase().includes(query)
     ));
-  }, [productSearch, products]);
+  }, [products, productSearch]);
+
+  const selectedProducts = useMemo(() => (
+    (products || []).filter((product) => (
+      (form.targetProductIds || []).some((id) => String(id) === String(product.id))
+    ))
+  ), [form.targetProductIds, products]);
+
+  const previewRows = useMemo(() => (
+    selectedProducts.slice(0, 4).map((product) => {
+      const pricing = getPromotionPrice(product, {
+        type: 'bundle',
+        bundleQty: Number(form.bundleQty || 0),
+        bundlePrice: Number(form.bundlePrice || 0),
+      });
+      const normalTotal = productPrice(product) * Number(form.bundleQty || 0);
+      return {
+        product,
+        pricing,
+        normalTotal,
+        discountTotal: Math.max(0, normalTotal - Number(form.bundlePrice || 0)),
+      };
+    })
+  ), [form.bundlePrice, form.bundleQty, selectedProducts]);
 
   const toggleProduct = (productId) => {
-    setForm((prev) => {
-      const exists = prev.targetProductIds.some((id) => String(id) === String(productId));
+    setForm((current) => {
+      const exists = current.targetProductIds.some((id) => String(id) === String(productId));
       return {
-        ...prev,
+        ...current,
         targetProductIds: exists
-          ? prev.targetProductIds.filter((id) => String(id) !== String(productId))
-          : [...prev.targetProductIds, String(productId)],
+          ? current.targetProductIds.filter((id) => String(id) !== String(productId))
+          : [...current.targetProductIds, String(productId)],
       };
     });
   };
@@ -138,7 +138,10 @@ export default function OwnerPromotions() {
 
   const buildPayload = () => ({
     ...form,
-    discountValue: Number(form.discountValue || 0),
+    type: 'bundle',
+    discountValue: 0,
+    bundleQty: Number(form.bundleQty || 0),
+    bundlePrice: Number(form.bundlePrice || 0),
     targetSales: Number(form.targetSales || 0),
     budget: Number(form.budget || 0),
     targetProductIds: form.targetProductIds.map((id) => String(id)),
@@ -151,6 +154,14 @@ export default function OwnerPromotions() {
     }
     if (!form.startDate || !form.endDate || form.endDate < form.startDate) {
       toast('Periode promo belum valid', 'error');
+      return;
+    }
+    if (Number(form.bundleQty || 0) < 2 || Number(form.bundlePrice || 0) <= 0) {
+      toast('Promo paket wajib minimal 2 cup dan harga paket lebih dari Rp 0', 'error');
+      return;
+    }
+    if (!form.targetProductIds.length) {
+      toast('Pilih minimal satu menu untuk promo paket satu menu', 'error');
       return;
     }
 
@@ -175,12 +186,12 @@ export default function OwnerPromotions() {
     setEditingId(promotion.id);
     setForm({
       name: promotion.name || '',
-      type: promotion.type || 'nominal',
       status: promotion.status || 'draft',
       startDate: promotion.startDate || today,
       endDate: promotion.endDate || today,
       targetProductIds: (promotion.targetProductIds || []).map((id) => String(id)),
-      discountValue: String(promotion.discountValue || ''),
+      bundleQty: String(promotion.bundleQty || 2),
+      bundlePrice: String(promotion.bundlePrice || promotion.discountValue || ''),
       targetSales: String(promotion.targetSales || ''),
       budget: String(promotion.budget || ''),
       objective: promotion.objective || '',
@@ -209,20 +220,20 @@ export default function OwnerPromotions() {
   };
 
   return (
-    <PageWrapper title="Promo Penjualan" subtitle="Rencanakan promo, jalankan di kasir, lalu evaluasi dampaknya">
+    <PageWrapper title="Promo Penjualan" subtitle="Kelola promo paket satu menu dan pantau performanya dari rekap closing">
       <div className="space-y-6">
         <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-4">
           <KpiTile icon={Gift} label="Total Promo" value={promoMetrics.total} helper="Semua rencana promo" tone="green" />
           <KpiTile icon={CalendarDays} label="Promo Aktif" value={promoMetrics.active} helper={`${promoMetrics.scheduled} terjadwal`} tone="blue" />
-          <KpiTile icon={Target} label="Omzet Promo" value={formatRupiah(promoMetrics.omzet)} helper="Dari transaksi ber-promo" tone="orange" />
-          <KpiTile icon={Check} label="Diskon Diberi" value={formatRupiah(promoMetrics.discount)} helper="Total subsidi harga" tone="purple" />
+          <KpiTile icon={Target} label="Omzet Promo" value={formatRupiah(promoMetrics.omzet)} helper="Dari rekap ber-promo" tone="orange" />
+          <KpiTile icon={Check} label="Diskon Diberi" value={formatRupiah(promoMetrics.discount)} helper="Estimasi subsidi harga" tone="purple" />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <section className="glass-card p-5">
             <SectionHeader
-              title={editingId ? 'Edit Promo' : 'Buat Rencana Promo'}
-              subtitle="Atur periode, tipe promo, target menu, dan target penjualan"
+              title={editingId ? 'Edit Promo Paket' : 'Buat Promo Paket'}
+              subtitle="Versi pertama fokus ke paket satu menu, contoh 2 cup = Rp 18.000"
             >
               {editingId && (
                 <button type="button" onClick={resetForm} className="btn btn-secondary h-10 min-h-10 px-3 text-xs">
@@ -239,17 +250,8 @@ export default function OwnerPromotions() {
                   value={form.name}
                   onChange={(event) => setForm({ ...form, name: event.target.value })}
                   className="form-input"
-                  placeholder="Contoh: Hemat Sore Kopi Susu"
+                  placeholder="Contoh: Beli 2 Kopi Susu 18K"
                 />
-              </label>
-
-              <label className="block">
-                <span className="mb-1 block text-[11px] font-bold uppercase text-[var(--color-text-secondary)]">Jenis Promo</span>
-                <select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="form-select">
-                  {Object.entries(promotionTypeLabels).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
               </label>
 
               <label className="block">
@@ -259,6 +261,18 @@ export default function OwnerPromotions() {
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-[11px] font-bold uppercase text-[var(--color-text-secondary)]">Jumlah Cup Paket</span>
+                <input
+                  type="number"
+                  min="2"
+                  value={form.bundleQty}
+                  onChange={(event) => setForm({ ...form, bundleQty: event.target.value })}
+                  className="form-input font-mono"
+                  placeholder="2"
+                />
               </label>
 
               <label className="block">
@@ -272,16 +286,15 @@ export default function OwnerPromotions() {
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-[11px] font-bold uppercase text-[var(--color-text-secondary)]">Nilai Promo</span>
+                <span className="mb-1 block text-[11px] font-bold uppercase text-[var(--color-text-secondary)]">Harga Paket</span>
                 <input
                   type="number"
                   min="0"
-                  value={form.discountValue}
-                  onChange={(event) => setForm({ ...form, discountValue: event.target.value })}
+                  value={form.bundlePrice}
+                  onChange={(event) => setForm({ ...form, bundlePrice: event.target.value })}
                   className="form-input font-mono"
-                  placeholder={form.type === 'percentage' ? '15' : '2000'}
+                  placeholder="18000"
                 />
-                <span className="mt-1 block text-[10px] font-semibold text-[var(--color-text-muted)]">{typeHelper(form.type)}</span>
               </label>
 
               <label className="block">
@@ -314,7 +327,7 @@ export default function OwnerPromotions() {
                   value={form.objective}
                   onChange={(event) => setForm({ ...form, objective: event.target.value })}
                   className="form-input min-h-24 resize-y"
-                  placeholder="Contoh: menaikkan transaksi jam sore dan mengenalkan menu baru."
+                  placeholder="Contoh: menaikkan transaksi sore lewat paket dua cup."
                 />
               </label>
 
@@ -324,7 +337,7 @@ export default function OwnerPromotions() {
                   value={form.notes}
                   onChange={(event) => setForm({ ...form, notes: event.target.value })}
                   className="form-input min-h-20 resize-y"
-                  placeholder="Catatan bahan, syarat promo, atau hasil evaluasi setelah selesai."
+                  placeholder="Syarat promo atau evaluasi setelah berjalan."
                 />
               </label>
             </div>
@@ -341,7 +354,7 @@ export default function OwnerPromotions() {
           </section>
 
           <section className="glass-card p-5">
-            <SectionHeader title="Target Menu" subtitle="Kosongkan pilihan untuk berlaku ke semua menu" />
+            <SectionHeader title="Target Menu" subtitle="Promo paket satu menu wajib memilih minimal satu menu" />
             <input
               type="search"
               value={productSearch}
@@ -357,7 +370,7 @@ export default function OwnerPromotions() {
                     <input type="checkbox" checked={checked} onChange={() => toggleProduct(product.id)} className="h-4 w-4 accent-[var(--color-band-1)]" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-xs font-black text-[var(--color-text-primary)]">{product.name}</span>
-                      <span className="font-mono text-[10px] font-bold text-[var(--color-text-muted)]">{formatRupiah(product.sellingPrice || 0)}</span>
+                      <span className="font-mono text-[10px] font-bold text-[var(--color-text-muted)]">{formatRupiah(productPrice(product))}</span>
                     </span>
                   </label>
                 );
@@ -368,29 +381,23 @@ export default function OwnerPromotions() {
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, targetProductIds: [] }))}
-              className="btn btn-secondary mt-3 w-full text-xs"
-            >
-              Berlaku untuk Semua Menu
-            </button>
 
             <div className="mt-5 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-band-4)] p-4">
-              <p className="text-[10px] font-extrabold uppercase text-[var(--color-text-muted)]">Simulasi Harga</p>
-              <p className="mt-1 text-xs font-bold text-[var(--color-text-secondary)]">
-                Margin rata-rata preview: <span className="font-mono text-[var(--color-band-1)]">{pricePreview.avgMargin}%</span>
-              </p>
+              <p className="text-[10px] font-extrabold uppercase text-[var(--color-text-muted)]">Simulasi Paket</p>
               <div className="mt-3 space-y-2">
-                {pricePreview.rows.map(({ product, pricing, margin }) => (
-                  <div key={product.id} className="flex items-center justify-between gap-3 text-xs">
-                    <span className="min-w-0 flex-1 truncate font-bold">{product.name}</span>
-                    <span className="font-mono font-black text-[var(--color-band-1)]">{formatRupiah(pricing.promoPrice)}</span>
-                    <span className={`font-mono font-black ${margin >= 40 ? 'text-[var(--color-accent-green)]' : 'text-[var(--color-accent-red)]'}`}>{margin}%</span>
+                {previewRows.map(({ product, pricing, normalTotal, discountTotal }) => (
+                  <div key={product.id} className="rounded-[var(--radius-card)] bg-white p-3 text-xs">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 flex-1 truncate font-black">{product.name}</span>
+                      <span className="font-mono font-black text-[var(--color-band-1)]">{formatRupiah(form.bundlePrice || 0)}</span>
+                    </div>
+                    <p className="mt-1 font-semibold text-[var(--color-text-muted)]">
+                      Normal {formatRupiah(normalTotal)} - harga/cup promo {formatRupiah(pricing.promoPrice)} - hemat {formatRupiah(discountTotal)}
+                    </p>
                   </div>
                 ))}
-                {pricePreview.rows.length === 0 && (
-                  <p className="text-xs font-semibold text-[var(--color-text-muted)]">Pilih atau buat menu untuk melihat simulasi harga promo.</p>
+                {previewRows.length === 0 && (
+                  <p className="text-xs font-semibold text-[var(--color-text-muted)]">Pilih menu target untuk melihat simulasi paket.</p>
                 )}
               </div>
             </div>
@@ -430,16 +437,14 @@ export default function OwnerPromotions() {
                   return (
                     <tr key={promotion.id}>
                       <td>
-                        <div className="min-w-0">
-                          <p className="font-black text-[var(--color-text-primary)]">{promotion.name}</p>
-                          <p className="mt-1 text-[11px] font-semibold text-[var(--color-text-muted)]">
-                            {promotionTypeLabels[promotion.type] || promotion.type} - nilai {promotion.type === 'percentage' ? `${promotion.discountValue}%` : formatRupiah(promotion.discountValue)}
-                          </p>
-                        </div>
+                        <p className="font-black text-[var(--color-text-primary)]">{promotion.name}</p>
+                        <p className="mt-1 text-[11px] font-semibold text-[var(--color-text-muted)]">
+                          {promotion.type === 'bundle' ? 'Paket satu menu' : 'Promo lama'} - {promoValueLabel(promotion)}
+                        </p>
                       </td>
                       <td className="font-mono text-xs">{promotion.startDate} s/d {promotion.endDate}</td>
                       <td className="max-w-56 truncate text-[var(--color-text-secondary)]">{targetNames || 'Menu belum ditemukan'}</td>
-                      <td><span className={`badge ${statusBadgeClass(status)}`}>{promotionStatusLabels[status]}</span></td>
+                      <td><span className={`badge ${statusBadgeClass(status)}`}>{promotionStatusLabels[status] || status}</span></td>
                       <td className="text-right font-mono font-black">{formatRupiah(performance.totalOmzet)}</td>
                       <td className="text-right font-mono font-black">{performance.totalCup}</td>
                       <td className="text-center">
@@ -454,7 +459,7 @@ export default function OwnerPromotions() {
                             <Edit size={15} />
                           </button>
                           {status !== 'canceled' && (
-                            <button type="button" onClick={() => handleCancelPromotion(promotion)} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--color-accent-orange)] hover:bg-[#fff1d9]" title="Batalkan promo">
+                            <button type="button" onClick={() => handleCancelPromotion(promotion)} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--color-accent-orange)] hover:bg-[#fff8e3]" title="Batalkan promo">
                               <X size={15} />
                             </button>
                           )}
@@ -469,7 +474,7 @@ export default function OwnerPromotions() {
                 {(!promotions || promotions.length === 0) && (
                   <tr>
                     <td colSpan={8} className="py-8 text-center text-sm font-bold text-[var(--color-text-muted)]">
-                      Belum ada promo. Buat rencana promo pertama dari form di atas.
+                      Belum ada promo. Buat promo paket pertama dari form di atas.
                     </td>
                   </tr>
                 )}
