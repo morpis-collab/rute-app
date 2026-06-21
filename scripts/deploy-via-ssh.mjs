@@ -27,14 +27,27 @@ conn.on('ready', () => {
   
   const command = `
     set -e
-    echo "=== [1/6] Navigating to app directory and stashing local changes ==="
+    echo "=== [1/6] Navigating to app directory and setting up Git ==="
+    if [ ! -d "/opt/rute-app" ]; then
+      mkdir -p /opt/rute-app
+    fi
     cd /opt/rute-app
-    git stash -u || echo "No changes to stash"
-    
-    echo "=== [2/6] Pulling latest code from GitHub ==="
-    git pull origin main
+    if [ ! -d "/opt/rute-app/.git" ]; then
+      echo "=== [2/6] Clone repo from GitHub ==="
+      git clone https://github.com/morpis-collab/rute-app.git .
+    else
+      echo "=== [2/6] Pulling latest code from GitHub ==="
+      git stash -u || echo "No changes to stash"
+      git pull origin main
+    fi
     
     echo "=== [2.5/6] Injecting Gemini environment variables to .env ==="
+    if [ ! -f "/opt/rute-app/.env" ]; then
+      echo "NODE_ENV=production" > "/opt/rute-app/.env"
+      echo "PORT=4322" >> "/opt/rute-app/.env"
+      echo "VITE_API_URL=/api" >> "/opt/rute-app/.env"
+    fi
+    
     update_env_var() {
       local key=$1
       local value=$2
