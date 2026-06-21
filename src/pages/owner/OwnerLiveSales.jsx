@@ -982,7 +982,7 @@ export default function OwnerLiveSales() {
 
                       <div className="space-y-2.5">
                         {ocrItems.map((item) => {
-                          const isMatched = !!item.matchedProductId;
+                          const isMatched = item.matchedProductId && activeProducts.some(p => String(p.id) === String(item.matchedProductId));
                           return (
                             <div
                               key={item.id}
@@ -1003,8 +1003,12 @@ export default function OwnerLiveSales() {
                                 <div className="flex items-center gap-2">
                                   <span className="text-[10px] font-bold text-[var(--color-text-muted)] whitespace-nowrap">Petakan ke:</span>
                                   <select
-                                    value={item.matchedProductId || ''}
-                                    onChange={(e) => updateOcrItem(item.id, { matchedProductId: e.target.value ? Number(e.target.value) : '' })}
+                                    value={item.matchedProductId ? String(item.matchedProductId) : ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      const foundProd = activeProducts.find(p => String(p.id) === String(val));
+                                      updateOcrItem(item.id, { matchedProductId: foundProd ? foundProd.id : '' });
+                                    }}
                                     className="form-select h-8 py-0 px-2 text-xs bg-white border-[var(--color-border)] max-w-xs flex-1 rounded-lg"
                                   >
                                     <option value="">⚠️ Pilih Menu (Tidak cocok)...</option>
