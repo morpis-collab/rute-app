@@ -33,8 +33,13 @@ conn.on('ready', () => {
     fi
     cd /opt/rute-app
     if [ ! -d "/opt/rute-app/.git" ]; then
-      echo "=== [2/6] Clone repo from GitHub ==="
-      git clone https://github.com/morpis-collab/rute-app.git .
+      echo "=== [2/6] Initializing Git repo and resetting to origin/main ==="
+      git init
+      git remote add origin https://github.com/morpis-collab/rute-app.git
+      git fetch origin
+      git reset --hard origin/main
+      git branch -M main || echo "Rename to main done"
+      git branch --set-upstream-to=origin/main main || echo "Upstream done"
     else
       echo "=== [2/6] Pulling latest code from GitHub ==="
       git stash -u || echo "No changes to stash"
