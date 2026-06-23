@@ -428,6 +428,51 @@ Jika API key belum ada, provider gagal, confidence rendah, atau item tidak terba
 }
 ```
 
+## Sales Note OCR
+
+`POST /sales-notes/scan`
+
+Multipart field:
+
+- `note`: file foto catatan closing penjualan
+- Tipe file yang diterima: JPEG, PNG, WebP, HEIC, HEIF
+- Ukuran maksimal: 8MB
+
+Backend menyimpan foto ke folder upload `sales-notes` lalu mencoba OCR Vision memakai `SALES_NOTE_AI_API_KEY`, fallback ke `AI_API_KEY`/`OPENAI_API_KEY`, atau `GEMINI_API_KEY` jika tersedia.
+
+Response:
+```json
+{
+  "confidence": 0.91,
+  "imageUrl": "/uploads/sales-notes/1716000000000-abcd1234.jpg",
+  "items": [
+    {
+      "id": 1,
+      "rawText": "Ruang / kopi susu",
+      "qty": 27,
+      "matchedProductId": 1,
+      "price": 10000
+    }
+  ],
+  "source": "ai",
+  "aiStatus": "parsed",
+  "requiresManualReview": false
+}
+```
+
+Jika provider gagal atau hasil tidak cukup yakin, response tetap dikirim tanpa data palsu dan frontend harus menampilkan review/input manual:
+
+```json
+{
+  "confidence": 0,
+  "items": [],
+  "source": "local",
+  "aiStatus": "manual_review_required",
+  "requiresManualReview": true,
+  "providerError": "OCR AI gagal. Isi rekap secara manual atau coba foto yang lebih jelas."
+}
+```
+
 ## Receipt Expense Confirmation
 
 `POST /receipt-expenses`

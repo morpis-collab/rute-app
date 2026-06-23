@@ -17,8 +17,7 @@ import {
   Trash2,
   Grid,
   List,
-  X,
-  Upload
+  X
 } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import useAppStore from '../../store/useAppStore';
@@ -27,6 +26,7 @@ import useToastStore from '../../store/useToastStore';
 import { formatRupiah, formatWaktu } from '../../utils/formatters';
 import { getBusinessDate, isSameBusinessDate } from '../../utils/businessDate';
 import { getPromotionPrice, getPromotionStatus, isProductInPromotion } from '../../utils/promotions';
+import { postSalesNoteScan } from '../../services/apiClient';
 
 const paymentFields = [
   { id: 'cash', label: 'Cash / Tunai', icon: Banknote },
@@ -126,6 +126,7 @@ export default function OwnerLiveSales() {
   const [isOcrLoading, setIsOcrLoading] = useState(false);
   const [ocrImage, setOcrImage] = useState('');
   const [ocrItems, setOcrItems] = useState([]);
+  const [ocrError, setOcrError] = useState('');
 
   // WhatsApp Copas States
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
@@ -333,30 +334,14 @@ export default function OwnerLiveSales() {
     if (ocrImage) URL.revokeObjectURL(ocrImage);
     const previewUrl = URL.createObjectURL(file);
     setOcrImage(previewUrl);
+    setOcrItems([]);
+    setOcrError('');
     setIsOcrLoading(true);
     setIsOcrModalOpen(true);
 
     try {
-      // Simulate network / AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 2200));
-
-      // Mock OCR response matching the uploaded 20 Juni handwriting
-      const mockResult = [
-        { id: 1, rawText: 'Ruang (Kopi Susu RUTE)', qty: 27, matchedProductId: 1, price: 10000 },
-        { id: 2, rawText: 'Americano', qty: 2, matchedProductId: 3, price: 8000 },
-        { id: 3, rawText: 'cokelat', qty: 2, matchedProductId: 4, price: 10000 },
-        { id: 4, rawText: 'pop es', qty: 3, matchedProductId: '', price: 5000 },
-        { id: 5, rawText: 'kentang', qty: 2, matchedProductId: '', price: 10000 },
-        { id: 6, rawText: 'Labor/Lolor', qty: 3, matchedProductId: '', price: 10000 },
-        { id: 7, rawText: 'pad redvelve/velvet', qty: 1, matchedProductId: '', price: 15000 },
-        { id: 8, rawText: 'es turo', qty: 1, matchedProductId: '', price: 10000 },
-        { id: 9, rawText: 'tungan/tengah', qty: 2, matchedProductId: '', price: 13000 },
-        { id: 10, rawText: 'Cibor/Cebor', qty: 1, matchedProductId: '', price: 10000 },
-        { id: 11, rawText: 'kopi hitam', qty: 1, matchedProductId: '', price: 10000 },
-      ];
-
-      // Perform initial fuzzy matching automatically for unmatched ones if possible
-      const processed = mockResult.map(item => {
+      const result = await postSalesNoteScan(file);
+      const processed = (result.items || []).map(item => {
         if (!item.matchedProductId) {
           const autoMatch = fuzzyMatchProduct(item.rawText, activeProducts);
           return { ...item, matchedProductId: autoMatch };
@@ -365,9 +350,15 @@ export default function OwnerLiveSales() {
       });
 
       setOcrItems(processed);
+      if (result.requiresManualReview || processed.length === 0) {
+        const message = result.providerError || 'AI belum menemukan baris menu. Isi rekap manual atau coba foto yang lebih jelas.';
+        setOcrError(message);
+        toast(message, 'error');
+      }
     } catch (err) {
-      toast('Gagal memproses gambar catatan closing.', 'error');
-      setIsOcrModalOpen(false);
+      const message = err.response?.data?.error || 'Gagal memproses gambar catatan closing.';
+      setOcrError(message);
+      toast(message, 'error');
     } finally {
       setIsOcrLoading(false);
     }
@@ -415,8 +406,8 @@ export default function OwnerLiveSales() {
       if (!cleanLine) return;
 
       // Extract number and name
-      let name = '';
-      let qty = 1;
+      let name;
+      let qty;
 
       const numFirstMatch = cleanLine.match(/^(\d+)\s*(?:x|\*|-|:|)\s*(.+)$/i);
       const nameFirstMatch = cleanLine.match(/^(.+?)\s*(?:x|\*|-|:|)\s*(\d+)$/i);
@@ -979,6 +970,11 @@ export default function OwnerLiveSales() {
                       <p className="text-[11px] text-[var(--color-text-secondary)] font-semibold leading-relaxed">
                         Berikut adalah hasil pembacaan tulisan tangan dari foto. Periksa kembali dan pastikan setiap baris telah dipetakan ke menu yang sesuai di sistem sebelum menekan tombol <b>Terapkan</b>.
                       </p>
+                      {ocrError && (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] font-bold text-amber-800">
+                          {ocrError}
+                        </div>
+                      )}
 
                       <div className="space-y-2.5">
                         {ocrItems.map((item) => {

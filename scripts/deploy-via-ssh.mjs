@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const geminiApiKey = process.env.GEMINI_API_KEY;
-const geminiModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
 if (!geminiApiKey) {
   console.error('Error: GEMINI_API_KEY not found in local .env file. Please add it before deploying.');
@@ -12,7 +12,7 @@ if (!geminiApiKey) {
 }
 
 const config = {
-  host: '202.10.34.42',
+  host: 'ruteapp.cloud',
   port: 22,
   username: 'root',
   password: 'mhan071099@'

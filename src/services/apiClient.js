@@ -65,6 +65,16 @@ export async function postReceiptScan(file) {
   return data;
 }
 
+export async function postSalesNoteScan(file) {
+  const formData = new FormData();
+  formData.append('note', file);
+  const { data } = await api.post('/sales-notes/scan', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  });
+  return data;
+}
+
 export async function postReceiptExpense(payload) {
   const { data } = await api.post('/receipt-expenses', payload);
   return data;

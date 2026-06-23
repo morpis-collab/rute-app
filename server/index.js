@@ -17,6 +17,7 @@ import {
 } from './rules.js';
 import { readDb, resetDb, updateDb } from './db.js';
 import { scanReceipt } from './receiptAi.js';
+import { scanSalesNote } from './salesNoteAi.js';
 import { ensureUploadRoot, saveUploadedFile, uploadRoot } from './uploads.js';
 import { authenticateRequest, getAuthenticatedUser, loginWithRolePin } from './auth.js';
 import { answerCopilot, buildCopilotContext, buildCopilotInsights } from './copilot.js';
@@ -1467,6 +1468,26 @@ app.post('/api/receipts/scan', upload.single('receipt'), async (req, res, next) 
       file: req.file,
       upload: uploadRecord,
       ingredients: readDb().ingredients,
+    });
+    if (result?.error) return res.status(result.statusCode || 400).json(result);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/sales-notes/scan', upload.single('note'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'File catatan wajib diunggah' });
+    }
+
+    const db = readDb();
+    const uploadRecord = saveUploadedFile(req.file, { folder: 'sales-notes' });
+    const result = await scanSalesNote({
+      file: req.file,
+      upload: uploadRecord,
+      products: refreshProductCosts(db.products, db.ingredients),
     });
     if (result?.error) return res.status(result.statusCode || 400).json(result);
     res.json(result);
