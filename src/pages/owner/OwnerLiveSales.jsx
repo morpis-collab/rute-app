@@ -50,6 +50,7 @@ export default function OwnerLiveSales() {
   const [quantities, setQuantities] = useState({});
   const [promoInputs, setPromoInputs] = useState({});
   const [payments, setPayments] = useState({ cash: '', qris: '', transfer: '' });
+  const [remainingMethod, setRemainingMethod] = useState('qris');
   const [search, setSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -162,7 +163,21 @@ export default function OwnerLiveSales() {
 
   const totalSales = selectedItems.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
   const totalCup = selectedItems.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-  const totalPaid = paymentFields.reduce((sum, field) => sum + Number(payments[field.id] || 0), 0);
+  
+  const calculatedRemaining = useMemo(() => {
+    const sumOtherMethods = paymentFields
+      .filter(f => f.id !== remainingMethod)
+      .reduce((sum, f) => sum + Number(payments[f.id] || 0), 0);
+    return Math.max(0, totalSales - sumOtherMethods);
+  }, [payments, remainingMethod, totalSales]);
+
+  const totalPaid = useMemo(() => {
+    return paymentFields.reduce((sum, f) => {
+      const val = f.id === remainingMethod ? calculatedRemaining : Number(payments[f.id] || 0);
+      return sum + val;
+    }, 0);
+  }, [payments, remainingMethod, calculatedRemaining]);
+
   const difference = totalPaid - totalSales;
   const daySales = useMemo(() => (
     (sales || []).filter((sale) => isSameBusinessDate(sale.date, selectedDate))
@@ -199,10 +214,6 @@ export default function OwnerLiveSales() {
     }));
   };
 
-  const setPaymentToTotal = () => {
-    setPayments({ cash: String(totalSales), qris: '0', transfer: '0' });
-  };
-
   const clearForm = () => {
     setQuantities({});
     setPromoInputs({});
@@ -228,6 +239,12 @@ export default function OwnerLiveSales() {
       return;
     }
 
+    const finalPayments = {
+      cash: Number(remainingMethod === 'cash' ? calculatedRemaining : (payments.cash || 0)),
+      qris: Number(remainingMethod === 'qris' ? calculatedRemaining : (payments.qris || 0)),
+      transfer: Number(remainingMethod === 'transfer' ? calculatedRemaining : (payments.transfer || 0)),
+    };
+
     setIsSaving(true);
     try {
       await recordSale({
@@ -236,11 +253,7 @@ export default function OwnerLiveSales() {
         user: user?.name || 'Owner',
         items: selectedItems,
         total: totalSales,
-        paymentBreakdown: {
-          cash: Number(payments.cash || 0),
-          qris: Number(payments.qris || 0),
-          transfer: Number(payments.transfer || 0),
-        },
+        paymentBreakdown: finalPayments,
       });
       toast('Rekap penjualan closing berhasil disimpan', 'success');
       clearForm();
@@ -513,10 +526,7 @@ export default function OwnerLiveSales() {
                       key={product.id}
                       className={`relative flex flex-col justify-between rounded-2xl border p-4 bg-white shadow-sm transition-all ${qty > 0 ? 'border-[var(--color-band-1)] ring-1 ring-[var(--color-band-1)] bg-success-pale' : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]'}`}
                     >
-                      <div 
-                        className="mb-2 cursor-pointer select-none active:opacity-75 transition-opacity" 
-                        onClick={() => !isClosed && adjustQty(product.id, 1)}
-                      >
+                      <div className="mb-2">
                         <div className="flex items-start justify-between">
                           <span className="text-xl">{product.emoji || '☕'}</span>
                           {qty > 0 && (
@@ -569,40 +579,64 @@ export default function OwnerLiveSales() {
                           </button>
                         </div>
 
-                        {/* Promo selection inside Grid Card */}
-                        {productPromotions.length > 0 && (
-                          <div className="pt-2 border-t border-dashed border-[var(--color-border)]">
-                            <select
-                              value={promoInput.promoId || ''}
-                              onChange={(e) => updatePromoInput(product.id, { promoId: e.target.value, bundleCount: e.target.value ? (promoInput.bundleCount || '') : '' })}
-                              disabled={isClosed}
-                              className="form-select h-8 py-0 px-2 text-[10px] bg-white rounded-lg border-[var(--color-border)]"
-                            >
-                              <option value="">Promo Paket?</option>
-                              {productPromotions.map((promo) => (
-                                <option key={promo.id} value={promo.id}>
-                                  {promo.name}
-                                </option>
-                              ))}
-                            </select>
-
-                            {promoInput.promoId && (
-                              <div className="mt-1 flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  inputMode="numeric"
-                                  value={promoInput.bundleCount || ''}
-                                  onChange={(e) => updatePromoInput(product.id, { bundleCount: e.target.value })}
-                                  disabled={isClosed}
-                                  placeholder="0"
-                                  className="w-12 h-7 rounded border border-[var(--color-border)] text-center font-mono text-xs font-bold"
-                                />
-                                <span className="text-[9px] text-[var(--color-text-muted)]">paket</span>
+                        {/* Auto Promo Detection Grid UI */}
+                        {(() => {
+                          const selectedPromo = productPromotions.find((p) => String(p.id) === String(promoInput.promoId));
+                          const hasActivePromo = selectedPromo && Number(promoInput.bundleCount || 0) > 0;
+                          
+                          if (hasActivePromo) {
+                            return (
+                              <div className="mt-2 pt-2 border-t border-dashed border-[var(--color-border)] flex items-center justify-between gap-1">
+                                <span className="text-[10px] font-black text-success-text truncate">
+                                  🎁 {promoInput.bundleCount}x {selectedPromo.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const bundleQty = Number(selectedPromo.bundleQty || 0);
+                                    const bundleCount = Number(promoInput.bundleCount || 0);
+                                    const currentNormalQty = Number(quantities[product.id] || 0);
+                                    const totalQty = currentNormalQty + (bundleCount * bundleQty);
+                                    
+                                    setQuantities((prev) => ({ ...prev, [product.id]: totalQty }));
+                                    updatePromoInput(product.id, { promoId: '', bundleCount: '' });
+                                  }}
+                                  className="text-[9px] font-bold text-[var(--color-accent-red)] hover:underline cursor-pointer bg-transparent border-0 px-1 py-0.5"
+                                >
+                                  Batal
+                                </button>
                               </div>
-                            )}
-                          </div>
-                        )}
+                            );
+                          }
+                          
+                          const offerPromo = productPromotions.find(
+                            (p) => qty >= Number(p.bundleQty || 0) && Number(p.bundleQty || 0) > 0
+                          );
+                          
+                          if (offerPromo) {
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const bundleQty = Number(offerPromo.bundleQty || 0);
+                                  const bundleCount = Math.floor(qty / bundleQty);
+                                  const remainingQty = qty % bundleQty;
+                                  
+                                  updatePromoInput(product.id, { 
+                                    promoId: offerPromo.id, 
+                                    bundleCount: String((Number(promoInput.bundleCount || 0) + bundleCount)) 
+                                  });
+                                  setQuantities((prev) => ({ ...prev, [product.id]: remainingQty }));
+                                }}
+                                className="w-full mt-2 py-1.5 px-2 bg-success-bg border border-success-border text-success-text rounded-xl text-[10px] font-black hover:bg-success-bg/85 cursor-pointer text-center animate-pulse"
+                              >
+                                🎁 Jadikan Paket {offerPromo.name}?
+                              </button>
+                            );
+                          }
+                          
+                          return null;
+                        })()}
                       </div>
                     </div>
                   );
@@ -676,37 +710,66 @@ export default function OwnerLiveSales() {
                           </div>
                         </td>
                         <td>
-                          <div className="space-y-2">
-                            <select
-                              value={promoInput.promoId || ''}
-                              onChange={(event) => updatePromoInput(product.id, { promoId: event.target.value, bundleCount: event.target.value ? (promoInput.bundleCount || '') : '' })}
-                              disabled={isClosed || productPromotions.length === 0}
-                              className="form-select h-10 py-1.5 text-xs"
-                            >
-                              <option value="">{productPromotions.length ? 'Tanpa promo' : 'Tidak ada promo aktif'}</option>
-                              {productPromotions.map((promotion) => (
-                                <option key={promotion.id} value={promotion.id}>
-                                  {promotion.name} ({promotion.bundleQty} cup = {formatRupiah(promotion.bundlePrice)})
-                                </option>
-                              ))}
-                            </select>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="number"
-                                min="0"
-                                inputMode="numeric"
-                                value={promoInput.bundleCount || ''}
-                                onChange={(event) => updatePromoInput(product.id, { bundleCount: event.target.value })}
-                                disabled={isClosed || !promoInput.promoId}
-                                className="w-20 rounded-lg border border-[var(--color-border)] bg-white px-2 py-2 text-center font-mono text-sm font-black focus:border-[var(--color-band-1)] focus:outline-none disabled:bg-gray-50"
-                                placeholder="0"
-                                aria-label={`Jumlah paket promo ${product.name}`}
-                              />
-                              <span className="text-[10px] font-bold text-[var(--color-text-muted)]">
-                                paket{selectedPromo ? ` x ${selectedPromo.bundleQty} cup` : ''}
+                          {(() => {
+                            const hasActivePromo = selectedPromo && Number(promoInput.bundleCount || 0) > 0;
+                            
+                            if (hasActivePromo) {
+                              return (
+                                <div className="flex items-center justify-between gap-1 p-2 bg-success-bg/40 border border-success-border rounded-xl">
+                                  <span className="text-xs font-bold text-success-text truncate">
+                                    🎁 {promoInput.bundleCount}x {selectedPromo.name}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const bundleQty = Number(selectedPromo.bundleQty || 0);
+                                      const bundleCount = Number(promoInput.bundleCount || 0);
+                                      const currentNormalQty = Number(quantities[product.id] || 0);
+                                      const totalQty = currentNormalQty + (bundleCount * bundleQty);
+                                      
+                                      setQuantities((prev) => ({ ...prev, [product.id]: totalQty }));
+                                      updatePromoInput(product.id, { promoId: '', bundleCount: '' });
+                                    }}
+                                    className="text-xs font-black text-danger-text hover:underline px-2 py-1 cursor-pointer bg-transparent border-0"
+                                  >
+                                    Batal
+                                  </button>
+                                </div>
+                              );
+                            }
+                            
+                            const offerPromo = productPromotions.find(
+                              (p) => qty >= Number(p.bundleQty || 0) && Number(p.bundleQty || 0) > 0
+                            );
+                            
+                            if (offerPromo) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const bundleQty = Number(offerPromo.bundleQty || 0);
+                                    const bundleCount = Math.floor(qty / bundleQty);
+                                    const remainingQty = qty % bundleQty;
+                                    
+                                    updatePromoInput(product.id, { 
+                                      promoId: offerPromo.id, 
+                                      bundleCount: String((Number(promoInput.bundleCount || 0) + bundleCount)) 
+                                    });
+                                    setQuantities((prev) => ({ ...prev, [product.id]: remainingQty }));
+                                  }}
+                                  className="w-full py-1.5 px-3 bg-success-bg border border-success-border text-success-text rounded-xl text-xs font-black hover:bg-success-bg/85 cursor-pointer text-center animate-pulse"
+                                >
+                                  🎁 Jadikan Paket {offerPromo.name}?
+                                </button>
+                              );
+                            }
+                            
+                            return (
+                              <span className="text-xs font-semibold text-[var(--color-text-muted)]">
+                                {productPromotions.length ? 'Tanpa promo aktif' : 'Tidak ada promo'}
                               </span>
-                            </div>
-                          </div>
+                            );
+                          })()}
                         </td>
                         <td className="text-right font-mono font-black text-[var(--color-band-1)]">
                           {formatRupiah(qty * price + promoSubtotal)}
@@ -757,48 +820,71 @@ export default function OwnerLiveSales() {
               </p>
             </div>
 
-            <div className="mt-4 space-y-3">
-              {paymentFields.map(({ id, label, icon: Icon }) => (
-                <label key={id} className="block">
-                  <span className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase text-[var(--color-text-secondary)]">
-                    <Icon size={14} />
-                    {label}
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={payments[id]}
-                    onChange={(event) => setPayments((current) => ({ ...current, [id]: event.target.value }))}
-                    disabled={isClosed}
-                    className="form-input font-mono text-sm"
-                    placeholder="0"
-                  />
-                </label>
-              ))}
+            {/* Auto Remaining Method Selector */}
+            <div className="mt-4 p-3 rounded-2xl bg-cream-card border border-[var(--color-border)]">
+              <span className="block text-[10px] font-black text-[var(--color-text-secondary)] uppercase mb-2">
+                Metode Sisa Otomatis
+              </span>
+              <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-white border border-[var(--color-border)]">
+                {[
+                  { id: 'qris', label: '📱 QRIS' },
+                  { id: 'cash', label: '💰 Cash' },
+                  { id: 'transfer', label: '🏦 Transfer' },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setRemainingMethod(opt.id)}
+                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-colors cursor-pointer text-center ${
+                      remainingMethod === opt.id
+                        ? 'bg-[var(--color-band-1)] text-white shadow-sm'
+                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-[9px] text-[var(--color-text-muted)] font-semibold leading-relaxed">
+                Ketik pembayaran lain, sisanya otomatis dimasukkan ke metode terpilih di atas.
+              </p>
             </div>
 
-            <div className="mt-3.5 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setPayments({ cash: String(totalSales), qris: '0', transfer: '0' })}
-                disabled={isClosed || totalSales <= 0}
-                className="py-2 px-3 text-[10px] font-black rounded-xl border border-[var(--color-border)] bg-cream-card text-[var(--color-text-secondary)] hover:bg-cream-hover transition-colors cursor-pointer flex-1 text-center"
-              >
-                💰 Cash = Total
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const cashVal = Number(payments.cash || 0);
-                  const transferVal = Number(payments.transfer || 0);
-                  const remaining = Math.max(0, totalSales - (cashVal + transferVal));
-                  setPayments((prev) => ({ ...prev, qris: String(remaining) }));
-                }}
-                disabled={isClosed || totalSales <= 0}
-                className="py-2 px-3 text-[10px] font-black rounded-xl border border-[var(--color-border)] bg-cream-card text-[var(--color-text-secondary)] hover:bg-cream-hover transition-colors cursor-pointer flex-1 text-center"
-              >
-                📱 QRIS = Sisanya
-              </button>
+            <div className="mt-4 space-y-3">
+              {paymentFields.map(({ id, label, icon: Icon }) => {
+                const isAuto = remainingMethod === id;
+                return (
+                  <label key={id} className="block">
+                    <span className="mb-1 flex items-center justify-between text-[11px] font-bold uppercase text-[var(--color-text-secondary)]">
+                      <span className="flex items-center gap-1.5">
+                        <Icon size={14} />
+                        {label}
+                      </span>
+                      {isAuto && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-success-bg text-success-text font-black border border-success-border">
+                          Sisa Otomatis
+                        </span>
+                      )}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={isAuto ? String(calculatedRemaining) : payments[id]}
+                      onChange={(event) => {
+                        if (isAuto) return;
+                        setPayments((current) => ({ ...current, [id]: event.target.value }));
+                      }}
+                      disabled={isClosed || isAuto}
+                      className={`form-input font-mono text-sm ${
+                        isAuto 
+                          ? 'bg-success-pale border-success-border font-bold text-[var(--color-band-1)] focus:ring-0 cursor-not-allowed' 
+                          : ''
+                      }`}
+                      placeholder="0"
+                    />
+                  </label>
+                );
+              })}
             </div>
 
             <div className="mt-4 rounded-xl border border-[var(--color-border)] bg-white p-3 text-sm">
@@ -814,22 +900,14 @@ export default function OwnerLiveSales() {
               </div>
             </div>
 
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                onClick={setPaymentToTotal}
-                disabled={isClosed || totalSales <= 0}
-                className="btn btn-secondary flex-1 text-xs disabled:opacity-50 h-10 flex items-center justify-center cursor-pointer"
-              >
-                Semua Cash
-              </button>
+            <div className="mt-4">
               <button
                 type="button"
                 onClick={clearForm}
                 disabled={isSaving}
-                className="btn btn-secondary flex-1 text-xs disabled:opacity-50 h-10 flex items-center justify-center cursor-pointer"
+                className="btn btn-secondary w-full text-xs h-10 flex items-center justify-center cursor-pointer"
               >
-                Reset
+                Reset Pilihan & Input
               </button>
             </div>
             
