@@ -438,7 +438,7 @@ function PeriodReport({ startDate, setStartDate, endDate, setEndDate, period }) 
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={period.trend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eadfd0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="label" tick={{ fontSize: 11 }} />
               <YAxis tickFormatter={(value) => `${Math.round(value / 1000)}k`} tick={{ fontSize: 11 }} />
               <Tooltip formatter={(value) => formatRupiah(value)} />

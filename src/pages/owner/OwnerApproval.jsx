@@ -93,7 +93,7 @@ export default function OwnerApproval() {
                   <span className="font-bold font-mono text-[var(--color-accent-primary)]">{formatRupiah(exp.total)}</span>
                   <div className="flex gap-2 items-center">
                     {isClosed && (
-                      <span className="text-[10px] text-[var(--color-accent-red)] font-semibold bg-[#fff4ef] px-2 py-1 rounded border border-[#f0c7ba]">
+                      <span className="text-[10px] text-danger-text font-semibold bg-danger-bg px-2 py-1 rounded border border-danger-border">
                         Kas tanggal ini sudah ditutup
                       </span>
                     )}

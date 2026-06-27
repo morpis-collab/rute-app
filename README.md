@@ -2,13 +2,15 @@
 
 Sistem manajemen operasional RUTE Coffee untuk pemilik (*owner*) sebagai satu panel kerja outlet. Aplikasi ini bukan sekadar *landing page*, melainkan **dashboard operasional** lengkap dengan pencatatan kas, penjualan, inventaris, hingga kecerdasan buatan (*AI Copilot*).
 
-## Tech Stack (Frontend)
-- **Framework**: React 19 + Vite
-- **Styling**: Tailwind CSS v4 (Warm Coffee Design System)
-- **State Management**: Zustand
+## Tech Stack
+- **Frontend**: React 19 + Vite 8 + Tailwind CSS v4 (Sage Green Design System)
+- **Animation**: Framer Motion
+- **State Management**: Zustand 5
 - **Icons**: Lucide React
-- **Charts**: Recharts
-- **Font**: Plus Jakarta Sans
+- **Charts**: Recharts 3
+- **Font**: Plus Jakarta Sans + Fraunces (display) + JetBrains Mono (angka)
+- **Backend**: Express 5 (server lokal di `server/`)
+- **PWA**: vite-plugin-pwa
 
 ## Modul Fungsional Utama
 Aplikasi ini berjalan owner-only, dengan layout desktop untuk dashboard dan input operasional yang tetap nyaman dipakai di HP.
@@ -43,4 +45,4 @@ Backend lokal berjalan di `http://localhost:4321` dan Vite akan proxy request `/
 npm run build
 ```
 
-*Frontend prototype ini dikembangkan oleh Antigravity.*
+*Frontend + Backend dikembangkan oleh tim AI (Antigravity, Codex).*

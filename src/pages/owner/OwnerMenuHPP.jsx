@@ -95,9 +95,9 @@ export default function OwnerMenuHPP() {
   
   const getMarginStatus = (m) => {
     const marginVal = Number(m || 0);
-    if (marginVal >= 60) return { label: 'Sehat', color: 'text-[var(--color-accent-green)] bg-[#e8f5e4]' };
-    if (marginVal >= 40) return { label: 'Tipis', color: 'text-[var(--color-accent-orange)] bg-[#f5efe0]' };
-    return { label: 'Rugi/Kecil', color: 'text-[var(--color-accent-red)] bg-[#fae8e0]' };
+    if (marginVal >= 60) return { label: 'Sehat', color: 'text-[var(--color-accent-green)] bg-success-bg' };
+    if (marginVal >= 40) return { label: 'Tipis', color: 'text-[var(--color-accent-orange)] bg-warning-bg' };
+    return { label: 'Rugi/Kecil', color: 'text-[var(--color-accent-red)] bg-danger-bg' };
   };
   const status = getMarginStatus(margin);
 
@@ -223,7 +223,7 @@ export default function OwnerMenuHPP() {
                     value={totalHPP}
                     disabled={form.recipe && form.recipe.length > 0}
                     onChange={(e) => setForm({ ...form, hpp: parseFloat(e.target.value) || 0 })}
-                    className={`form-input font-mono ${form.recipe && form.recipe.length > 0 ? 'bg-[#f4efe8] cursor-not-allowed text-[var(--color-text-secondary)] font-semibold' : ''}`}
+                    className={`form-input font-mono ${form.recipe && form.recipe.length > 0 ? 'bg-cream-light cursor-not-allowed text-[var(--color-text-secondary)] font-semibold' : ''}`}
                     placeholder="0"
                   />
                   {form.recipe && form.recipe.length > 0 && (
@@ -295,7 +295,7 @@ export default function OwnerMenuHPP() {
                   }
 
                   return (
-                    <div key={index} className="flex flex-col sm:flex-row gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[#FAF8F5] relative group">
+                    <div key={index} className="flex flex-col sm:flex-row gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-cream-card relative group">
                       <div className="flex-1">
                         <label className="block text-[9px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Bahan Baku</label>
                         <select
@@ -428,7 +428,7 @@ export default function OwnerMenuHPP() {
           </div>
           
           {/* Info/Warning Card */}
-          <div className="glass-card p-4 border-l-4 border-l-[var(--color-accent-orange)] bg-[#f5efe0]">
+          <div className="glass-card p-4 border-l-4 border-l-[var(--color-accent-orange)] bg-warning-bg">
             <h4 className="font-bold text-[var(--color-text-primary)] text-sm mb-1">Rekomendasi Pricing AI</h4>
             <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
               Untuk kategori <strong>{form.category}</strong>, margin yang disarankan adalah minimal <strong>60%</strong>. 
@@ -454,7 +454,7 @@ export default function OwnerMenuHPP() {
         ) : (
           <div className="border border-[var(--color-coffee-latte)] rounded-lg overflow-x-auto">
             <table className="data-table min-w-full">
-              <thead className="bg-[#faf6ef]">
+              <thead className="bg-cream-light">
                 <tr>
                   <th className="text-left py-3 px-4">Menu</th>
                   <th className="text-left py-3 px-4">Kategori</th>
@@ -473,7 +473,7 @@ export default function OwnerMenuHPP() {
                   const marginStatus = getMarginStatus(marginPct);
                   
                   return (
-                    <tr key={prod.id} className={`hover:bg-[#fbf9f4] transition-colors border-b border-[var(--color-coffee-latte)]/40 ${!prod.active ? 'opacity-60 bg-gray-50/50' : ''}`}>
+                    <tr key={prod.id} className={`hover:bg-cream-hover transition-colors border-b border-[var(--color-coffee-latte)]/40 ${!prod.active ? 'opacity-60 bg-gray-50/50' : ''}`}>
                       <td className="py-3 px-4 font-medium text-[var(--color-text-primary)]">
                         <div className="flex items-center gap-3">
                           <ProductThumb product={prod} size="sm" className="shrink-0" />
@@ -483,7 +483,7 @@ export default function OwnerMenuHPP() {
                         </div>
                         {prod.recipe && prod.recipe.length > 0 && (
                           <div className="text-[10px] text-[var(--color-text-secondary)] font-normal mt-1.5 flex flex-wrap gap-1 items-center">
-                            <span className="bg-[#f5ece2] px-1.5 py-0.5 rounded text-[8px] font-bold text-[var(--color-text-secondary)] uppercase">Resep:</span>
+                            <span className="bg-warning-bg px-1.5 py-0.5 rounded text-[8px] font-bold text-[var(--color-text-secondary)] uppercase">Resep:</span>
                             {prod.recipe.map((r, rIdx) => {
                               const ingName = r.name || ingredients.find(i => String(i.id) === String(r.ingredientId))?.name || 'Bahan';
                               return (

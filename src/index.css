@@ -40,6 +40,37 @@
   --color-border: #dbe5d8;
   --color-shadow: rgba(47, 70, 52, 0.08);
 
+  /* Status Semantik Ringan (Background & Text Alert/Badge) */
+  --color-danger-bg: #fff4ef;
+  --color-danger-text: #a34f39;
+  --color-danger-border: #f0c7ba;
+
+  --color-success-bg: #e8f5e4;
+  --color-success-text: #4a7a3f;
+  --color-success-border: #cfddc9;
+  --color-success-pale: #f7fbf7;
+
+  --color-warning-bg: #f5efe0;
+  --color-warning-text: #c4955a;
+  --color-warning-border: #f0d6a8;
+
+  --color-info-bg: #e0ecf5;
+  --color-info-text: #5a7a8f;
+  --color-info-border: #c4d9e9;
+
+  /* Latar Cream/Sand Hangat & Netral */
+  --color-cream-light: #faf6ef;
+  --color-cream-hover: #fbf9f4;
+  --color-cream-card: #FAF8F5;
+
+  /* Accent Khusus Metrik & Chart */
+  --color-brand-blue-bg: #eef3fe;
+  --color-brand-blue-text: #2e4c85;
+  --color-brand-blue-light: #5c7bb9;
+
+  --color-expense-bg: #fae8e0;
+  --color-expense-text: #c4705a;
+
   --shadow-sm: 0 1px 2px rgba(47, 70, 52, 0.04), 0 8px 24px -20px rgba(47, 70, 52, 0.15);
   --shadow-md: 0 12px 32px -24px rgba(47, 70, 52, 0.25), 0 1px 2px rgba(47, 70, 52, 0.05);
   --shadow-lg: 0 24px 54px -34px rgba(47, 70, 52, 0.35);
@@ -309,23 +340,23 @@
   }
 
   .badge-success {
-    color: #3f5944;
-    background: #e9f1e6;
+    color: var(--color-success-text);
+    background: var(--color-success-bg);
   }
 
   .badge-warning {
-    color: #776230;
-    background: #f5efd9;
+    color: var(--color-warning-text);
+    background: var(--color-warning-bg);
   }
 
   .badge-danger {
-    color: #A04434;
-    background: #FFF0EC;
+    color: var(--color-danger-text);
+    background: var(--color-danger-bg);
   }
 
   .badge-info {
-    color: #526b55;
-    background: #edf4ea;
+    color: var(--color-info-text);
+    background: var(--color-info-bg);
   }
 
   .form-input,
@@ -541,10 +572,10 @@
     white-space: nowrap;
   }
 
-  .status-alert--success { --alert-bg: #e9f1e6; --alert-border: #cfddc9; --alert-text: #3f5944; }
-  .status-alert--info { --alert-bg: #f6f9f4; --alert-border: #dbe5d8; --alert-text: #526b55; }
-  .status-alert--warning { --alert-bg: #f8f2df; --alert-border: #e4d8ab; --alert-text: #776230; }
-  .status-alert--danger { --alert-bg: #FFF0EC; --alert-border: #EAC1B8; --alert-text: #A04434; }
+  .status-alert--success { --alert-bg: var(--color-success-bg); --alert-border: var(--color-success-border); --alert-text: var(--color-success-text); }
+  .status-alert--info { --alert-bg: var(--color-info-bg); --alert-border: var(--color-info-border); --alert-text: var(--color-info-text); }
+  .status-alert--warning { --alert-bg: var(--color-warning-bg); --alert-border: var(--color-warning-border); --alert-text: var(--color-warning-text); }
+  .status-alert--danger { --alert-bg: var(--color-danger-bg); --alert-border: var(--color-danger-border); --alert-text: var(--color-danger-text); }
 
   .product-thumb {
     display: grid;
@@ -1015,5 +1046,19 @@
       animation: none !important;
       transition: none !important;
     }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fade-in-up {
+    animation: fadeInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }

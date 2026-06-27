@@ -242,7 +242,7 @@ export default function OwnerOpeningCapital() {
         </div>
       </div>
 
-      <div className="flex items-start gap-2.5 rounded-xl border border-[var(--color-border)] bg-[#faf6ef] p-4 text-xs text-[var(--color-text-secondary)] mb-6">
+      <div className="flex items-start gap-2.5 rounded-xl border border-[var(--color-border)] bg-cream-light p-4 text-xs text-[var(--color-text-secondary)] mb-6">
         <Info size={16} className="shrink-0 text-[var(--color-accent-primary)]" />
         <div className="space-y-1">
           <p className="font-semibold text-[var(--color-text-primary)]">Mengapa memisahkan Modal Awal dan Pengeluaran?</p>
@@ -251,7 +251,7 @@ export default function OwnerOpeningCapital() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-xl border border-[#f0c7ba] bg-[#fff4ef] px-4 py-3 text-sm text-[#a34f39] flex items-center gap-2">
+        <div className="mb-4 rounded-xl border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text flex items-center gap-2">
           <AlertCircle size={16} />
           {error}
         </div>
@@ -288,7 +288,7 @@ export default function OwnerOpeningCapital() {
 
         {/* 1. Alat Usaha / Aset Tetap */}
         <div className="glass-card p-0 overflow-hidden">
-          <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-[#faf6ef]">
+          <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-cream-light">
             <div>
               <h3 className="font-bold text-[var(--color-text-primary)]">1. Alat Usaha / Aset Tetap</h3>
               <p className="text-[10px] text-[var(--color-text-muted)]">Grinder, ROK Presso, Booth, Meja, Timbangan, dll.</p>
@@ -300,7 +300,7 @@ export default function OwnerOpeningCapital() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-[var(--color-text-primary)]">
               <thead>
-                <tr className="bg-[#faf6ef]/50 border-b border-[var(--color-border)]">
+                <tr className="bg-cream-light/50 border-b border-[var(--color-border)]">
                   <th className="p-3 font-semibold">Nama Alat / Aset</th>
                   <th className="p-3 font-semibold w-20 text-center">Qty</th>
                   <th className="p-3 font-semibold w-32">Satuan</th>
@@ -378,7 +378,7 @@ export default function OwnerOpeningCapital() {
               </tbody>
             </table>
           </div>
-          <div className="p-3 bg-[#faf6ef]/30 border-t border-[var(--color-border)] flex justify-between text-xs font-semibold text-[var(--color-text-secondary)]">
+          <div className="p-3 bg-cream-light/30 border-t border-[var(--color-border)] flex justify-between text-xs font-semibold text-[var(--color-text-secondary)]">
             <span>Total Nilai Aset</span>
             <span className="font-mono text-[var(--color-text-primary)]">{formatRupiah(totalAssets)}</span>
           </div>
@@ -386,7 +386,7 @@ export default function OwnerOpeningCapital() {
 
         {/* 2. Bahan Baku Awal / Stok Awal */}
         <div className="glass-card p-0 overflow-hidden">
-          <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-[#faf6ef]">
+          <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-cream-light">
             <div>
               <h3 className="font-bold text-[var(--color-text-primary)]">2. Bahan Baku Awal / Stok Awal</h3>
               <p className="text-[10px] text-[var(--color-text-muted)]">Kopi, Susu, Gula, Cup, dll yang disetor sebagai modal awal (mempengaruhi kuantitas gudang & HPP).</p>
@@ -398,7 +398,7 @@ export default function OwnerOpeningCapital() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-[var(--color-text-primary)]">
               <thead>
-                <tr className="bg-[#faf6ef]/50 border-b border-[var(--color-border)]">
+                <tr className="bg-cream-light/50 border-b border-[var(--color-border)]">
                   <th className="p-3 font-semibold">Bahan Baku</th>
                   <th className="p-3 font-semibold w-32 text-center">Kuantitas</th>
                   <th className="p-3 font-semibold w-24">Satuan</th>
@@ -473,7 +473,7 @@ export default function OwnerOpeningCapital() {
               </tbody>
             </table>
           </div>
-          <div className="p-3 bg-[#faf6ef]/30 border-t border-[var(--color-border)] flex justify-between text-xs font-semibold text-[var(--color-text-secondary)]">
+          <div className="p-3 bg-cream-light/30 border-t border-[var(--color-border)] flex justify-between text-xs font-semibold text-[var(--color-text-secondary)]">
             <span>Total Nilai Bahan Baku Awal</span>
             <span className="font-mono text-[var(--color-text-primary)]">{formatRupiah(totalInventory)}</span>
           </div>
@@ -481,7 +481,7 @@ export default function OwnerOpeningCapital() {
 
         {/* 3. Barang Pribadi Excluded */}
         <div className="glass-card p-0 overflow-hidden">
-          <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-[#faf6ef]">
+          <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-cream-light">
             <div>
               <h3 className="font-bold text-[var(--color-text-primary)]">3. Barang Pribadi (Dikecualikan dari Modal Usaha)</h3>
               <p className="text-[10px] text-[var(--color-text-muted)]">Laptop pribadi owner, HP operasional pribadi. Hanya untuk catatan audit (tidak dihitung dalam kas/stok/laba).</p>
@@ -493,7 +493,7 @@ export default function OwnerOpeningCapital() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-[var(--color-text-primary)]">
               <thead>
-                <tr className="bg-[#faf6ef]/50 border-b border-[var(--color-border)]">
+                <tr className="bg-cream-light/50 border-b border-[var(--color-border)]">
                   <th className="p-3 font-semibold">Nama Barang</th>
                   <th className="p-3 font-semibold w-40">Nilai Wajar (Rp)</th>
                   <th className="p-3 font-semibold">Alasan Dikecualikan</th>
@@ -550,7 +550,7 @@ export default function OwnerOpeningCapital() {
               </tbody>
             </table>
           </div>
-          <div className="p-3 bg-[#faf6ef]/30 border-t border-[var(--color-border)] flex justify-between text-xs font-semibold text-[var(--color-text-secondary)]">
+          <div className="p-3 bg-cream-light/30 border-t border-[var(--color-border)] flex justify-between text-xs font-semibold text-[var(--color-text-secondary)]">
             <span>Total Catatan Barang Pribadi</span>
             <span className="font-mono text-[var(--color-text-primary)]">{formatRupiah(totalExcluded)}</span>
           </div>

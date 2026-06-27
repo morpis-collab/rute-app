@@ -73,8 +73,8 @@ export default function OwnerCash() {
     <PageWrapper title="Kas Usaha" subtitle="Manajemen Saldo & Rekening">
       
       {isClosed && (
-        <div className="mb-6 rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-4 py-3.5 text-sm text-[#a34f39] flex items-start gap-2.5 shadow-sm">
-          <AlertTriangle className="shrink-0 text-[#a34f39] mt-0.5" size={16} />
+        <div className="mb-6 rounded-[var(--radius-md)] border border-danger-border bg-danger-bg px-4 py-3.5 text-sm text-danger-text flex items-start gap-2.5 shadow-sm">
+          <AlertTriangle className="shrink-0 text-danger-text mt-0.5" size={16} />
           <div className="space-y-1">
             <p className="font-semibold">Sesi Kasir Hari Ini Sudah Ditutup</p>
             <p className="text-xs opacity-90 font-medium">Uang laci harian telah dialokasikan. Harap berhati-hati saat memasukkan, mengeluarkan, atau memindahkan dana untuk keperluan penyesuaian laci dan brankas.</p>
@@ -111,7 +111,7 @@ export default function OwnerCash() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-4 py-3 text-sm text-[#a34f39]">
+        <div className="mb-4 rounded-[var(--radius-md)] border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text">
           {error}
         </div>
       )}
@@ -137,7 +137,7 @@ export default function OwnerCash() {
               key={acc.id} 
               className={`kpi-card flex flex-col justify-between min-h-[125px] transition-all hover:shadow-md ${
                 isBrankas 
-                  ? 'border-2 border-[var(--color-accent-warm)] bg-[#fcfaf7]' 
+                  ? 'border-2 border-[var(--color-accent-warm)] bg-cream-card' 
                   : 'border border-[var(--color-border)] bg-white'
               }`}
             >
@@ -153,12 +153,12 @@ export default function OwnerCash() {
                   </div>
                   <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
                     isBrankas
-                      ? 'bg-[#f5efe0] text-[#c4955a]'
+                      ? 'bg-warning-bg text-warning-text'
                       : acc.type === 'tunai' || acc.type === 'cash'
-                        ? 'bg-[#e8f5e4] text-[#4a7a3f]'
+                        ? 'bg-success-bg text-success-text'
                         : acc.type === 'bank'
-                          ? 'bg-[#e0ecf5] text-[#5a7a8f]'
-                          : 'bg-[#f5efe0] text-[#c4955a]'
+                          ? 'bg-info-bg text-info-text'
+                          : 'bg-warning-bg text-warning-text'
                   }`}>
                     {acc.type}
                   </span>
@@ -180,7 +180,7 @@ export default function OwnerCash() {
 
       {/* History Mutasi Kas */}
       <div className="glass-card p-0">
-        <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-[#faf6ef]">
+        <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-cream-light">
           <h3 className="font-bold text-[var(--color-text-primary)]">Riwayat Mutasi Kas</h3>
         </div>
         <div className="overflow-x-auto">

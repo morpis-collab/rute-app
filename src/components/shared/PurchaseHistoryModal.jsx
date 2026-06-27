@@ -73,7 +73,7 @@ export default function PurchaseHistoryModal({ isOpen, onClose, ingredientId }) 
           ) : (
             <div className="border border-[var(--color-border)] rounded-lg overflow-hidden">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#FAF8F5] border-b border-[var(--color-border)] text-[var(--color-text-secondary)]">
+                <thead className="bg-cream-card border-b border-[var(--color-border)] text-[var(--color-text-secondary)]">
                   <tr>
                     <th className="p-3 font-semibold">Tanggal</th>
                     <th className="p-3 font-semibold text-right">Jumlah</th>
@@ -85,7 +85,7 @@ export default function PurchaseHistoryModal({ isOpen, onClose, ingredientId }) 
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border)] text-[var(--color-text-primary)] font-mono">
                   {history.map((row, index) => (
-                    <tr key={row.id || index} className="hover:bg-[#FDFCFB] transition-colors">
+                    <tr key={row.id || index} className="hover:bg-cream-hover transition-colors">
                       <td className="p-3 font-sans text-xs text-[var(--color-text-secondary)]">
                         {formatDate(row.date)}
                       </td>

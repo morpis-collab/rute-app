@@ -1,7 +1,7 @@
 import { Client } from 'ssh2';
 
 const config = {
-  host: '202.10.34.42',
+  host: 'ruteapp.cloud',
   port: 22,
   username: 'root',
   password: 'mhan071099@'

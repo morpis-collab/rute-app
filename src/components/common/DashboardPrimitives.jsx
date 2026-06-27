@@ -100,7 +100,7 @@ export function ProductTile({ product, qty = 0, onClick, promotionMatch }) {
     >
       <span className="product-tile__add shrink-0">+</span>
       {promotionMatch && (
-        <span className="absolute left-2 top-2 max-w-[calc(100%-3rem)] truncate rounded-md bg-[#fff1d9] px-1.5 py-1 text-[8px] font-black uppercase text-[#9a5d1b]">
+        <span className="absolute left-2 top-2 max-w-[calc(100%-3rem)] truncate rounded-md bg-warning-bg px-1.5 py-1 text-[8px] font-black uppercase text-warning-text">
           Promo
         </span>
       )}

@@ -9,19 +9,22 @@ import useSettingsStore from '../../store/useSettingsStore';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { softSpring } from '../../utils/motion';
 
-const ownerMenu = [
+const dailyFlowMenu = [
+  { to: '/owner/opening-capital', icon: Briefcase, label: '1. Modal Awal' },
+  { to: '/owner/live-sales', icon: TrendingUp, label: '2. Rekap Penjualan' },
+  { to: '/owner/close-cash', icon: Clock, label: '3. Tutup Kas' },
+  { to: '/owner/revenue-allocation', icon: Percent, label: '4. Bagi Omzet' },
+];
+
+const secondaryMenu = [
   { to: '/owner/dashboard', icon: LayoutDashboard, label: 'Dasbor' },
-  { to: '/owner/live-sales', icon: TrendingUp, label: 'Rekap Penjualan' },
-  { to: '/owner/close-cash', icon: Clock, label: 'Tutup Kas' },
+  { to: '/owner/reports', icon: BarChart3, label: 'Laporan' },
   { to: '/owner/expenses', icon: Receipt, label: 'Pengeluaran' },
   { to: '/owner/cash', icon: Wallet, label: 'Kas Usaha' },
   { to: '/owner/stock', icon: Package, label: 'Gudang Bahan' },
   { to: '/owner/restock-planner', icon: ClipboardList, label: 'Restock Planner' },
-  { to: '/owner/opening-capital', icon: Briefcase, label: 'Modal Awal' },
   { to: '/owner/menu-hpp', icon: BookOpen, label: 'Menu & HPP' },
   { to: '/owner/promotions', icon: Gift, label: 'Promo' },
-  { to: '/owner/reports', icon: BarChart3, label: 'Laporan' },
-  { to: '/owner/revenue-allocation', icon: Percent, label: 'Bagi Omzet' },
   { to: '/owner/activity', icon: Clock, label: 'Riwayat Aktivitas' },
   { to: '/owner/settings', icon: Settings, label: 'Pengaturan' },
 ];
@@ -36,6 +39,50 @@ export default function Sidebar() {
   const toggleCollapse = () => {
     updateSettings({ sidebarCollapsed: !sidebarCollapsed });
   };
+
+  const renderMenuItem = ({ to, icon: Icon, label }) => (
+    <NavLink
+      key={to}
+      to={to}
+      title={sidebarCollapsed ? label : undefined}
+      className={({ isActive }) =>
+        `relative flex items-center rounded-[var(--radius-button)] py-2 text-sm font-bold transition-all duration-200 ${
+          sidebarCollapsed ? 'justify-center px-0' : 'px-3.5 gap-3'
+        } ${
+          isActive
+            ? 'bg-[var(--color-band-4)] text-[var(--color-band-1)] shadow-sm'
+            : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-coffee-milk)] hover:text-[var(--color-band-1)]'
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {/* Active Indicator Glow Line */}
+          {isActive && (
+            <motion.div
+              layoutId="activeIndicator"
+              className="absolute left-0 top-1/4 h-1/2 w-1.5 rounded-r-full bg-[var(--color-band-1)]"
+              transition={softSpring}
+            />
+          )}
+          <Icon size={17} strokeWidth={isActive ? 2.5 : 2} className={`shrink-0 ${isActive ? 'text-[var(--color-band-1)]' : 'text-[var(--color-text-secondary)]'}`} />
+          <AnimatePresence initial={false}>
+            {!sidebarCollapsed && (
+              <motion.span
+                initial={shouldReduceMotion ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={shouldReduceMotion ? undefined : { opacity: 0 }}
+                transition={{ duration: 0.16 }}
+                className="truncate"
+              >
+                {label}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+    </NavLink>
+  );
 
   return (
     <motion.aside
@@ -76,50 +123,28 @@ export default function Sidebar() {
       </div>
 
       {/* Sidebar Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5 scrollbar-thin">
-        {ownerMenu.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            title={sidebarCollapsed ? label : undefined}
-            className={({ isActive }) =>
-              `relative flex items-center rounded-[var(--radius-button)] py-2.5 text-sm font-bold transition-all duration-200 ${
-                sidebarCollapsed ? 'justify-center px-0' : 'px-3.5 gap-3'
-              } ${
-                isActive
-                  ? 'bg-[var(--color-band-4)] text-[var(--color-band-1)] shadow-sm'
-                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-coffee-milk)] hover:text-[var(--color-band-1)]'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {/* Active Indicator Glow Line */}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeIndicator"
-                    className="absolute left-0 top-1/4 h-1/2 w-1.5 rounded-r-full bg-[var(--color-band-1)]"
-                    transition={softSpring}
-                  />
-                )}
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={`shrink-0 ${isActive ? 'text-[var(--color-band-1)]' : 'text-[var(--color-text-secondary)]'}`} />
-                <AnimatePresence initial={false}>
-                  {!sidebarCollapsed && (
-                    <motion.span
-                      initial={shouldReduceMotion ? false : { opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={shouldReduceMotion ? undefined : { opacity: 0 }}
-                      transition={{ duration: 0.16 }}
-                      className="truncate"
-                    >
-                      {label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </>
-            )}
-          </NavLink>
-        ))}
+      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-5 scrollbar-thin">
+        <div>
+          {!sidebarCollapsed && (
+            <div className="px-3.5 mb-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--color-text-muted)]">
+              Flow Harian
+            </div>
+          )}
+          <div className="space-y-0.5">
+            {dailyFlowMenu.map(renderMenuItem)}
+          </div>
+        </div>
+
+        <div>
+          {!sidebarCollapsed && (
+            <div className="px-3.5 mb-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--color-text-muted)]">
+              Fitur Pendukung
+            </div>
+          )}
+          <div className="space-y-0.5">
+            {secondaryMenu.map(renderMenuItem)}
+          </div>
+        </div>
       </nav>
 
       {/* Sidebar Footer */}

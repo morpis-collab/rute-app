@@ -68,7 +68,7 @@ export default function CashModal({ activeModal, setActiveModal, handleSimpan, c
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm slide-in">
       <div className="bg-white rounded-[var(--radius-xl)] w-full max-w-md shadow-[var(--shadow-lg)] overflow-hidden">
-        <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-[#faf6ef]">
+        <div className="p-4 border-b border-[var(--color-coffee-latte)] flex justify-between items-center bg-cream-light">
           <h3 className="font-bold text-[var(--color-text-primary)]">
             {activeModal === 'in' && 'Tambah Kas Masuk'}
             {activeModal === 'out' && 'Catat Kas Keluar'}
@@ -176,7 +176,7 @@ export default function CashModal({ activeModal, setActiveModal, handleSimpan, c
           </div>
 
           {(localError || error) && (
-            <div className="rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-3 py-2 text-xs text-[#a34f39]">
+            <div className="rounded-[var(--radius-md)] border border-danger-border bg-danger-bg px-3 py-2 text-xs text-danger-text">
               {localError || error}
             </div>
           )}

@@ -459,11 +459,11 @@ export default function OwnerPromotions() {
                             <Edit size={15} />
                           </button>
                           {status !== 'canceled' && (
-                            <button type="button" onClick={() => handleCancelPromotion(promotion)} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--color-accent-orange)] hover:bg-[#fff8e3]" title="Batalkan promo">
+                            <button type="button" onClick={() => handleCancelPromotion(promotion)} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--color-accent-orange)] hover:bg-warning-bg" title="Batalkan promo">
                               <X size={15} />
                             </button>
                           )}
-                          <button type="button" onClick={() => handleDelete(promotion)} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--color-accent-red)] hover:bg-[#fff0ec]" title="Hapus promo">
+                          <button type="button" onClick={() => handleDelete(promotion)} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--color-accent-red)] hover:bg-danger-bg" title="Hapus promo">
                             <Trash2 size={15} />
                           </button>
                         </div>

@@ -216,7 +216,7 @@ export default function OwnerCloseCash() {
   if (status === 'not_opened') {
     return (
       <PageWrapper title="Kas" subtitle="Buka kasir harian">
-        <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[#faf6ef] p-4 flex flex-col gap-2">
+        <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-cream-light p-4 flex flex-col gap-2">
           <label className="text-xs font-bold uppercase text-[var(--color-text-secondary)]">Pilih Tanggal Kas</label>
           <select
             value={selectedDate}
@@ -261,7 +261,7 @@ export default function OwnerCloseCash() {
                 </p>
               </>
             ) : (
-              <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[#faf6ef] p-3 text-sm text-[var(--color-text-muted)]">
+              <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-cream-light p-3 text-sm text-[var(--color-text-muted)]">
                 Belum ada akun sumber kas selain laci. Owner bisa menambahkan atau mengaktifkan Brankas di Kas Usaha.
               </div>
             )}
@@ -300,7 +300,7 @@ export default function OwnerCloseCash() {
 
   return (
     <PageWrapper title="Kas" subtitle="Tutup kas harian">
-      <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[#faf6ef] p-4 flex flex-col gap-2">
+      <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-cream-light p-4 flex flex-col gap-2">
         <label className="text-xs font-bold uppercase text-[var(--color-text-secondary)]">Pilih Tanggal Kas</label>
         <select
           value={selectedDate}

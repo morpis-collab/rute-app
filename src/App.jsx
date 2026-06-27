@@ -83,7 +83,6 @@ export default function App() {
           <Route path="/owner/live-sales" element={<ProtectedRoute allowedRole="owner"><OwnerLiveSales /></ProtectedRoute>} />
           <Route path="/owner/close-cash" element={<ProtectedRoute allowedRole="owner"><OwnerCloseCash /></ProtectedRoute>} />
           <Route path="/owner/expenses" element={<ProtectedRoute allowedRole="owner"><OwnerExpenses /></ProtectedRoute>} />
-          <Route path="/owner/receipt" element={<ProtectedRoute allowedRole="owner"><Navigate to="/owner/expenses" replace /></ProtectedRoute>} />
           <Route path="/owner/stock" element={<ProtectedRoute allowedRole="owner"><OwnerStock /></ProtectedRoute>} />
           <Route path="/owner/restock-planner" element={<ProtectedRoute allowedRole="owner"><OwnerRestockPlanner /></ProtectedRoute>} />
           <Route path="/owner/cash" element={<ProtectedRoute allowedRole="owner"><OwnerCash /></ProtectedRoute>} />
@@ -92,7 +91,6 @@ export default function App() {
           <Route path="/owner/reports" element={<ProtectedRoute allowedRole="owner"><OwnerReports /></ProtectedRoute>} />
           <Route path="/owner/promotions" element={<ProtectedRoute allowedRole="owner"><OwnerPromotions /></ProtectedRoute>} />
           <Route path="/owner/activity" element={<ProtectedRoute allowedRole="owner"><ActivityLog /></ProtectedRoute>} />
-          <Route path="/owner/ai" element={<ProtectedRoute allowedRole="owner"><Navigate to="/owner/dashboard" replace /></ProtectedRoute>} />
           <Route path="/owner/settings" element={<ProtectedRoute allowedRole="owner"><OwnerSettings /></ProtectedRoute>} />
           <Route path="/owner/opening-capital" element={<ProtectedRoute allowedRole="owner"><OwnerOpeningCapital /></ProtectedRoute>} />
           <Route path="/owner/revenue-allocation" element={<ProtectedRoute allowedRole="owner"><OwnerRevenueAllocation /></ProtectedRoute>} />

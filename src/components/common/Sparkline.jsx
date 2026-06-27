@@ -12,7 +12,7 @@ export default function Sparkline({
   data = [],
   width = 80,
   height = 26,
-  color = '#c4956a'
+  color = 'var(--color-accent-secondary)'
 }) {
   if (!data || data.length < 2) return null;
 

@@ -106,8 +106,8 @@ export default function OwnerExpenses() {
   return (
       <PageWrapper title="Pengeluaran" subtitle="Semua pengeluaran usaha">
       {isTodayClosed && (
-        <div className="mb-6 rounded-[var(--radius-md)] border border-[#f0c7ba] bg-[#fff4ef] px-4 py-3.5 text-sm text-[#a34f39] flex items-start gap-2.5 shadow-sm">
-          <AlertTriangle className="shrink-0 text-[#a34f39] mt-0.5" size={16} />
+        <div className="mb-6 rounded-[var(--radius-md)] border border-danger-border bg-danger-bg px-4 py-3.5 text-sm text-danger-text flex items-start gap-2.5 shadow-sm">
+          <AlertTriangle className="shrink-0 text-danger-text mt-0.5" size={16} />
           <div className="space-y-1">
             <p className="font-semibold">Sesi Kasir Hari Ini Sudah Ditutup</p>
             <p className="text-xs opacity-90 font-medium">Pengeluaran dari laci terkunci. Pengeluaran dari Brankas Bahan Baku, Operasional, Keuntungan, atau rekening tetap bisa dicatat.</p>

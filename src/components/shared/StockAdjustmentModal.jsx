@@ -190,7 +190,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, ingredie
           </div>
 
           {error && (
-            <div className="rounded-[var(--radius-card)] border border-[#EAC1B8] bg-[#FFF0EC] p-3 text-xs font-bold text-[#A04434]">
+            <div className="rounded-[var(--radius-card)] border border-danger-border bg-danger-bg p-3 text-xs font-bold text-danger-text">
               {error}
             </div>
           )}

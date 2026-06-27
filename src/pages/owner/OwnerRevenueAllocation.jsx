@@ -9,10 +9,20 @@ import useToastStore from '../../store/useToastStore';
 
 export default function OwnerRevenueAllocation() {
   const sales = useAppStore((state) => state.sales);
+  const cashSessions = useAppStore((state) => state.cashSessions);
   const settings = useSettingsStore();
   const { addToast } = useToastStore();
 
   const [selectedDate, setSelectedDate] = useState(getBusinessDate());
+  
+  const selectedSession = cashSessions.find((s) => s.date === selectedDate);
+  const isSessionClosed = selectedSession && selectedSession.status === 'closed';
+  const isAllocatedToday = settings.lastAllocatedDate === selectedDate;
+
+  const handleConfirmAllocation = () => {
+    settings.updateSettings({ lastAllocatedDate: selectedDate });
+    addToast(`Alokasi omzet untuk tanggal ${selectedDate} berhasil dikonfirmasi!`, 'success');
+  };
   const [calculationMode, setCalculationMode] = useState('auto'); // 'auto' | 'manual'
   const [manualRevenue, setManualRevenue] = useState('1000000');
 
@@ -230,7 +240,7 @@ export default function OwnerRevenueAllocation() {
                   step="1"
                   value={pctProfit}
                   onChange={(e) => setPctProfit(Number(e.target.value))}
-                  className="w-full accent-[#8b5a2b]"
+                  className="w-full accent-[var(--color-accent-orange)]"
                 />
               </div>
             </div>
@@ -264,6 +274,21 @@ export default function OwnerRevenueAllocation() {
                 <Save size={14} />
                 <span>Simpan Rasio Default</span>
               </button>
+
+              {isSessionClosed && (
+                <button
+                  type="button"
+                  onClick={handleConfirmAllocation}
+                  className={`w-full py-2.5 px-4 rounded-xl border-2 flex items-center justify-center gap-2 cursor-pointer transition-colors font-bold text-xs shadow-md ${
+                    isAllocatedToday
+                      ? 'border-success-border bg-success-bg text-success-text hover:bg-success-bg/85'
+                      : 'border-[var(--color-accent-warm)] bg-[var(--color-accent-light)]/20 text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-light)]/40'
+                  }`}
+                >
+                  <CheckCircle2 size={15} />
+                  <span>{isAllocatedToday ? 'Alokasi Terkonfirmasi' : 'Konfirmasi Alokasi Hari Ini'}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -295,7 +320,7 @@ export default function OwnerRevenueAllocation() {
                       cy="60"
                       r={radius}
                       fill="transparent"
-                      stroke="#f3f4f6"
+                      stroke="var(--color-border)"
                       strokeWidth="12"
                     />
 
@@ -338,7 +363,7 @@ export default function OwnerRevenueAllocation() {
                         cy="60"
                         r={radius}
                         fill="transparent"
-                        stroke="#8b5a2b"
+                        stroke="var(--color-accent-orange)"
                         strokeWidth="12"
                         strokeDasharray={`${strokeProfit} ${circumference}`}
                         strokeDashoffset={offsetProfit}
@@ -395,12 +420,12 @@ export default function OwnerRevenueAllocation() {
                 </div>
 
                 {/* Pos 3: Keuntungan Pribadi */}
-                <div className="p-3 rounded-xl border border-l-4 border-l-[#8b5a2b] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
+                <div className="p-3 rounded-xl border border-l-4 border-l-[var(--color-accent-orange)] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#8b5a2b]" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-accent-orange)]" />
                       <span className="text-xs font-bold text-gray-800">Keuntungan Bersih</span>
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-900/10 text-amber-900">{pctProfit}%</span>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-warning-bg text-warning-text">{pctProfit}%</span>
                     </div>
                     <p className="text-[10px] text-gray-500 mt-1 max-w-[200px] leading-relaxed">
                       Sisa dana keuntungan yang aman untuk diambil sebagai gaji pribadi / dividen.

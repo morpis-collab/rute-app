@@ -11,7 +11,7 @@ export default function ActivityLog() {
       <div className="glass-card p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="data-table">
-            <thead className="bg-[#faf6ef]">
+            <thead className="bg-cream-light">
               <tr>
                 <th className="w-32">Waktu</th>
                 <th className="w-24">User</th>
@@ -28,10 +28,10 @@ export default function ActivityLog() {
                   </td>
                   <td>
                     <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
-                      log.type === 'kas' ? 'bg-[#e0ecf5] text-[#5a7a8f]' :
-                      log.type === 'penjualan' ? 'bg-[#e8f5e4] text-[#4a7a3f]' :
-                      log.type === 'pengeluaran' ? 'bg-[#fae8e0] text-[#c4705a]' :
-                      'bg-[#f5efe0] text-[#c4955a]'
+                      log.type === 'kas' ? 'bg-info-bg text-info-text' :
+                      log.type === 'penjualan' ? 'bg-success-bg text-success-text' :
+                      log.type === 'pengeluaran' ? 'bg-expense-bg text-expense-text' :
+                      'bg-warning-bg text-warning-text'
                     }`}>
                       {log.type}
                     </span>

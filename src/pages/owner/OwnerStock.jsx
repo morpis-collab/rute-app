@@ -102,7 +102,7 @@ export default function OwnerStock() {
   return (
     <PageWrapper title="Gudang Bahan" subtitle="Pantau stok, harga modal, dan riwayat pembelian">
       {isClosed && (
-        <div className="mb-5 flex items-start gap-3 rounded-[var(--radius-card)] border border-[#EAC1B8] bg-[#FFF0EC] p-4 text-sm font-semibold text-[#A04434]">
+        <div className="mb-5 flex items-start gap-3 rounded-[var(--radius-card)] border border-danger-border bg-danger-bg p-4 text-sm font-semibold text-danger-text">
           <AlertTriangle className="mt-0.5 shrink-0" size={18} />
           <div>
             <p className="font-black">Sesi kasir hari ini sudah ditutup</p>
@@ -207,7 +207,7 @@ function IngredientRow({ item, onHistory, onDelete }) {
         <button onClick={onHistory} className="touch-target rounded-[var(--radius-button)] text-[var(--color-text-secondary)] hover:bg-[var(--color-coffee-milk)]" title="Riwayat Belanja">
           <History size={17} className="mx-auto" />
         </button>
-        <button onClick={onDelete} className="touch-target rounded-[var(--radius-button)] text-[var(--color-accent-red)] hover:bg-[#FFF0EC]" title="Hapus Bahan">
+        <button onClick={onDelete} className="touch-target rounded-[var(--radius-button)] text-[var(--color-accent-red)] hover:bg-danger-bg" title="Hapus Bahan">
           <Trash2 size={17} className="mx-auto" />
         </button>
       </div>

@@ -1,15 +1,15 @@
 import { NavLink } from 'react-router-dom';
-import { BarChart3, Clock, LayoutDashboard, TrendingUp, Wallet } from 'lucide-react';
+import { Clock, LayoutDashboard, TrendingUp, Briefcase, Percent } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 import { motion, useReducedMotion } from 'framer-motion';
 import { softSpring } from '../../utils/motion';
 
 const ownerMobileMenu = [
-  { to: '/owner/dashboard', icon: LayoutDashboard, label: 'Dasbor' },
+  { to: '/owner/opening-capital', icon: Briefcase, label: 'Modal' },
   { to: '/owner/live-sales', icon: TrendingUp, label: 'Rekap' },
   { to: '/owner/close-cash', icon: Clock, label: 'Tutup' },
-  { to: '/owner/cash', icon: Wallet, label: 'Kas' },
-  { to: '/owner/reports', icon: BarChart3, label: 'Laporan' },
+  { to: '/owner/revenue-allocation', icon: Percent, label: 'Omzet' },
+  { to: '/owner/dashboard', icon: LayoutDashboard, label: 'Dasbor' },
 ];
 
 export default function BottomNav() {

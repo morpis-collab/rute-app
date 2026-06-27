@@ -21,6 +21,7 @@ import {
   YAxis,
 } from 'recharts';
 import PageWrapper from '../../components/layout/PageWrapper';
+import DailyFlowIndicator from '../../components/owner/DailyFlowIndicator';
 import { KpiTile, ProductThumb, SectionHeader, StatusAlert } from '../../components/common/DashboardPrimitives';
 import useAppStore from '../../store/useAppStore';
 import { formatRupiah, formatWaktu } from '../../utils/formatters';
@@ -156,6 +157,11 @@ export default function OwnerDashboard() {
         animate="show"
         className="space-y-6"
       >
+        {/* Daily Progress Flow Indicator */}
+        <motion.div variants={itemVariants}>
+          <DailyFlowIndicator />
+        </motion.div>
+
         {/* KPI Tiles Row */}
         <motion.div variants={itemVariants} className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-5">
           <KpiTile icon={TrendingUp} label="Omzet Hari Ini" value={<AnimatedNumber value={summary.totalOmzet || 0} />} helper={`${summary.totalTransaksi || 0} transaksi / ${summary.totalCup || 0} cup`} tone="green" />
@@ -191,20 +197,20 @@ export default function OwnerDashboard() {
                   <AreaChart data={trendData} margin={{ left: -18, right: 8, top: 10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="omzetGradient" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="5%" stopColor="#4c694d" stopOpacity={0.22} />
-                        <stop offset="95%" stopColor="#4c694d" stopOpacity={0} />
+                        <stop offset="5%" stopColor="var(--color-band-1)" stopOpacity={0.22} />
+                        <stop offset="95%" stopColor="var(--color-band-1)" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="labaGradient" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="5%" stopColor="#608261" stopOpacity={0.18} />
-                        <stop offset="95%" stopColor="#608261" stopOpacity={0} />
+                        <stop offset="5%" stopColor="var(--color-accent-secondary)" stopOpacity={0.18} />
+                        <stop offset="95%" stopColor="var(--color-accent-secondary)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} axisLine={false} tickLine={false} tickFormatter={(value) => `Rp ${Math.round(value / 1000000)}jt`} />
                     <Tooltip formatter={(value) => formatRupiah(value)} contentStyle={{ borderRadius: 12, border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)' }} />
-                    <Area type="monotone" dataKey="omzet" name="Omzet" stroke="#4c694d" strokeWidth={3} fill="url(#omzetGradient)" />
-                    <Area type="monotone" dataKey="laba" name="Laba" stroke="#608261" strokeWidth={2.5} fill="url(#labaGradient)" />
+                    <Area type="monotone" dataKey="omzet" name="Omzet" stroke="var(--color-band-1)" strokeWidth={3} fill="url(#omzetGradient)" />
+                    <Area type="monotone" dataKey="laba" name="Laba" stroke="var(--color-accent-secondary)" strokeWidth={2.5} fill="url(#labaGradient)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>

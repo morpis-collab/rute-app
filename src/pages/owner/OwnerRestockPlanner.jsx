@@ -22,12 +22,12 @@ const priorityMeta = {
   kritis: {
     label: 'Kritis',
     badge: 'badge-danger',
-    row: 'border-[#EAC1B8] bg-[#FFF7F4]',
+    row: 'border-danger-border bg-danger-bg',
   },
   rendah: {
     label: 'Rendah',
     badge: 'badge-warning',
-    row: 'border-[#F0D6A8] bg-[#FFF9EC]',
+    row: 'border-warning-border bg-warning-bg',
   },
   aman: {
     label: 'Aman',
@@ -121,7 +121,7 @@ export default function OwnerRestockPlanner() {
   return (
     <PageWrapper title="Restock Planner" subtitle="Proyeksi kebutuhan bahan dari 7 hari penjualan terakhir">
       {isClosed && (
-        <div className="mb-5 flex items-start gap-3 rounded-[var(--radius-card)] border border-[#EAC1B8] bg-[#FFF0EC] p-4 text-sm font-semibold text-[#A04434]">
+        <div className="mb-5 flex items-start gap-3 rounded-[var(--radius-card)] border border-danger-border bg-danger-bg p-4 text-sm font-semibold text-danger-text">
           <AlertTriangle className="mt-0.5 shrink-0" size={18} />
           <div>
             <p className="font-black">Kas hari ini sudah ditutup</p>
@@ -138,7 +138,7 @@ export default function OwnerRestockPlanner() {
       </div>
 
       {recipeWarnings.length > 0 && (
-        <section className="mb-5 rounded-[var(--radius-card)] border border-[#F0D6A8] bg-[#FFF9EC] p-4">
+        <section className="mb-5 rounded-[var(--radius-card)] border border-warning-border bg-warning-bg p-4">
           <SectionHeader
             title="Perlu Data Resep"
             subtitle={`${recipeWarnings.length} menu/komponen belum bisa dihitung ke stok bahan`}
@@ -146,7 +146,7 @@ export default function OwnerRestockPlanner() {
           />
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             {recipeWarnings.slice(0, 4).map((warning) => (
-              <div key={`${warning.productId || warning.productName}-${warning.reason}`} className="rounded-[var(--radius-card)] border border-[#F0D6A8] bg-white p-3">
+              <div key={`${warning.productId || warning.productName}-${warning.reason}`} className="rounded-[var(--radius-card)] border border-warning-border bg-white p-3">
                 <p className="text-sm font-black text-[var(--color-text-primary)]">{warning.productName}</p>
                 <p className="mt-1 text-xs font-semibold text-[var(--color-text-muted)]">
                   {warning.reason} - {formatQty(warning.totalQty, 'cup')} tercatat di periode ini
