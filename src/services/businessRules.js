@@ -182,13 +182,14 @@ export function getSalesSummary(salesData = []) {
     0,
   );
 
-  const byMethod = { cash: 0, qris: 0, transfer: 0 };
+  const byMethod = { cash: 0, qris: 0, transfer: 0, debt: 0 };
   salesData.forEach((sale) => {
     const breakdown = sale.paymentBreakdown;
     if (breakdown && typeof breakdown === 'object') {
       byMethod.cash += Number(breakdown.cash || 0);
       byMethod.qris += Number(breakdown.qris || 0);
       byMethod.transfer += Number(breakdown.transfer || 0);
+      byMethod.debt += Number(breakdown.debt || 0);
       return;
     }
     const method = sale.paymentMethod || 'cash';

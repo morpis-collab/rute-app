@@ -556,6 +556,79 @@
       "paymentMethod": "cash",
       "user": "Partner",
       "estimatedHpp": 6235
+    },
+    {
+      "id": "TRX-MOCK-DEBT-1",
+      "date": "2026-06-30T02:00:00.000Z",
+      "items": [
+        {
+          "productId": 1,
+          "name": "Kopi Susu RUTE",
+          "qty": 2,
+          "price": 10000,
+          "subtotal": 20000,
+          "estimatedHpp": 13600
+        },
+        {
+          "productId": 2,
+          "name": "Matcha Latte",
+          "qty": 1,
+          "price": 12000,
+          "subtotal": 12000,
+          "estimatedHpp": 7200
+        }
+      ],
+      "total": 32000,
+      "paymentMethod": "debt",
+      "paymentBreakdown": {
+        "cash": 0,
+        "qris": 0,
+        "transfer": 0,
+        "debt": 32000
+      },
+      "customerName": "Andi",
+      "debtStatus": "unpaid",
+      "debtRemaining": 32000,
+      "debtPayments": [],
+      "user": "Partner",
+      "estimatedHpp": 20800
+    },
+    {
+      "id": "TRX-MOCK-DEBT-2",
+      "date": "2026-06-30T03:30:00.000Z",
+      "items": [
+        {
+          "productId": 2,
+          "name": "Matcha Latte",
+          "qty": 4,
+          "price": 12000,
+          "subtotal": 48000,
+          "estimatedHpp": 28800
+        }
+      ],
+      "total": 48000,
+      "paymentMethod": "mixed",
+      "paymentBreakdown": {
+        "cash": 18000,
+        "qris": 0,
+        "transfer": 0,
+        "debt": 30000
+      },
+      "customerName": "Budi",
+      "debtStatus": "partial",
+      "debtRemaining": 15000,
+      "debtPayments": [
+        {
+          "id": "CTX-PAY-DEBT-MOCK",
+          "date": "2026-06-30T04:00:00.000Z",
+          "amount": 15000,
+          "paymentMethod": "cash",
+          "cashAccountId": "kas-utama",
+          "user": "Partner"
+        }
+      ],
+      "user": "Partner",
+      "estimatedHpp": 28800
     }
   ],
   "expenses": [

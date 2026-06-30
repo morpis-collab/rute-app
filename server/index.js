@@ -34,7 +34,7 @@ const RECEIPT_CATEGORIES = new Set(['bahan_baku', 'packaging', 'operasional', 'p
 const EXPENSE_STATUSES = new Set(['auto_approved', 'pending', 'approved', 'rejected']);
 const PROMOTION_TYPES = new Set(['percentage', 'nominal', 'fixed_price', 'bundle', 'bogo']);
 const PROMOTION_STATUSES = new Set(['draft', 'scheduled', 'active', 'completed', 'canceled']);
-const PAYMENT_METHODS = ['cash', 'qris', 'transfer'];
+const PAYMENT_METHODS = ['cash', 'qris', 'transfer', 'debt'];
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 },
@@ -1040,6 +1040,15 @@ app.post('/api/sales', (req, res) => {
     );
     if (paymentResult.error) return paymentResult;
     transaction.paymentBreakdown = paymentResult.breakdown;
+
+    // Inisialisasi data bon jika ada porsi debt
+    const debtAmount = Number(transaction.paymentBreakdown.debt || 0);
+    if (debtAmount > 0) {
+      transaction.customerName = body.customerName || body.transaction?.customerName || 'Pelanggan';
+      transaction.debtStatus = 'unpaid';
+      transaction.debtRemaining = debtAmount;
+      transaction.debtPayments = [];
+    }
     transaction.paymentMethod = PAYMENT_METHODS.filter((method) => Number(transaction.paymentBreakdown[method] || 0) > 0).length > 1
       ? 'mixed'
       : PAYMENT_METHODS.find((method) => Number(transaction.paymentBreakdown[method] || 0) > 0) || paymentMethod;
@@ -1052,6 +1061,7 @@ app.post('/api/sales', (req, res) => {
     PAYMENT_METHODS.forEach((method) => {
       const amount = Number(transaction.paymentBreakdown[method] || 0);
       if (amount <= 0) return;
+      if (method === 'debt') return; // Bon tidak langsung masuk kas utama
       const cashAccount = db.cashAccounts.find((account) => (
         method === 'cash'
           ? isCashDrawerAccount(account)
@@ -1093,6 +1103,88 @@ app.post('/api/sales', (req, res) => {
 
   if (result?.error) return res.status(result.statusCode || 400).json(result);
   res.status(201).json(result);
+});
+
+app.put('/api/sales/:id/pay-debt', (req, res) => {
+  const { id } = req.params;
+  const { amount, paymentMethod, cashAccountId } = req.body || {};
+  const user = req.body?.user || getAuthenticatedUser(readDb(), req.auth)?.name || 'Owner';
+
+  const payAmount = Number(amount || 0);
+  if (!payAmount || payAmount <= 0) {
+    return res.status(400).json({ error: 'Nominal pelunasan wajib lebih dari 0' });
+  }
+  if (!['cash', 'qris', 'transfer'].includes(paymentMethod)) {
+    return res.status(400).json({ error: 'Metode pembayaran tidak valid' });
+  }
+  if (!cashAccountId) {
+    return res.status(400).json({ error: 'Akun kas penyetoran wajib dipilih' });
+  }
+
+  const result = updateDb((db) => {
+    const sale = db.sales.find(s => String(s.id) === String(id));
+    if (!sale) {
+      return { error: 'Transaksi penjualan tidak ditemukan', statusCode: 404 };
+    }
+    if (sale.debtRemaining == null || sale.debtRemaining <= 0) {
+      return { error: 'Transaksi ini tidak memiliki sisa piutang/bon', statusCode: 400 };
+    }
+    if (payAmount > sale.debtRemaining) {
+      return { error: `Nominal pelunasan melebihi sisa tagihan (Maks: Rp ${sale.debtRemaining.toLocaleString('id-ID')})`, statusCode: 400 };
+    }
+
+    const cashAccount = db.cashAccounts.find(acc => String(acc.id) === String(cashAccountId));
+    if (!cashAccount) {
+      return { error: 'Akun kas penyetoran tidak ditemukan', statusCode: 404 };
+    }
+
+    // 1. Catat transaksi cicilan
+    const paymentId = `CTX-PAY-DEBT-${Date.now()}`;
+    const payment = {
+      id: paymentId,
+      date: new Date().toISOString(),
+      amount: payAmount,
+      paymentMethod,
+      cashAccountId,
+      user
+    };
+    sale.debtPayments.push(payment);
+
+    // 2. Update sisa bon & status
+    sale.debtRemaining = Number((sale.debtRemaining - payAmount).toFixed(2));
+    sale.debtStatus = sale.debtRemaining <= 0 ? 'paid' : 'partial';
+
+    // 3. Masukkan uang ke akun kas
+    cashAccount.balance = Number(cashAccount.balance || 0) + payAmount;
+
+    // 4. Buat Cash Transaction (CTX)
+    db.cashTransactions.unshift({
+      id: `CTX-SALE-DEBT-${Date.now()}-${id}`,
+      date: payment.date,
+      type: 'in',
+      amount: payAmount,
+      category: 'penjualan',
+      description: `Pelunasan Bon: ${sale.customerName} (Sisa tagihan: Rp ${sale.debtRemaining.toLocaleString('id-ID')})`,
+      accountId: cashAccount.id,
+      sourceType: 'sale',
+      sourceId: sale.id,
+      user
+    });
+
+    // 5. Audit Log
+    db.activityLog.push({
+      id: `ACT-${Date.now()}`,
+      time: payment.date,
+      action: `Pelunasan cicilan bon Rp ${payAmount.toLocaleString('id-ID')} oleh ${sale.customerName}`,
+      user,
+      type: 'penjualan'
+    });
+
+    return { sale, state: bootstrapPayload(db) };
+  });
+
+  if (result?.error) return res.status(result.statusCode || 400).json(result);
+  res.status(200).json(result);
 });
 
 app.get('/api/expenses', (req, res) => {

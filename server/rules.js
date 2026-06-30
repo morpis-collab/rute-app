@@ -42,7 +42,7 @@ export function getSalesSummary(sales = []) {
     (sum, sale) => sum + (sale.items || []).reduce((itemSum, item) => itemSum + Number(item.qty || 0), 0),
     0,
   );
-  const byMethod = { cash: 0, qris: 0, transfer: 0 };
+  const byMethod = { cash: 0, qris: 0, transfer: 0, debt: 0 };
   const menuCount = {};
 
   sales.forEach((sale) => {
@@ -50,6 +50,7 @@ export function getSalesSummary(sales = []) {
       byMethod.cash += Number(sale.paymentBreakdown.cash || 0);
       byMethod.qris += Number(sale.paymentBreakdown.qris || 0);
       byMethod.transfer += Number(sale.paymentBreakdown.transfer || 0);
+      byMethod.debt += Number(sale.paymentBreakdown.debt || 0);
     } else {
       const method = sale.paymentMethod || 'cash';
       byMethod[method] = (byMethod[method] || 0) + Number(sale.total || 0);

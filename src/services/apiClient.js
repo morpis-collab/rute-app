@@ -108,7 +108,6 @@ export async function postCashOpen(payload) {
   return data;
 }
 
-
 export async function getCashAccounts() {
   const { data } = await api.get('/cash/accounts');
   return data;
@@ -174,7 +173,6 @@ export async function deleteIngredient(id) {
   return data;
 }
 
-
 export async function getCopilotInsights(date) {
   const { data } = await api.get('/copilot/insights', {
     params: date ? { date } : {},
@@ -236,6 +234,11 @@ export async function getOpeningCapital() {
 
 export async function updateOpeningCapital(payload) {
   const { data } = await api.put('/opening-capital', payload);
+  return data;
+}
+
+export async function putPayDebt(saleId, payload) {
+  const { data } = await api.put(`/sales/${saleId}/pay-debt`, payload);
   return data;
 }
 

@@ -16,6 +16,7 @@ export const PAYMENT_METHODS = [
   { value: 'cash', label: 'Cash', icon: 'Banknote' },
   { value: 'qris', label: 'QRIS', icon: 'QrCode' },
   { value: 'transfer', label: 'Transfer', icon: 'ArrowRightLeft' },
+  { value: 'debt', label: 'Bon / Piutang', icon: 'FileText' },
 ];
 
 // Status approval

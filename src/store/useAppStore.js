@@ -28,7 +28,8 @@ import {
   postIngredient,
   deleteIngredient,
   postStockAdjustment,
-  updateOpeningCapital
+  updateOpeningCapital,
+  putPayDebt
 } from '../services/apiClient';
 import { getBusinessDate, isSameBusinessDate } from '../utils/businessDate';
 
@@ -497,6 +498,38 @@ const useAppStore = create((set, get) => ({
       return result;
     } catch (err) {
       console.error('Failed to save opening capital', err);
+      throw err;
+    }
+  },
+
+  payDebt: async (saleId, payload) => {
+    try {
+      const result = await putPayDebt(saleId, {
+        ...payload,
+        user: 'Owner',
+      });
+      if (result?.state) {
+        set((state) => ({
+          ...state,
+          products: result.state.products || state.products,
+          sales: result.state.sales || state.sales,
+          expenses: result.state.expenses || state.expenses,
+          ingredients: result.state.ingredients || state.ingredients,
+          stockMovements: result.state.stockMovements || state.stockMovements,
+          activityLog: result.state.activityLog || state.activityLog,
+          cashSessions: result.state.cashSessions || state.cashSessions,
+          cashAccounts: result.state.cashAccounts || state.cashAccounts,
+          cashTransactions: result.state.cashTransactions || state.cashTransactions,
+          dailyNotes: result.state.dailyNotes || state.dailyNotes,
+          promotions: result.state.promotions || state.promotions,
+        }));
+      } else {
+        await get().loadRemoteData();
+      }
+      return result;
+    } catch (err) {
+      console.error('Failed to pay debt', err);
+      await get().loadRemoteData();
       throw err;
     }
   },

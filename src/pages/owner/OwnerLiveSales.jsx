@@ -33,6 +33,7 @@ const paymentFields = [
   { id: 'cash', label: 'Cash / Tunai', icon: Banknote },
   { id: 'qris', label: 'QRIS', icon: QrCode },
   { id: 'transfer', label: 'Transfer', icon: WalletCards },
+  { id: 'debt', label: 'Bon / Piutang', icon: FileText },
 ];
 
 export default function OwnerLiveSales() {
@@ -49,7 +50,8 @@ export default function OwnerLiveSales() {
   const [selectedDate, setSelectedDate] = useState(getBusinessDate());
   const [quantities, setQuantities] = useState({});
   const [promoInputs, setPromoInputs] = useState({});
-  const [payments, setPayments] = useState({ cash: '', qris: '', transfer: '' });
+  const [payments, setPayments] = useState({ cash: '', qris: '', transfer: '', debt: '' });
+  const [customerName, setCustomerName] = useState('');
   const [remainingMethod, setRemainingMethod] = useState('qris');
   const [search, setSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -217,7 +219,8 @@ export default function OwnerLiveSales() {
   const clearForm = () => {
     setQuantities({});
     setPromoInputs({});
-    setPayments({ cash: '', qris: '', transfer: '' });
+    setPayments({ cash: '', qris: '', transfer: '', debt: '' });
+    setCustomerName('');
     setSearch('');
   };
 
@@ -235,7 +238,7 @@ export default function OwnerLiveSales() {
       return;
     }
     if (Math.round(totalPaid) !== Math.round(totalSales)) {
-      toast('Total cash, QRIS, dan transfer harus sama dengan total penjualan.', 'error');
+      toast('Total pembayaran (Cash, QRIS, Transfer, Bon) harus sama dengan total penjualan.', 'error');
       return;
     }
 
@@ -243,7 +246,13 @@ export default function OwnerLiveSales() {
       cash: Number(remainingMethod === 'cash' ? calculatedRemaining : (payments.cash || 0)),
       qris: Number(remainingMethod === 'qris' ? calculatedRemaining : (payments.qris || 0)),
       transfer: Number(remainingMethod === 'transfer' ? calculatedRemaining : (payments.transfer || 0)),
+      debt: Number(remainingMethod === 'debt' ? calculatedRemaining : (payments.debt || 0)),
     };
+
+    if (finalPayments.debt > 0 && !customerName.trim()) {
+      toast('Nama pelanggan wajib diisi jika ada pembayaran Bon / Piutang.', 'error');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -254,6 +263,7 @@ export default function OwnerLiveSales() {
         items: selectedItems,
         total: totalSales,
         paymentBreakdown: finalPayments,
+        customerName: finalPayments.debt > 0 ? customerName.trim() : undefined,
       });
       toast('Rekap penjualan closing berhasil disimpan', 'success');
       clearForm();
@@ -825,11 +835,12 @@ export default function OwnerLiveSales() {
               <span className="block text-[10px] font-black text-[var(--color-text-secondary)] uppercase mb-2">
                 Metode Sisa Otomatis
               </span>
-              <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-white border border-[var(--color-border)]">
+              <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-white border border-[var(--color-border)]">
                 {[
                   { id: 'qris', label: '📱 QRIS' },
                   { id: 'cash', label: '💰 Cash' },
                   { id: 'transfer', label: '🏦 Transfer' },
+                  { id: 'debt', label: '📝 Bon' },
                 ].map((opt) => (
                   <button
                     key={opt.id}
@@ -885,6 +896,21 @@ export default function OwnerLiveSales() {
                   </label>
                 );
               })}
+
+              {(remainingMethod === 'debt' ? calculatedRemaining > 0 : Number(payments.debt || 0) > 0) && (
+                <div className="mt-4 space-y-1.5 animate-fadeIn">
+                  <label htmlFor="customerName" className="text-xs font-bold uppercase text-[var(--color-text-secondary)]">Nama Pelanggan (Bon)</label>
+                  <input
+                    type="text"
+                    id="customerName"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Ketik Nama Pelanggan..."
+                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)] focus:border-transparent text-sm font-semibold bg-white text-[var(--color-text-primary)] animate-fadeIn"
+                    required
+                  />
+                </div>
+              )}
             </div>
 
             <div className="mt-4 rounded-xl border border-[var(--color-border)] bg-white p-3 text-sm">

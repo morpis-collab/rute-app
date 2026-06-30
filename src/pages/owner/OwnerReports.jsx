@@ -6,7 +6,7 @@ import useAppStore from '../../store/useAppStore';
 import { formatRupiah, formatTanggalSingkat, formatWaktu } from '../../utils/formatters';
 import { getBusinessDate, isSameBusinessDate } from '../../utils/businessDate';
 
-const paymentMethods = ['cash', 'qris', 'transfer'];
+const paymentMethods = ['cash', 'qris', 'transfer', 'debt'];
 
 function salePaymentBreakdown(sale) {
   if (sale?.paymentBreakdown && typeof sale.paymentBreakdown === 'object') {
@@ -14,12 +14,14 @@ function salePaymentBreakdown(sale) {
       cash: Number(sale.paymentBreakdown.cash || 0),
       qris: Number(sale.paymentBreakdown.qris || 0),
       transfer: Number(sale.paymentBreakdown.transfer || 0),
+      debt: Number(sale.paymentBreakdown.debt || 0),
     };
   }
   return {
     cash: sale?.paymentMethod === 'cash' ? Number(sale.total || 0) : 0,
     qris: sale?.paymentMethod === 'qris' ? Number(sale.total || 0) : 0,
     transfer: sale?.paymentMethod === 'transfer' ? Number(sale.total || 0) : 0,
+    debt: sale?.paymentMethod === 'debt' ? Number(sale.total || 0) : 0,
   };
 }
 
@@ -41,7 +43,7 @@ function summarizeSales(sales = []) {
     omzet: 0,
     count: 0,
     cups: 0,
-    byMethod: { cash: 0, qris: 0, transfer: 0 },
+    byMethod: { cash: 0, qris: 0, transfer: 0, debt: 0 },
     menu: {},
   });
 }
@@ -197,6 +199,7 @@ export default function OwnerReports() {
         ['Penjualan', 'Cash', daily.summary.byMethod.cash],
         ['Penjualan', 'QRIS', daily.summary.byMethod.qris],
         ['Penjualan', 'Transfer', daily.summary.byMethod.transfer],
+        ['Penjualan', 'Bon / Piutang', daily.summary.byMethod.debt],
         ['Kas', 'Cash aktual laci', daily.session?.closingCash ?? 'Belum tutup'],
         ['Kas', 'Selisih laci', daily.session?.difference ?? 'Belum tutup'],
         ...daily.expenseByAccount.map((row) => ['Pengeluaran per sumber dana', row.label, row.value]),
@@ -208,6 +211,7 @@ export default function OwnerReports() {
         ['Penjualan', 'Cash periode', period.summary.byMethod.cash],
         ['Penjualan', 'QRIS periode', period.summary.byMethod.qris],
         ['Penjualan', 'Transfer periode', period.summary.byMethod.transfer],
+        ['Penjualan', 'Bon / Piutang periode', period.summary.byMethod.debt],
         ...period.expenseByCategory.map((row) => ['Pengeluaran per kategori', row.label, row.value]),
         ...period.expenseByAccount.map((row) => ['Pengeluaran per sumber dana', row.label, row.value]),
         ...period.vaultDeltas.map((row) => ['Perubahan brankas', row.account.name, row.delta]),
@@ -336,6 +340,7 @@ function DailyReport({ selectedDate, setSelectedDate, daily, cashAccounts }) {
               ['Cash / Tunai', daily.summary.byMethod.cash],
               ['QRIS', daily.summary.byMethod.qris],
               ['Transfer', daily.summary.byMethod.transfer],
+              ['Bon / Piutang', daily.summary.byMethod.debt],
               ['Kas seharusnya', session?.expectedCash],
               ['Kas aktual', session?.closingCash],
             ].map(([label, value]) => (
