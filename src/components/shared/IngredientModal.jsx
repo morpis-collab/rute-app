@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 const CATEGORY_OPTIONS = [
@@ -10,25 +10,33 @@ const CATEGORY_OPTIONS = [
 
 const UNIT_OPTIONS = ['gram', 'kg', 'ml', 'l', 'pcs'];
 
-export default function IngredientModal({ isOpen, onClose, onSave }) {
+export default function IngredientModal({ isOpen, onClose, onSave, ingredient }) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('bahan_baku');
   const [unit, setUnit] = useState('gram');
-  const [stock, setStock] = useState('');
-  const [minStock, setMinStock] = useState('');
   const [costPerUnit, setCostPerUnit] = useState('');
+  const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      if (ingredient) {
+        setName(ingredient.name || '');
+        setCategory(ingredient.category || 'bahan_baku');
+        setUnit(ingredient.unit || 'gram');
+        setCostPerUnit(ingredient.costPerUnit !== undefined ? String(ingredient.costPerUnit) : '');
+        setNotes(ingredient.notes || '');
+      } else {
+        setName('');
+        setCategory('bahan_baku');
+        setUnit('gram');
+        setCostPerUnit('');
+        setNotes('');
+      }
+    }
+  }, [ingredient, isOpen]);
 
-  const resetForm = () => {
-    setName('');
-    setCategory('bahan_baku');
-    setUnit('gram');
-    setStock('');
-    setMinStock('');
-    setCostPerUnit('');
-  };
+  if (!isOpen) return null;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -40,12 +48,12 @@ export default function IngredientModal({ isOpen, onClose, onSave }) {
         name: name.trim(),
         category,
         unit,
-        stock: Number(stock || 0),
-        minStock: Number(minStock || 0),
-        costPerUnit: Number(costPerUnit || 0),
+        costPerUnit: costPerUnit === '' ? 0 : Number(costPerUnit),
+        notes: notes.trim(),
       });
-      resetForm();
       onClose();
+    } catch (error) {
+      console.error('Gagal menyimpan bahan baku:', error);
     } finally {
       setSaving(false);
     }
@@ -53,20 +61,29 @@ export default function IngredientModal({ isOpen, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm slide-in">
-      <div className="bg-white rounded-[var(--radius-xl)] w-full max-w-md shadow-[var(--shadow-lg)] overflow-hidden">
-        <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg-primary)]">
-          <h3 className="font-bold text-[var(--color-text-primary)]">Tambah Bahan Baku</h3>
-          <button type="button" onClick={onClose} className="rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]" title="Tutup">
-            <X size={18} />
+      <div className="bg-[var(--color-bg-card)] rounded-[var(--radius-xl)] w-full max-w-md shadow-[var(--shadow-lg)] overflow-hidden border border-[var(--color-border)]">
+        <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg-secondary)]">
+          <h3 className="font-bold text-[var(--color-text-primary)] font-display text-lg">
+            {ingredient ? 'Edit Bahan Baku' : 'Tambah Bahan Baku'}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full h-11 w-11 flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            title="Tutup"
+          >
+            <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Nama Bahan</label>
+            <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
+              Nama Bahan
+            </label>
             <input
               type="text"
-              className="form-input text-sm p-2 w-full"
+              className="form-input text-sm p-3 w-full"
               placeholder="Contoh: Kopi Blend"
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -76,41 +93,78 @@ export default function IngredientModal({ isOpen, onClose, onSave }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Kategori</label>
-              <select className="form-select text-sm p-2 w-full" value={category} onChange={(event) => setCategory(event.target.value)}>
+              <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
+                Kategori
+              </label>
+              <select
+                className="form-select text-sm p-3 w-full"
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+              >
                 {CATEGORY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Unit Dasar</label>
-              <select className="form-select text-sm p-2 w-full" value={unit} onChange={(event) => setUnit(event.target.value)}>
+              <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
+                Unit Dasar
+              </label>
+              <select
+                className="form-select text-sm p-3 w-full"
+                value={unit}
+                onChange={(event) => setUnit(event.target.value)}
+              >
                 {UNIT_OPTIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Stok Awal</label>
-              <input type="number" min="0" step="0.001" className="form-input text-sm p-2 w-full font-mono" value={stock} onChange={(event) => setStock(event.target.value)} />
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
+              Harga Modal (Biaya / Unit)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-[var(--color-text-secondary)] font-mono">
+                Rp
+              </span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className="form-input text-sm p-3 pl-9 w-full font-mono"
+                placeholder="0"
+                value={costPerUnit}
+                onChange={(event) => setCostPerUnit(event.target.value)}
+              />
             </div>
-            <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Min Stok</label>
-              <input type="number" min="0" step="0.001" className="form-input text-sm p-2 w-full font-mono" value={minStock} onChange={(event) => setMinStock(event.target.value)} />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Biaya / Unit</label>
-              <input type="number" min="0" step="0.01" className="form-input text-sm p-2 w-full font-mono" value={costPerUnit} onChange={(event) => setCostPerUnit(event.target.value)} />
-            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
+              Catatan (Notes)
+            </label>
+            <textarea
+              className="form-input text-sm p-3 w-full h-24 resize-none"
+              placeholder="Contoh: Beli di supplier langganan"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+            />
           </div>
 
           <div className="pt-2">
-            <button type="submit" disabled={saving} className="btn btn-primary w-full shadow-md disabled:opacity-60">
-              {saving ? 'Menyimpan...' : 'Simpan Bahan Baku'}
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn btn-primary w-full shadow-md disabled:opacity-60 p-3 flex items-center justify-center font-bold text-sm h-11"
+            >
+              {saving ? 'Menyimpan...' : ingredient ? 'Simpan Perubahan' : 'Tambah Bahan Baku'}
             </button>
           </div>
         </form>
