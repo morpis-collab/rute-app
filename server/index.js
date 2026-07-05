@@ -1,607 +1,44 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import multer from 'multer';
-import {
-  applyStockMovements,
-  applyPurchaseCosts,
-  buildExpenseStockMovements,
-  buildSaleStockMovements,
-  calculateProductHpp,
-  getCashExpected,
-  getEstimatedHpp,
-  getExpenseTotal,
-  getSalesSummary,
-  refreshProductCosts,
-  getIngredientStatus,
-} from './rules.js';
 import { readDb, resetDb, updateDb } from './db.js';
-import { scanReceipt } from './receiptAi.js';
-import { scanSalesNote } from './salesNoteAi.js';
-import { ensureUploadRoot, saveUploadedFile, uploadRoot } from './uploads.js';
 import { authenticateRequest, getAuthenticatedUser, loginWithRolePin } from './auth.js';
-import { answerCopilot, buildCopilotContext, buildCopilotInsights } from './copilot.js';
 
 const app = express();
-const RECEIPT_ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/heic',
-  'image/heif',
-]);
-const RECEIPT_CATEGORIES = new Set(['bahan_baku', 'packaging', 'operasional', 'pra_operasional', 'lainnya']);
-const EXPENSE_STATUSES = new Set(['auto_approved', 'pending', 'approved', 'rejected']);
-const PROMOTION_TYPES = new Set(['percentage', 'nominal', 'fixed_price', 'bundle', 'bogo']);
-const PROMOTION_STATUSES = new Set(['draft', 'scheduled', 'active', 'completed', 'canceled']);
-const PAYMENT_METHODS = ['cash', 'qris', 'transfer', 'debt'];
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    if (!RECEIPT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
-      return cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'receipt'));
-    }
-    return cb(null, true);
-  },
-});
 const port = Number(process.env.RUTE_API_PORT || process.env.PORT || 4321);
 const corsOrigin = process.env.RUTE_CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? false : true);
 
-ensureUploadRoot();
 app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: '2mb' }));
-app.use('/uploads', express.static(uploadRoot));
 
-function today() {
-  return new Date().toLocaleDateString('en-CA', {
-    timeZone: process.env.RUTE_BUSINESS_TZ || 'Asia/Makassar',
-  });
-}
-
-function dashboardFrom(db, businessDate = today()) {
-  const todaySales = db.sales.filter((sale) => sale.date?.startsWith(businessDate));
-  const todayExpenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate) && expense.status !== 'rejected');
-  const products = refreshProductCosts(db.products, db.ingredients);
-  const summary = getSalesSummary(todaySales);
-  const estimatedHpp = getEstimatedHpp(todaySales, products);
-  const expenseTotal = getExpenseTotal(todayExpenses);
-  const criticalStock = db.ingredients.filter((ingredient) => ingredient.status === 'kritis');
-  const cashSession = db.cashSessions.find((session) => session.date === businessDate);
-  const latestNote = db.dailyNotes.find((note) => note.date === businessDate) || db.dailyNotes[0] || null;
-
-  return {
-    businessDate,
-    summary,
-    estimatedHpp,
-    grossProfit: summary.totalOmzet - estimatedHpp,
-    netProfitEstimate: summary.totalOmzet - estimatedHpp - expenseTotal,
-    expenseTotal,
-    criticalStock,
-    cashSession,
-    latestNote,
-    recentActivity: db.activityLog.slice(-8).reverse(),
-  };
-}
-
-function bootstrapPayload(db) {
-  const products = refreshProductCosts(db.products, db.ingredients);
-  return {
-    products,
-    sales: db.sales,
-    expenses: db.expenses,
-    ingredients: db.ingredients,
-    stockMovements: db.stockMovements,
-    activityLog: db.activityLog,
-    cashSessions: db.cashSessions,
-    cashAccounts: db.cashAccounts,
-    cashTransactions: db.cashTransactions,
-    openingCapital: openingCapitalPayload(db.openingCapital, { includePersonal: false }),
-    dailyNotes: db.dailyNotes,
-    receiptUploads: db.receiptUploads,
-    promotions: (db.promotions || []).map((promotion) => promotionContractFrom(promotion)),
-    dashboard: dashboardFrom(db),
-  };
-}
-
-function resolvePromotionStatus(promotion, businessDate = today()) {
-  const status = promotion.status || 'draft';
-  if (['draft', 'canceled'].includes(status)) return status;
-  if (promotion.endDate && promotion.endDate < businessDate) return 'completed';
-  if (promotion.startDate && promotion.startDate > businessDate) return 'scheduled';
-  return 'active';
-}
-
-function promotionContractFrom(promotion) {
-  return {
-    ...promotion,
-    targetProductIds: Array.isArray(promotion.targetProductIds)
-      ? promotion.targetProductIds.map((id) => String(id))
-      : [],
-    discountValue: Number(promotion.discountValue || 0),
-    bundleQty: Number(promotion.bundleQty || 0),
-    bundlePrice: Number(promotion.bundlePrice || 0),
-    targetSales: Number(promotion.targetSales || 0),
-    budget: Number(promotion.budget || 0),
-    computedStatus: resolvePromotionStatus(promotion),
-  };
-}
-
-function normalizePromotionPayload(body = {}, existing = {}) {
-  const name = String(body.name ?? existing.name ?? '').trim();
-  const type = String(body.type ?? existing.type ?? 'nominal').trim();
-  const status = String(body.status ?? existing.status ?? 'draft').trim();
-  const startDate = String(body.startDate ?? existing.startDate ?? '').trim();
-  const endDate = String(body.endDate ?? existing.endDate ?? '').trim();
-  const targetProductIds = Array.isArray(body.targetProductIds)
-    ? body.targetProductIds.map((id) => String(id))
-    : Array.isArray(existing.targetProductIds)
-      ? existing.targetProductIds.map((id) => String(id))
-      : [];
-  const discountValue = Number(body.discountValue ?? existing.discountValue ?? 0);
-  const bundleQty = Number(body.bundleQty ?? existing.bundleQty ?? 0);
-  const bundlePrice = Number(body.bundlePrice ?? existing.bundlePrice ?? 0);
-  const targetSales = Number(body.targetSales ?? existing.targetSales ?? 0);
-  const budget = Number(body.budget ?? existing.budget ?? 0);
-
-  if (!name) return { error: 'Nama promo wajib diisi', statusCode: 400 };
-  if (!PROMOTION_TYPES.has(type)) return { error: 'Jenis promo tidak valid', statusCode: 400 };
-  if (!PROMOTION_STATUSES.has(status)) return { error: 'Status promo tidak valid', statusCode: 400 };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
-    return { error: 'Tanggal promo wajib format YYYY-MM-DD', statusCode: 400 };
-  }
-  if (endDate < startDate) return { error: 'Tanggal selesai promo tidak boleh sebelum tanggal mulai', statusCode: 400 };
-  if (!Number.isFinite(discountValue) || discountValue < 0) return { error: 'Nilai promo harus angka positif', statusCode: 400 };
-  if (type === 'percentage' && discountValue > 100) return { error: 'Diskon persen maksimal 100%', statusCode: 400 };
-  if (!Number.isFinite(bundleQty) || bundleQty < 0) return { error: 'Jumlah cup paket harus angka positif', statusCode: 400 };
-  if (!Number.isFinite(bundlePrice) || bundlePrice < 0) return { error: 'Harga paket harus angka positif', statusCode: 400 };
-  if (type === 'bundle' && (bundleQty < 2 || bundlePrice <= 0)) {
-    return { error: 'Promo paket wajib berisi minimal 2 cup dan harga paket lebih dari 0', statusCode: 400 };
-  }
-  if (!Number.isFinite(targetSales) || targetSales < 0) return { error: 'Target penjualan harus angka positif', statusCode: 400 };
-  if (!Number.isFinite(budget) || budget < 0) return { error: 'Budget promo harus angka positif', statusCode: 400 };
-
-  return {
-    promotion: {
-      ...existing,
-      name,
-      type,
-      status,
-      startDate,
-      endDate,
-      targetProductIds,
-      discountValue,
-      bundleQty,
-      bundlePrice,
-      targetSales,
-      budget,
-      objective: String(body.objective ?? existing.objective ?? '').trim(),
-      notes: String(body.notes ?? existing.notes ?? '').trim(),
-    },
-  };
-}
-
-function sumContributionValues(items = []) {
-  return items.reduce((sum, item) => sum + Number(item.estimatedValue || 0), 0);
-}
-
-function openingCapitalPayload(openingCapital = {}, { includePersonal = true } = {}) {
-  const cashCapital = Number(openingCapital.cashCapital || 0);
-  const assetContributions = Array.isArray(openingCapital.assetContributions)
-    ? openingCapital.assetContributions
-    : [];
-  const inventoryContributions = Array.isArray(openingCapital.inventoryContributions)
-    ? openingCapital.inventoryContributions
-    : [];
-  const personalExcludedItems = includePersonal && Array.isArray(openingCapital.personalExcludedItems)
-    ? openingCapital.personalExcludedItems
-    : [];
-  const totalAssetContributions = sumContributionValues(assetContributions);
-  const totalInventoryContributions = sumContributionValues(inventoryContributions);
-  const totalPersonalExcluded = sumContributionValues(personalExcludedItems);
-
-  return {
-    businessStartDate: openingCapital.businessStartDate || null,
-    cashCapital,
-    assetContributions,
-    inventoryContributions,
-    personalExcludedItems,
-    notes: openingCapital.notes || '',
-    createdBy: openingCapital.createdBy || 'System',
-    createdAt: openingCapital.createdAt || null,
-    updatedBy: openingCapital.updatedBy || 'System',
-    updatedAt: openingCapital.updatedAt || null,
-    totals: {
-      cashCapital,
-      assetContributions: totalAssetContributions,
-      inventoryContributions: totalInventoryContributions,
-      businessCapital: cashCapital + totalAssetContributions + totalInventoryContributions,
-      personalExcluded: totalPersonalExcluded,
-    },
-  };
-}
-
-function normalizeCapitalItems(items, kind) {
-  if (!Array.isArray(items)) return [];
-  return items.map((item, index) => {
-    const name = String(item?.name || '').trim();
-    const estimatedValue = Number(item?.estimatedValue ?? item?.value ?? 0);
-    const quantity = Number(item?.quantity ?? 1);
-    const normalized = {
-      id: item?.id || `${kind.toUpperCase()}-${Date.now()}-${index}`,
-      name,
-      estimatedValue,
-      notes: String(item?.notes || '').trim(),
-    };
-
-    if (kind !== 'personal') {
-      normalized.quantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
-      normalized.unit = String(item?.unit || 'item').trim();
-      if (item?.category) normalized.category = String(item.category).trim();
+// Helper to update ingredient costPerUnit from purchasedIngredients array
+function updateIngredientCosts(db, purchasedIngredients) {
+  if (!Array.isArray(purchasedIngredients)) return;
+  for (const item of purchasedIngredients) {
+    if (!item || !item.ingredientId) continue;
+    const ingredient = db.ingredients.find(ing => String(ing.id) === String(item.ingredientId));
+    if (!ingredient) continue;
+    
+    let nextCost = null;
+    if (item.costPerUnit !== undefined && Number(item.costPerUnit) > 0) {
+      nextCost = Number(item.costPerUnit);
+    } else if (item.price !== undefined && Number(item.price) > 0) {
+      nextCost = Number(item.price);
+    } else if (item.qty && item.total && Number(item.qty) > 0) {
+      nextCost = Number(item.total) / Number(item.qty);
+    } else if (item.quantity && item.total && Number(item.quantity) > 0) {
+      nextCost = Number(item.total) / Number(item.quantity);
     }
-    if (kind === 'inventory' && item?.ingredientId) normalized.ingredientId = String(item.ingredientId);
-    if (kind === 'personal') normalized.reason = String(item?.reason || 'Barang pribadi, tidak masuk usaha').trim();
-
-    return normalized;
-  });
-}
-
-function validateCapitalItems(items, label) {
-  if (items.length > 100) return { error: `${label} maksimal 100 item` };
-  const invalid = items.find((item) => (
-    !item.name ||
-    !Number.isFinite(Number(item.estimatedValue)) ||
-    Number(item.estimatedValue) < 0 ||
-    (item.quantity != null && (!Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))
-  ));
-  if (invalid) return { error: `${label} wajib punya nama, nilai wajar tidak negatif, dan jumlah valid` };
-  return null;
-}
-
-function openingCashFromCapital(db, businessDate, existingSession, openingCash) {
-  if (openingCash != null) return { value: Number(openingCash), source: 'query' };
-  if (existingSession?.openingCash != null) return { value: Number(existingSession.openingCash), source: 'cashSession' };
-  if (db.openingCapital?.businessStartDate === businessDate) {
-    return { value: Number(db.openingCapital.cashCapital || 0), source: 'openingCapital' };
-  }
-  return { value: 100000, source: 'default' };
-}
-
-const cashDrawerAccountIds = new Set(['acc-01', 'kas-utama']);
-const defaultOpeningCashSourceIds = new Set(['acc-brankas', 'kas-brankas']);
-
-function isPhysicalCashAccount(account) {
-  return ['cash', 'tunai'].includes(String(account?.type || '').toLowerCase());
-}
-
-function isCashDrawerAccount(account) {
-  return cashDrawerAccountIds.has(String(account?.id || ''));
-}
-
-function findCashAccountById(db, id) {
-  return db.cashAccounts.find((account) => String(account.id) === String(id));
-}
-
-function findCashDrawerAccount(db) {
-  return db.cashAccounts.find(isCashDrawerAccount)
-    || db.cashAccounts.find(isPhysicalCashAccount);
-}
-
-function findDefaultOpeningCashSourceAccount(db, drawerAccount) {
-  const isNotDrawer = (account) => String(account?.id || '') !== String(drawerAccount?.id || '');
-  return findCashAccountById(db, 'acc-brankas')
-    || db.cashAccounts.find((account) => defaultOpeningCashSourceIds.has(String(account.id)) && isNotDrawer(account))
-    || db.cashAccounts.find((account) => /brankas/i.test(String(account.name || '')) && isPhysicalCashAccount(account) && isNotDrawer(account))
-    || db.cashAccounts.find((account) => isPhysicalCashAccount(account) && isNotDrawer(account));
-}
-
-function cashExpectedPayload(db, { date, openingCash } = {}) {
-  const businessDate = date || today();
-  const existingSession = db.cashSessions.find((session) => session.date === businessDate) || null;
-  const resolvedOpeningCash = openingCashFromCapital(db, businessDate, existingSession, openingCash);
-  const openingCashSourceAccount = existingSession?.openingCashSourceAccountId
-    ? findCashAccountById(db, existingSession.openingCashSourceAccountId)
-    : null;
-  const daySales = db.sales.filter((sale) => sale.date?.startsWith(businessDate));
-  const dayExpenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate) && expense.status !== 'rejected');
-  const salesSummary = getSalesSummary(daySales);
-  const cashSales = Number(salesSummary.byMethod.cash || 0);
-
-  const cashExpensesList = dayExpenses.filter((expense) => {
-    if (!expense.cashAccountId) return true;
-    const id = String(expense.cashAccountId);
-    return id === 'acc-01' || id === 'kas-utama';
-  });
-  const cashExpenses = getExpenseTotal(cashExpensesList);
-
-  const expectedCash = getCashExpected({
-    sales: db.sales,
-    expenses: cashExpensesList,
-    openingCash: resolvedOpeningCash.value,
-    businessDate,
-  });
-
-  return {
-    date: businessDate,
-    openingCash: resolvedOpeningCash.value,
-    openingCashSource: resolvedOpeningCash.source,
-    openingCashSourceAccountId: openingCashSourceAccount?.id || existingSession?.openingCashSourceAccountId || null,
-    openingCashSourceAccountName: openingCashSourceAccount?.name || existingSession?.openingCashSourceAccountName || null,
-    cashSales,
-    cashExpenses,
-    expectedCash,
-    salesByMethod: salesSummary.byMethod,
-    totalSales: salesSummary.totalOmzet,
-    totalExpenseCash: cashExpenses,
-    existingSession,
-    canClose: existingSession?.status !== 'closed',
-  };
-}
-
-function parsePositiveInt(value, fallback, max = 100) {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed <= 0) return fallback;
-  return Math.min(parsed, max);
-}
-
-function cashLedgerPayload(db, { limit, type, accountId, date } = {}) {
-  const normalizedType = type ? String(type).trim() : '';
-  const normalizedAccountId = accountId ? String(accountId).trim() : '';
-  const businessDate = date ? String(date).trim() : '';
-  const resolvedLimit = parsePositiveInt(limit, 50);
-  const cashTransactions = [...db.cashTransactions]
-    .filter((transaction) => !normalizedType || transaction.type === normalizedType)
-    .filter((transaction) => !businessDate || transaction.date?.startsWith(businessDate))
-    .filter((transaction) => {
-      if (!normalizedAccountId) return true;
-      return [transaction.accountId, transaction.fromAccountId, transaction.toAccountId]
-        .some((id) => String(id || '') === normalizedAccountId);
-    })
-    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-
-  return {
-    cashAccounts: db.cashAccounts,
-    cashTransactions: cashTransactions.slice(0, resolvedLimit),
-    totalCash: db.cashAccounts.reduce((sum, account) => sum + Number(account.balance || 0), 0),
-    transactionCount: cashTransactions.length,
-  };
-}
-
-function cashTransactionSummary(transactions) {
-  return transactions.reduce((summary, transaction) => {
-    const amount = Number(transaction.amount || 0);
-    summary.count += 1;
-    if (transaction.type === 'in') summary.cashIn += amount;
-    if (transaction.type === 'out') summary.cashOut += amount;
-    if (transaction.type === 'transfer') summary.transfer += amount;
-    if (transaction.type === 'koreksi') summary.adjustment += amount;
-    return summary;
-  }, {
-    count: 0,
-    cashIn: 0,
-    cashOut: 0,
-    transfer: 0,
-    adjustment: 0,
-  });
-}
-
-function ownerCashPayload(db, { date, openingCash, limit, type, accountId } = {}) {
-  const expected = cashExpectedPayload(db, { date, openingCash });
-  const ledger = cashLedgerPayload(db, { limit, type, accountId });
-
-  return {
-    businessDate: expected.date,
-    ...ledger,
-    expectedCash: expected,
-    cashSession: expected.existingSession,
-    summary: cashTransactionSummary(ledger.cashTransactions),
-    filters: {
-      limit: parsePositiveInt(limit, 50),
-      type: type || null,
-      accountId: accountId || null,
-    },
-  };
-}
-
-function stockContractFrom(ingredient) {
-  return {
-    ...ingredient,
-    category: ingredient.category || 'Bahan Baku',
-    stockCurrent: Number(ingredient.stock ?? ingredient.stockCurrent ?? 0),
-    emoji: ingredient.emoji || '📦',
-  };
-}
-
-function ingredientUnitConversions(unit) {
-  const normalizedUnit = String(unit || '').trim().toLowerCase();
-  const conversions = {
-    gram: { kg: 1000 },
-    kg: { gram: 0.001 },
-    ml: { l: 1000, liter: 1000 },
-    l: { ml: 0.001, liter: 1 },
-    liter: { ml: 0.001, l: 1 },
-  };
-  return conversions[normalizedUnit] || {};
-}
-
-function expenseContractFrom(expense) {
-  return {
-    ...expense,
-    proofUrl: expense.proofUrl ?? expense.photoUrl ?? null,
-  };
-}
-
-function normalizeExpenseStockItem(rawItem = {}, ingredients = []) {
-  const ingredient = ingredients.find((candidate) => String(candidate.id) === String(rawItem.ingredientId));
-  if (!ingredient) return { error: 'Bahan baku tidak ditemukan', statusCode: 400 };
-
-  const qty = Number(rawItem.qty ?? rawItem.quantity ?? rawItem.stockQty ?? 0);
-  const stockQty = Number(rawItem.stockQty ?? rawItem.quantity ?? rawItem.qty ?? 0);
-  const total = Number(rawItem.total ?? rawItem.amount ?? rawItem.subtotal ?? 0);
-  const price = Number(rawItem.price ?? (qty > 0 ? total / qty : 0));
-  const unit = String(rawItem.unit || rawItem.stockUnit || ingredient.unit || '').trim();
-  const stockUnit = String(rawItem.stockUnit || rawItem.unit || ingredient.unit || '').trim();
-  const name = String(rawItem.name || ingredient.name || '').trim();
-
-  if (!name) return { error: 'Nama item stok wajib diisi', statusCode: 400 };
-  if (!unit || !stockUnit) return { error: 'Satuan item stok wajib diisi', statusCode: 400 };
-  if (!Number.isFinite(qty) || qty <= 0) return { error: 'Qty pembelian wajib lebih dari 0', statusCode: 400 };
-  if (!Number.isFinite(stockQty) || stockQty <= 0) return { error: 'Qty stok wajib lebih dari 0', statusCode: 400 };
-  if (!Number.isFinite(total) || total <= 0) return { error: 'Nominal item stok wajib lebih dari 0', statusCode: 400 };
-  if (!Number.isFinite(price) || price < 0) return { error: 'Harga item stok harus angka positif', statusCode: 400 };
-
-  return {
-    item: {
-      ...rawItem,
-      name,
-      qty,
-      unit,
-      price,
-      total,
-      amount: total,
-      addsStock: true,
-      ingredientId: ingredient.id,
-      stockQty,
-      stockUnit,
-    },
-  };
-}
-
-function normalizePaymentBreakdown(value, total, fallbackMethod = 'cash') {
-  if (value && typeof value === 'object') {
-    const breakdown = PAYMENT_METHODS.reduce((acc, method) => ({
-      ...acc,
-      [method]: Number(value[method] || 0),
-    }), {});
-    const invalid = PAYMENT_METHODS.some((method) => (
-      !Number.isFinite(breakdown[method]) || breakdown[method] < 0
-    ));
-    if (invalid) return { error: 'Breakdown pembayaran harus angka positif', statusCode: 400 };
-
-    const paidTotal = PAYMENT_METHODS.reduce((sum, method) => sum + breakdown[method], 0);
-    if (Math.round(paidTotal) !== Math.round(Number(total || 0))) {
-      return { error: 'Total cash, QRIS, dan transfer harus sama dengan total penjualan', statusCode: 400 };
+    
+    if (nextCost !== null && !Number.isNaN(nextCost)) {
+      ingredient.costPerUnit = Number(nextCost.toFixed(2));
     }
-    return { breakdown };
   }
-
-  if (!PAYMENT_METHODS.includes(fallbackMethod)) {
-    return { error: 'Metode pembayaran tidak valid', statusCode: 400 };
-  }
-  return {
-    breakdown: {
-      cash: fallbackMethod === 'cash' ? Number(total || 0) : 0,
-      qris: fallbackMethod === 'qris' ? Number(total || 0) : 0,
-      transfer: fallbackMethod === 'transfer' ? Number(total || 0) : 0,
-    },
-  };
 }
 
-function parseNonNegativeNumber(value, fieldName) {
-  const number = Number(value);
-  if (!Number.isFinite(number) || number < 0) {
-    return { error: `${fieldName} harus berupa angka positif` };
-  }
-  return { value: number };
-}
-
-function normalizeReceiptDate(value, fallback = new Date().toISOString()) {
-  const raw = String(value || '').trim();
-  if (!raw) return fallback;
-
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toISOString();
-}
-
-function normalizeReceiptItems(items, ingredients = []) {
-  if (!Array.isArray(items) || !items.length) {
-    return { error: 'Minimal satu item resi wajib diisi sebelum konfirmasi', statusCode: 400 };
-  }
-
-  const normalized = [];
-  for (const [index, item] of items.entries()) {
-    const row = index + 1;
-    const name = String(item.name || item.description || '').trim();
-    if (!name) return { error: `Nama item resi baris ${row} wajib diisi`, statusCode: 400 };
-
-    const category = RECEIPT_CATEGORIES.has(item.category) ? item.category : 'lainnya';
-    const qty = Number(item.qty ?? item.quantity ?? 0);
-    if (!Number.isFinite(qty) || qty <= 0) {
-      return { error: `Qty item resi baris ${row} wajib lebih dari 0`, statusCode: 400 };
-    }
-
-    const priceResult = parseNonNegativeNumber(item.price ?? item.unitPrice ?? 0, `Harga item resi baris ${row}`);
-    if (priceResult.error) return { ...priceResult, statusCode: 400 };
-
-    const computedTotal = qty * priceResult.value;
-    const totalResult = parseNonNegativeNumber(item.total ?? item.amount ?? computedTotal, `Total item resi baris ${row}`);
-    if (totalResult.error) return { ...totalResult, statusCode: 400 };
-    if (totalResult.value <= 0) {
-      return { error: `Total item resi baris ${row} wajib lebih dari 0`, statusCode: 400 };
-    }
-
-    const addsStock = Boolean(item.addsStock);
-    const ingredientId = item.ingredientId == null || item.ingredientId === ''
-      ? null
-      : Number(item.ingredientId);
-    const ingredient = ingredients.find((candidate) => Number(candidate.id) === ingredientId);
-    if (addsStock && !ingredient) {
-      return { error: `Bahan stok item resi baris ${row} tidak valid`, statusCode: 400 };
-    }
-
-    const stockQty = addsStock ? Number(item.stockQty ?? qty) : 0;
-    if (addsStock && (!Number.isFinite(stockQty) || stockQty <= 0)) {
-      return { error: `Qty stok item resi baris ${row} wajib lebih dari 0`, statusCode: 400 };
-    }
-
-    normalized.push({
-      id: item.id || row,
-      name,
-      category,
-      qty,
-      unit: String(item.unit || 'pcs').trim(),
-      price: priceResult.value,
-      total: totalResult.value,
-      amount: totalResult.value,
-      addsStock,
-      ingredientId: addsStock ? ingredient.id : null,
-      stockQty,
-      stockUnit: addsStock ? String(item.stockUnit || ingredient.unit || item.unit || 'pcs').trim() : null,
-    });
-  }
-
-  return { items: normalized };
-}
-
-function receiptAlreadyConfirmed(receiptUploads, uploadRecord) {
-  if (!uploadRecord) return false;
-  return receiptUploads.some((existing) => (
-    (uploadRecord.fileName && existing.fileName === uploadRecord.fileName)
-    || (uploadRecord.imageUrl && existing.imageUrl === uploadRecord.imageUrl)
-  ));
-}
-
-function requireRole(role) {
-  return (req, res, next) => {
-    if (req.auth?.role !== role) {
-      return res.status(403).json({ error: 'Akses hanya untuk ' + role });
-    }
-    return next();
-  };
-}
-
-function checkCashLock(db, businessDate) {
-  const session = db.cashSessions.find((s) => s.date === businessDate);
-  if (session?.status === 'closed') {
-    return { error: `Kas untuk tanggal ${businessDate} sudah ditutup, transaksi ditolak.`, statusCode: 403 };
-  }
-  return null;
-}
-
-function notFound(res, entity = 'Data') {
-  return res.status(404).json({ error: `${entity} tidak ditemukan` });
-}
+// -------------------------------------------------------------
+// Public Endpoints
+// -------------------------------------------------------------
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'rute-api', time: new Date().toISOString() });
@@ -613,6 +50,9 @@ app.post('/api/auth/login', (req, res) => {
   return res.json(session);
 });
 
+// -------------------------------------------------------------
+// Authenticated Endpoints
+// -------------------------------------------------------------
 app.use('/api', authenticateRequest);
 
 app.get('/api/auth/me', (req, res) => {
@@ -621,1665 +61,587 @@ app.get('/api/auth/me', (req, res) => {
   return res.json({ user });
 });
 
+// GET /api/bootstrap
 app.get('/api/bootstrap', (req, res) => {
-  res.json(bootstrapPayload(readDb()));
-});
-
-app.get('/api/dashboard', (req, res) => {
   const db = readDb();
-  res.json(dashboardFrom(db, req.query.date || today()));
+  res.json({
+    wallets: db.wallets || [],
+    categories: db.categories || { income: [], expense: [] },
+    incomes: db.incomes || [],
+    expenses: db.expenses || [],
+    transfers: db.transfers || [],
+    ingredients: db.ingredients || [],
+  });
 });
 
-app.get('/api/promotions', (req, res) => {
+// -------------------------------------------------------------
+// Wallets CRUD
+// -------------------------------------------------------------
+app.get('/api/wallets', (req, res) => {
   const db = readDb();
-  res.json((db.promotions || []).map((promotion) => promotionContractFrom(promotion)));
+  res.json(db.wallets || []);
 });
 
-app.post('/api/promotions', requireRole('owner'), (req, res) => {
+app.post('/api/wallets', (req, res) => {
   const result = updateDb((db) => {
-    const normalized = normalizePromotionPayload(req.body || {});
-    if (normalized.error) return normalized;
-
-    const now = new Date().toISOString();
-    const user = getAuthenticatedUser(db, req.auth)?.name || req.body?.user || 'Owner';
-    const promotion = {
-      id: req.body?.id || `PROMO-${Date.now()}`,
-      ...normalized.promotion,
-      createdBy: user,
-      createdAt: now,
-      updatedAt: now,
+    const { id, name, balance } = req.body;
+    if (!name || !String(name).trim()) return { error: 'Nama wallet wajib diisi', statusCode: 400 };
+    const walletId = id || `wallet-${Date.now()}`;
+    if (db.wallets.some(w => String(w.id) === String(walletId))) {
+      return { error: 'Wallet dengan ID ini sudah ada', statusCode: 409 };
+    }
+    const newWallet = {
+      id: walletId,
+      name: String(name).trim(),
+      balance: Number(balance || 0),
+      createdAt: new Date().toISOString()
     };
-
-    db.promotions = [promotion, ...(db.promotions || [])];
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: now,
-      action: `Promo dibuat: ${promotion.name}`,
-      user,
-      type: 'promo',
-    });
-
-    return { promotion: promotionContractFrom(promotion), state: bootstrapPayload(db) };
+    db.wallets.push(newWallet);
+    return newWallet;
   });
-
-  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
-  return res.status(201).json(result);
-});
-
-app.put('/api/promotions/:id', requireRole('owner'), (req, res) => {
-  const { id } = req.params;
-  const result = updateDb((db) => {
-    const promotionIndex = (db.promotions || []).findIndex((promotion) => String(promotion.id) === String(id));
-    if (promotionIndex === -1) return { error: 'Promo tidak ditemukan', statusCode: 404 };
-
-    const normalized = normalizePromotionPayload(req.body || {}, db.promotions[promotionIndex]);
-    if (normalized.error) return normalized;
-
-    const now = new Date().toISOString();
-    const user = getAuthenticatedUser(db, req.auth)?.name || req.body?.user || 'Owner';
-    const promotion = {
-      ...normalized.promotion,
-      id: db.promotions[promotionIndex].id,
-      createdAt: db.promotions[promotionIndex].createdAt,
-      createdBy: db.promotions[promotionIndex].createdBy,
-      updatedAt: now,
-      updatedBy: user,
-    };
-
-    db.promotions[promotionIndex] = promotion;
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: now,
-      action: `Promo diperbarui: ${promotion.name}`,
-      user,
-      type: 'promo',
-    });
-
-    return { promotion: promotionContractFrom(promotion), state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
-  return res.json(result);
-});
-
-app.delete('/api/promotions/:id', requireRole('owner'), (req, res) => {
-  const { id } = req.params;
-  const result = updateDb((db) => {
-    const promotion = (db.promotions || []).find((candidate) => String(candidate.id) === String(id));
-    if (!promotion) return { error: 'Promo tidak ditemukan', statusCode: 404 };
-
-    const isUsed = db.sales.some((sale) => (
-      (sale.items || []).some((item) => String(item.promoId || '') === String(id))
-    ));
-    if (isUsed) {
-      return { error: 'Promo sudah dipakai dalam transaksi. Ubah status menjadi Dibatalkan jika tidak ingin digunakan lagi.', statusCode: 400 };
-    }
-
-    db.promotions = db.promotions.filter((candidate) => String(candidate.id) !== String(id));
-    const now = new Date().toISOString();
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: now,
-      action: `Promo dihapus: ${promotion.name}`,
-      user: getAuthenticatedUser(db, req.auth)?.name || req.query.user || 'Owner',
-      type: 'promo',
-    });
-
-    return { success: true, state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
-  return res.json(result);
-});
-
-app.get('/api/products', (req, res) => {
-  const db = readDb();
-  res.json(refreshProductCosts(db.products, db.ingredients));
-});
-
-app.post('/api/products', (req, res) => {
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const sellingPrice = Number(body.sellingPrice ?? body.price ?? 0);
-    const recipe = Array.isArray(body.recipe) ? body.recipe : [];
-    const draft = {
-      id: body.id || 'PRD-' + Date.now(),
-      name: String(body.name || '').trim(),
-      category: body.category || 'Menu',
-      sellingPrice,
-      active: body.active ?? true,
-      emoji: body.emoji || '☕',
-      recipe,
-      hpp: Number(body.hpp ?? 0),
-    };
-
-    if (!draft.name || sellingPrice <= 0) return { error: 'Nama menu dan harga jual wajib diisi' };
-
-    const hpp = Math.round(calculateProductHpp(draft, db.ingredients));
-    const product = {
-      ...draft,
-      hpp,
-      margin: sellingPrice > 0 ? Math.round(((sellingPrice - hpp) / sellingPrice) * 100) : 0,
-      createdAt: new Date().toISOString(),
-    };
-
-    db.products.push(product);
-    db.activityLog.push({
-      id: 'ACT-' + Date.now(),
-      time: product.createdAt,
-      action: 'Menu baru ditambahkan: ' + product.name,
-      user: body.user || 'Owner',
-      type: 'menu',
-    });
-
-    return { product, state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(400).json({ error: result.error });
-  return res.status(201).json(result);
-});
-
-app.put('/api/products/:id', (req, res) => {
-  const { id } = req.params;
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const productIndex = db.products.findIndex((candidate) => String(candidate.id) === String(id));
-    if (productIndex === -1) return { error: 'Menu tidak ditemukan', statusCode: 404 };
-
-    const product = db.products[productIndex];
-    const sellingPrice = Number(body.sellingPrice ?? body.price ?? product.sellingPrice ?? 0);
-    const recipe = Array.isArray(body.recipe) ? body.recipe : product.recipe || [];
-
-    const draft = {
-      ...product,
-      name: String(body.name || product.name || '').trim(),
-      category: body.category || product.category || 'Menu',
-      sellingPrice,
-      active: body.active ?? product.active ?? true,
-      emoji: body.emoji || product.emoji || '☕',
-      recipe,
-    };
-    if (body.hpp !== undefined) {
-      draft.hpp = Number(body.hpp ?? 0);
-    }
-
-    if (!draft.name || sellingPrice <= 0) return { error: 'Nama menu dan harga jual wajib diisi' };
-
-    const hpp = Math.round(calculateProductHpp(draft, db.ingredients));
-    const updatedProduct = {
-      ...draft,
-      hpp,
-      margin: sellingPrice > 0 ? Math.round(((sellingPrice - hpp) / sellingPrice) * 100) : 0,
-      updatedAt: new Date().toISOString(),
-    };
-
-    db.products[productIndex] = updatedProduct;
-    db.activityLog.push({
-      id: 'ACT-' + Date.now(),
-      time: updatedProduct.updatedAt,
-      action: 'Menu diperbarui: ' + updatedProduct.name,
-      user: body.user || 'Owner',
-      type: 'menu',
-    });
-
-    return { product: updatedProduct, state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
-  return res.json(result);
-});
-
-app.delete('/api/products/:id', (req, res) => {
-  const { id } = req.params;
-  const result = updateDb((db) => {
-    const product = db.products.find((candidate) => String(candidate.id) === String(id));
-    if (!product) return { error: 'Menu tidak ditemukan', statusCode: 404 };
-
-    const usedInSales = db.sales.some((sale) =>
-      sale.items?.some((item) => String(item.productId) === String(id))
-    );
-    if (usedInSales) {
-      return {
-        error: 'Menu tidak bisa dihapus karena sudah memiliki riwayat transaksi penjualan. Silakan nonaktifkan menu ini.',
-        statusCode: 400,
-      };
-    }
-
-    db.products = db.products.filter((candidate) => String(candidate.id) !== String(id));
-    
-    const now = new Date().toISOString();
-    db.activityLog.push({
-      id: 'ACT-' + Date.now(),
-      time: now,
-      action: 'Menu dihapus: ' + product.name,
-      user: req.query.user || req.body?.user || 'Owner',
-      type: 'menu',
-    });
-
-    return { success: true, state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json({ error: result.error });
-  return res.json(result);
-});
-
-app.get('/api/ingredients', (req, res) => {
-  res.json(readDb().ingredients);
-});
-
-app.post('/api/ingredients', requireRole('owner'), (req, res) => {
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const name = String(body.name || '').trim();
-    const unit = String(body.unit || '').trim();
-    const category = String(body.category || 'bahan_baku').trim();
-    const stock = Number(body.stock ?? body.stockCurrent ?? 0);
-    const minStock = Number(body.minStock ?? 0);
-    const costPerUnit = Number(body.costPerUnit ?? 0);
-
-    if (!name) return { error: 'Nama bahan baku wajib diisi', statusCode: 400 };
-    if (!unit) return { error: 'Unit bahan baku wajib diisi', statusCode: 400 };
-    if (!Number.isFinite(stock) || stock < 0) {
-      return { error: 'Stok awal harus berupa angka positif', statusCode: 400 };
-    }
-    if (!Number.isFinite(minStock) || minStock < 0) {
-      return { error: 'Minimal stok harus berupa angka positif', statusCode: 400 };
-    }
-    if (!Number.isFinite(costPerUnit) || costPerUnit < 0) {
-      return { error: 'Biaya per unit harus berupa angka positif', statusCode: 400 };
-    }
-    const duplicate = db.ingredients.some(
-      (ingredient) => ingredient.name.toLowerCase() === name.toLowerCase(),
-    );
-    if (duplicate) return { error: 'Bahan baku dengan nama tersebut sudah ada', statusCode: 409 };
-
-    const numericIds = db.ingredients
-      .map((ingredient) => Number(ingredient.id))
-      .filter((id) => Number.isInteger(id));
-    const now = new Date().toISOString();
-    const ingredient = {
-      id: numericIds.length ? Math.max(...numericIds) + 1 : 1,
-      name,
-      category,
-      unit,
-      stock: Number(stock.toFixed(3)),
-      minStock: Number(minStock.toFixed(3)),
-      costPerUnit: Number(costPerUnit.toFixed(2)),
-      status: stock <= minStock ? 'kritis' : 'aman',
-      unitConversions: ingredientUnitConversions(unit),
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    db.ingredients.push(ingredient);
-    db.activityLog.push({
-      id: 'ACT-' + Date.now(),
-      time: now,
-      action: 'Bahan baku baru ditambahkan: ' + ingredient.name,
-      user: body.user || req.auth?.name || 'Owner',
-      type: 'stok',
-    });
-
-    return {
-      ingredient: stockContractFrom(ingredient),
-      stock: db.ingredients.map(stockContractFrom),
-      state: bootstrapPayload(db),
-    };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  return res.status(201).json(result);
-});
-
-app.delete('/api/ingredients/:id', requireRole('owner'), (req, res) => {
-  const { id } = req.params;
-  const result = updateDb((db) => {
-    const ingredientId = Number(id);
-    const ingredient = db.ingredients.find((candidate) => Number(candidate.id) === ingredientId);
-    if (!ingredient) {
-      return { error: 'Bahan baku tidak ditemukan', statusCode: 404 };
-    }
-
-    const usedInProducts = db.products.filter((product) =>
-      product.recipe?.some((recipe) => Number(recipe.ingredientId) === ingredientId)
-    );
-    if (usedInProducts.length > 0) {
-      const productNames = usedInProducts.map((p) => p.name).join(', ');
-      return {
-        error: `Bahan baku tidak bisa dihapus karena digunakan di resep: ${productNames}`,
-        statusCode: 400,
-      };
-    }
-
-    db.ingredients = db.ingredients.filter((candidate) => Number(candidate.id) !== ingredientId);
-    db.stockMovements = db.stockMovements.filter((movement) => Number(movement.ingredientId) !== ingredientId);
-
-    const now = new Date().toISOString();
-    db.activityLog.push({
-      id: 'ACT-' + Date.now(),
-      time: now,
-      action: 'Bahan baku dihapus: ' + ingredient.name,
-      user: req.auth?.name || 'Owner',
-      type: 'stok',
-    });
-
-    return { success: true, state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  return res.json(result);
-});
-
-
-app.get('/api/sales', (req, res) => {
-  const { date, all } = req.query;
-  const businessDate = date || today();
-  const sales = readDb().sales;
-  res.json(all === 'true' ? sales : sales.filter((sale) => sale.date?.startsWith(businessDate)));
-});
-
-app.post('/api/sales', (req, res) => {
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const transactionDate = body.date || body.transaction?.date || new Date().toISOString();
-    const lockError = checkCashLock(db, transactionDate.substring(0, 10));
-    if (lockError) return lockError;
-
-    const products = refreshProductCosts(db.products, db.ingredients);
-    const rawItems = Array.isArray(body.transaction?.items)
-      ? body.transaction.items
-      : Array.isArray(body.items)
-        ? body.items
-        : [];
-    if (!rawItems.length) return { error: 'Minimal satu item penjualan wajib diisi', statusCode: 400 };
-
-    const paymentMethod = body.transaction?.paymentMethod || body.paymentMethod || 'cash';
-
-    const transaction = body.transaction || {
-      id: `TRX-${Date.now()}`,
-      date: transactionDate,
-      items: rawItems,
-      total: Number(body.total || 0),
-      paymentMethod,
-      user: body.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner',
-    };
-    transaction.entrySource = body.entrySource || body.transaction?.entrySource || transaction.entrySource || 'manual';
-    transaction.items = transaction.items.map((item) => {
-      const product = products.find((candidate) => String(candidate.id) === String(item.productId));
-      const qty = Number(item.qty || item.quantity || 0);
-      const price = Number(item.price ?? product?.sellingPrice ?? 0);
-      const subtotal = Number(item.subtotal ?? price * qty);
-      return {
-        ...item,
-        productId: item.productId,
-        name: item.name || product?.name || 'Produk',
-        qty,
-        price,
-        subtotal,
-        normalPrice: item.normalPrice == null ? price : Number(item.normalPrice || 0),
-        discountAmount: Number(item.discountAmount || 0),
-        promoId: item.promoId || null,
-        promoName: item.promoName || null,
-        estimatedHpp: Math.round(Number(product?.hpp || item.estimatedHpp || 0) * qty),
-      };
-    });
-    if (transaction.items.some((item) => item.qty <= 0 || item.price < 0)) {
-      return { error: 'Qty item wajib lebih dari 0 dan harga tidak boleh negatif', statusCode: 400 };
-    }
-    transaction.total = Number(transaction.total || transaction.items.reduce(
-      (sum, item) => sum + Number(item.subtotal || 0),
-      0,
-    ));
-    if (!Number.isFinite(transaction.total) || transaction.total <= 0) {
-      return { error: 'Total penjualan wajib lebih dari 0', statusCode: 400 };
-    }
-    const paymentResult = normalizePaymentBreakdown(
-      body.paymentBreakdown || body.transaction?.paymentBreakdown,
-      transaction.total,
-      paymentMethod,
-    );
-    if (paymentResult.error) return paymentResult;
-    transaction.paymentBreakdown = paymentResult.breakdown;
-
-    // Inisialisasi data bon jika ada porsi debt
-    const debtAmount = Number(transaction.paymentBreakdown.debt || 0);
-    if (debtAmount > 0) {
-      transaction.customerName = body.customerName || body.transaction?.customerName || 'Pelanggan';
-      transaction.debtStatus = 'unpaid';
-      transaction.debtRemaining = debtAmount;
-      transaction.debtPayments = [];
-    }
-    transaction.paymentMethod = PAYMENT_METHODS.filter((method) => Number(transaction.paymentBreakdown[method] || 0) > 0).length > 1
-      ? 'mixed'
-      : PAYMENT_METHODS.find((method) => Number(transaction.paymentBreakdown[method] || 0) > 0) || paymentMethod;
-    transaction.estimatedHpp = transaction.items.reduce(
-      (sum, item) => sum + Number(item.estimatedHpp || 0),
-      0,
-    );
-    db.sales.push(transaction);
-
-    PAYMENT_METHODS.forEach((method) => {
-      const amount = Number(transaction.paymentBreakdown[method] || 0);
-      if (amount <= 0) return;
-      if (method === 'debt') return; // Bon tidak langsung masuk kas utama
-      const cashAccount = db.cashAccounts.find((account) => (
-        method === 'cash'
-          ? isCashDrawerAccount(account)
-          : method === 'qris'
-            ? String(account.type || '').toLowerCase() === 'qris'
-            : String(account.type || '').toLowerCase() === 'bank'
-      )) || (method === 'cash' ? findCashDrawerAccount(db) : db.cashAccounts[0]);
-
-      if (!cashAccount) return;
-      cashAccount.balance = Number(cashAccount.balance || 0) + amount;
-      db.cashTransactions.unshift({
-        id: `CTX-SALE-${Date.now()}-${method}-${transaction.id}`,
-        date: transaction.date,
-        type: 'in',
-        amount,
-        category: 'penjualan',
-        description: `Penjualan ${method.toUpperCase()}: ${transaction.items.map((item) => `${item.name} ${item.qty}x`).join(', ')}`,
-        accountId: cashAccount.id,
-        sourceType: 'sale',
-        sourceId: transaction.id,
-        user: transaction.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner',
-      });
-    });
-
-    const movements = buildSaleStockMovements(transaction, products);
-    db.stockMovements.push(...movements);
-    db.ingredients = applyStockMovements(db.ingredients, movements);
-
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: transaction.date,
-      action: `Input penjualan: ${transaction.items.map((item) => `${item.name} ${item.qty}x`).join(', ')}`,
-      user: transaction.user || body.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner',
-      type: 'penjualan',
-    });
-
-    return { transaction, movements, state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
   res.status(201).json(result);
 });
 
-app.put('/api/sales/:id/pay-debt', (req, res) => {
+app.put('/api/wallets/:id', (req, res) => {
   const { id } = req.params;
-  const { amount, paymentMethod, cashAccountId } = req.body || {};
-  const user = req.body?.user || getAuthenticatedUser(readDb(), req.auth)?.name || 'Owner';
-
-  const payAmount = Number(amount || 0);
-  if (!payAmount || payAmount <= 0) {
-    return res.status(400).json({ error: 'Nominal pelunasan wajib lebih dari 0' });
-  }
-  if (!['cash', 'qris', 'transfer'].includes(paymentMethod)) {
-    return res.status(400).json({ error: 'Metode pembayaran tidak valid' });
-  }
-  if (!cashAccountId) {
-    return res.status(400).json({ error: 'Akun kas penyetoran wajib dipilih' });
-  }
-
   const result = updateDb((db) => {
-    const sale = db.sales.find(s => String(s.id) === String(id));
-    if (!sale) {
-      return { error: 'Transaksi penjualan tidak ditemukan', statusCode: 404 };
+    const wallet = db.wallets.find(w => String(w.id) === String(id));
+    if (!wallet) return { error: 'Wallet tidak ditemukan', statusCode: 404 };
+    
+    if (req.body.name !== undefined) {
+      wallet.name = String(req.body.name).trim();
     }
-    if (sale.debtRemaining == null || sale.debtRemaining <= 0) {
-      return { error: 'Transaksi ini tidak memiliki sisa piutang/bon', statusCode: 400 };
+    if (req.body.balance !== undefined) {
+      wallet.balance = Number(req.body.balance || 0);
     }
-    if (payAmount > sale.debtRemaining) {
-      return { error: `Nominal pelunasan melebihi sisa tagihan (Maks: Rp ${sale.debtRemaining.toLocaleString('id-ID')})`, statusCode: 400 };
-    }
-
-    const cashAccount = db.cashAccounts.find(acc => String(acc.id) === String(cashAccountId));
-    if (!cashAccount) {
-      return { error: 'Akun kas penyetoran tidak ditemukan', statusCode: 404 };
-    }
-
-    // 1. Catat transaksi cicilan
-    const paymentId = `CTX-PAY-DEBT-${Date.now()}`;
-    const payment = {
-      id: paymentId,
-      date: new Date().toISOString(),
-      amount: payAmount,
-      paymentMethod,
-      cashAccountId,
-      user
-    };
-    sale.debtPayments.push(payment);
-
-    // 2. Update sisa bon & status
-    sale.debtRemaining = Number((sale.debtRemaining - payAmount).toFixed(2));
-    sale.debtStatus = sale.debtRemaining <= 0 ? 'paid' : 'partial';
-
-    // 3. Masukkan uang ke akun kas
-    cashAccount.balance = Number(cashAccount.balance || 0) + payAmount;
-
-    // 4. Buat Cash Transaction (CTX)
-    db.cashTransactions.unshift({
-      id: `CTX-SALE-DEBT-${Date.now()}-${id}`,
-      date: payment.date,
-      type: 'in',
-      amount: payAmount,
-      category: 'penjualan',
-      description: `Pelunasan Bon: ${sale.customerName} (Sisa tagihan: Rp ${sale.debtRemaining.toLocaleString('id-ID')})`,
-      accountId: cashAccount.id,
-      sourceType: 'sale',
-      sourceId: sale.id,
-      user
-    });
-
-    // 5. Audit Log
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: payment.date,
-      action: `Pelunasan cicilan bon Rp ${payAmount.toLocaleString('id-ID')} oleh ${sale.customerName}`,
-      user,
-      type: 'penjualan'
-    });
-
-    return { sale, state: bootstrapPayload(db) };
+    return wallet;
   });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  res.status(200).json(result);
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
 });
 
+app.delete('/api/wallets/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const index = db.wallets.findIndex(w => String(w.id) === String(id));
+    if (index === -1) return { error: 'Wallet tidak ditemukan', statusCode: 404 };
+    db.wallets.splice(index, 1);
+    return { success: true };
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
+});
+
+// -------------------------------------------------------------
+// Categories CRUD
+// -------------------------------------------------------------
+app.post('/api/categories', (req, res) => {
+  const { type, name } = req.body;
+  if (!type || !['income', 'expense'].includes(type)) {
+    return res.status(400).json({ error: 'Type harus income atau expense' });
+  }
+  if (!name || !String(name).trim()) {
+    return res.status(400).json({ error: 'Nama kategori wajib diisi' });
+  }
+  const categoryName = String(name).trim();
+  
+  const result = updateDb((db) => {
+    if (!db.categories) db.categories = { income: [], expense: [] };
+    if (!db.categories[type]) db.categories[type] = [];
+    
+    if (db.categories[type].includes(categoryName)) {
+      return { error: 'Kategori sudah ada', statusCode: 409 };
+    }
+    db.categories[type].push(categoryName);
+    return db.categories;
+  });
+  
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.status(201).json(result);
+});
+
+const deleteCategoryHandler = (req, res) => {
+  const type = req.params.type || req.body.type || req.query.type;
+  const name = req.params.name || req.body.name || req.query.name;
+  if (!type || !['income', 'expense'].includes(type)) {
+    return res.status(400).json({ error: 'Type harus income atau expense' });
+  }
+  if (!name) {
+    return res.status(400).json({ error: 'Nama kategori wajib diisi' });
+  }
+  const categoryName = String(name).trim();
+  
+  const result = updateDb((db) => {
+    if (!db.categories || !db.categories[type]) return { error: 'Kategori tidak ditemukan', statusCode: 404 };
+    const index = db.categories[type].indexOf(categoryName);
+    if (index === -1) return { error: 'Kategori tidak ditemukan', statusCode: 404 };
+    db.categories[type].splice(index, 1);
+    return db.categories;
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
+};
+
+app.delete('/api/categories', deleteCategoryHandler);
+app.delete('/api/categories/:type/:name', deleteCategoryHandler);
+
+// -------------------------------------------------------------
+// Incomes CRUD
+// -------------------------------------------------------------
+app.get('/api/incomes', (req, res) => {
+  const db = readDb();
+  res.json(db.incomes || []);
+});
+
+app.post('/api/incomes', (req, res) => {
+  const result = updateDb((db) => {
+    const { id, amount, walletId, category, description, date, user } = req.body;
+    if (amount === undefined || Number(amount) <= 0) {
+      return { error: 'Nominal income harus lebih dari 0', statusCode: 400 };
+    }
+    if (!walletId) {
+      return { error: 'Wallet ID wajib ditentukan', statusCode: 400 };
+    }
+    const wallet = db.wallets.find(w => String(w.id) === String(walletId));
+    if (!wallet) {
+      return { error: 'Wallet tidak ditemukan', statusCode: 404 };
+    }
+    
+    const incomeId = id || `inc-${Date.now()}`;
+    const newIncome = {
+      id: incomeId,
+      amount: Number(amount),
+      walletId,
+      category: category ? String(category).trim() : 'Lain-lain',
+      description: description ? String(description).trim() : '',
+      date: date || new Date().toISOString(),
+      user: user || 'Owner',
+      createdAt: new Date().toISOString()
+    };
+    
+    db.incomes.push(newIncome);
+    wallet.balance = Number((Number(wallet.balance || 0) + Number(amount)).toFixed(2));
+    
+    return newIncome;
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.status(201).json(result);
+});
+
+app.put('/api/incomes/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const incomeIndex = db.incomes.findIndex(inc => String(inc.id) === String(id));
+    if (incomeIndex === -1) return { error: 'Income tidak ditemukan', statusCode: 404 };
+    
+    const oldIncome = db.incomes[incomeIndex];
+    const newAmount = req.body.amount !== undefined ? Number(req.body.amount) : oldIncome.amount;
+    const newWalletId = req.body.walletId !== undefined ? req.body.walletId : oldIncome.walletId;
+    
+    if (newAmount <= 0) {
+      return { error: 'Nominal income harus lebih dari 0', statusCode: 400 };
+    }
+    
+    const oldWallet = db.wallets.find(w => String(w.id) === String(oldIncome.walletId));
+    const newWallet = db.wallets.find(w => String(w.id) === String(newWalletId));
+    if (!newWallet) {
+      return { error: 'Wallet tujuan tidak ditemukan', statusCode: 404 };
+    }
+    
+    if (oldWallet) {
+      oldWallet.balance = Number((Number(oldWallet.balance || 0) - Number(oldIncome.amount)).toFixed(2));
+    }
+    newWallet.balance = Number((Number(newWallet.balance || 0) + Number(newAmount)).toFixed(2));
+    
+    const updatedIncome = {
+      ...oldIncome,
+      amount: newAmount,
+      walletId: newWalletId,
+      category: req.body.category !== undefined ? String(req.body.category).trim() : oldIncome.category,
+      description: req.body.description !== undefined ? String(req.body.description).trim() : oldIncome.description,
+      date: req.body.date !== undefined ? req.body.date : oldIncome.date,
+      user: req.body.user !== undefined ? req.body.user : oldIncome.user,
+      updatedAt: new Date().toISOString()
+    };
+    
+    db.incomes[incomeIndex] = updatedIncome;
+    return updatedIncome;
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
+});
+
+app.delete('/api/incomes/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const index = db.incomes.findIndex(inc => String(inc.id) === String(id));
+    if (index === -1) return { error: 'Income tidak ditemukan', statusCode: 404 };
+    
+    const income = db.incomes[index];
+    const wallet = db.wallets.find(w => String(w.id) === String(income.walletId));
+    if (wallet) {
+      wallet.balance = Number((Number(wallet.balance || 0) - Number(income.amount)).toFixed(2));
+    }
+    
+    db.incomes.splice(index, 1);
+    return { success: true };
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
+});
+
+// -------------------------------------------------------------
+// Expenses CRUD
+// -------------------------------------------------------------
 app.get('/api/expenses', (req, res) => {
-  const { date, all } = req.query;
-  const businessDate = date || today();
-  const expenses = readDb().expenses;
-  const filtered = all === 'true' ? expenses : expenses.filter((expense) => expense.date?.startsWith(businessDate));
-  res.json(filtered.map(expenseContractFrom));
+  const db = readDb();
+  res.json(db.expenses || []);
 });
 
 app.post('/api/expenses', (req, res) => {
   const result = updateDb((db) => {
-    const body = req.body || {};
-    const expenseDate = body.date || body.expense?.date || today();
-
-    const items = Array.isArray(body.expense?.items)
-      ? body.expense.items
-      : Array.isArray(body.items)
-        ? body.items
-        : [];
-    if (!items.length) return { error: 'Minimal satu item pengeluaran wajib diisi', statusCode: 400 };
-    const total = Number(body.expense?.total ?? body.total ?? items.reduce(
-      (sum, item) => sum + Number(item.amount ?? item.total ?? 0),
-      0,
-    ));
-    if (!Number.isFinite(total) || total <= 0) {
-      return { error: 'Total pengeluaran wajib lebih dari 0', statusCode: 400 };
+    const { id, amount, total, walletId, category, description, date, user, purchasedIngredients } = req.body;
+    const expenseValue = amount !== undefined ? Number(amount) : (total !== undefined ? Number(total) : 0);
+    if (expenseValue <= 0) {
+      return { error: 'Nominal expense harus lebih dari 0', statusCode: 400 };
     }
-    const defaultCashAccountId = db.cashAccounts.find((account) => (
-      ['cash', 'tunai'].includes(String(account.type || '').toLowerCase())
-    ))?.id || db.cashAccounts[0]?.id || null;
-    const cashAccountId = body.cashAccountId || body.expense?.cashAccountId || defaultCashAccountId;
-    const cashAccount = cashAccountId
-      ? db.cashAccounts.find((account) => String(account.id) === String(cashAccountId))
-      : null;
-    if (!cashAccount || isCashDrawerAccount(cashAccount)) {
-      const lockError = checkCashLock(db, expenseDate.substring(0, 10));
-      if (lockError) return lockError;
+    if (!walletId) {
+      return { error: 'Wallet ID wajib ditentukan', statusCode: 400 };
     }
-
-    const expense = {
-      id: body.expense?.id || body.id || `EXP-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      date: body.expense?.date || body.date || new Date().toISOString(),
-      category: body.expense?.category || body.category || 'lainnya',
-      description: body.expense?.description || body.description || 'Pengeluaran manual',
-      items: items.map((item) => ({
-        ...item,
-        amount: Number(item.amount ?? item.total ?? 0),
-      })),
-      total,
-      status: 'approved',
-      photoUrl: body.proofUrl || body.photoUrl || body.expense?.photoUrl || null,
-      proofUrl: body.proofUrl || body.photoUrl || body.expense?.proofUrl || null,
-      sourceType: body.expense?.sourceType || 'manual',
-      cashAccountId: cashAccount?.id || null,
-      user: body.expense?.user || body.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner',
+    const wallet = db.wallets.find(w => String(w.id) === String(walletId));
+    if (!wallet) {
+      return { error: 'Wallet tidak ditemukan', statusCode: 404 };
+    }
+    
+    const expenseId = id || `exp-${Date.now()}`;
+    const newExpense = {
+      id: expenseId,
+      amount: expenseValue,
+      total: expenseValue,
+      walletId,
+      category: category ? String(category).trim() : 'Lain-lain',
+      description: description ? String(description).trim() : '',
+      date: date || new Date().toISOString(),
+      user: user || 'Owner',
+      purchasedIngredients: purchasedIngredients || [],
+      createdAt: new Date().toISOString()
     };
-
-
-    if (cashAccount) {
-      cashAccount.balance = Number(cashAccount.balance || 0) - expense.total;
-      db.cashTransactions.unshift({
-        id: `CTX-EXP-${Date.now()}-${expense.id}`,
-        date: expense.date,
-        type: 'out',
-        amount: expense.total,
-        category: 'pengeluaran',
-        description: expense.description,
-        accountId: cashAccount.id,
-        sourceType: 'expense',
-        sourceId: expense.id,
-        user: expense.user,
-      });
+    
+    wallet.balance = Number((Number(wallet.balance || 0) - expenseValue).toFixed(2));
+    db.expenses.push(newExpense);
+    
+    if (newExpense.category === 'Pembelian Bahan Baku' && purchasedIngredients) {
+      updateIngredientCosts(db, purchasedIngredients);
     }
-    // Automatically apply stock movements and update purchase costs if approved
-    let movements = [];
-    if (expense.status === 'approved' || expense.status === 'auto_approved') {
-      movements = buildExpenseStockMovements(expense);
-      db.stockMovements.push(...movements);
-      db.ingredients = applyPurchaseCosts(db.ingredients, expense.items || []);
-      db.ingredients = applyStockMovements(db.ingredients, movements);
-    }
-
-    db.expenses.unshift(expense);
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: expense.date,
-      action: `Input pengeluaran: ${expense.description} Rp ${Number(expense.total || 0).toLocaleString('id-ID')}`,
-      user: expense.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner',
-      type: 'pengeluaran',
-    });
-
-    return { expense, movements, state: bootstrapPayload(db) };
+    
+    return newExpense;
   });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  result.expense = expenseContractFrom(result.expense);
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
   res.status(201).json(result);
-});
-
-app.post('/api/expenses/:id/stock-items', requireRole('owner'), (req, res) => {
-  const { id } = req.params;
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const expense = db.expenses.find((candidate) => String(candidate.id) === String(id));
-    if (!expense) return { error: 'Pengeluaran tidak ditemukan', statusCode: 404 };
-    if (expense.status === 'rejected') {
-      return { error: 'Pengeluaran yang sudah dibatalkan tidak bisa dihubungkan ke stok', statusCode: 400 };
-    }
-
-    const normalized = normalizeExpenseStockItem(body.item || body, db.ingredients);
-    if (normalized.error) return normalized;
-    const item = normalized.item;
-
-    const existingItems = Array.isArray(expense.items) ? expense.items : [];
-    const duplicateIngredient = existingItems.some((existingItem) => (
-      existingItem.addsStock && String(existingItem.ingredientId) === String(item.ingredientId)
-    ));
-    if (duplicateIngredient) {
-      return { error: 'Bahan ini sudah pernah dihubungkan ke pengeluaran tersebut', statusCode: 409 };
-    }
-
-    const linkedTotal = existingItems
-      .filter((existingItem) => existingItem.addsStock)
-      .reduce((sum, existingItem) => sum + Number(existingItem.total ?? existingItem.amount ?? 0), 0);
-    const remainingTotal = Number(expense.total || 0) - linkedTotal;
-    if (remainingTotal <= 0) {
-      return { error: 'Nominal pengeluaran ini sudah seluruhnya terhubung ke stok', statusCode: 409 };
-    }
-    if (Number(item.total || 0) > remainingTotal + 0.5) {
-      return {
-        error: `Nominal item stok melebihi sisa pengeluaran Rp ${remainingTotal.toLocaleString('id-ID')}`,
-        statusCode: 400,
-      };
-    }
-
-    const now = new Date().toISOString();
-    expense.items = [...existingItems, item];
-    expense.category = expense.category === 'lainnya' ? 'bahan_baku' : expense.category;
-    expense.sourceType = expense.sourceType === 'manual' ? 'manual_reconciled' : expense.sourceType || 'manual_reconciled';
-    expense.stockReconciledAt = now;
-    expense.updatedAt = now;
-
-    const movements = buildExpenseStockMovements({ ...expense, items: [item] });
-    db.stockMovements.push(...movements);
-    db.ingredients = applyPurchaseCosts(db.ingredients, [item]);
-    db.ingredients = applyStockMovements(db.ingredients, movements);
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: now,
-      action: `Hubungkan pengeluaran ${expense.description} ke stok: ${item.name} ${item.stockQty} ${item.stockUnit}`,
-      user: body.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner',
-      type: 'stok',
-    });
-
-    return { expense, movements, state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  result.expense = expenseContractFrom(result.expense);
-  return res.json(result);
-});
-
-app.patch('/api/expenses/:id/status', (req, res) => {
-  const { id } = req.params;
-  const { status, user = 'Owner' } = req.body || {};
-  if (!['auto_approved', 'pending', 'approved', 'rejected'].includes(status)) {
-    return res.status(400).json({ error: 'Status tidak valid' });
-  }
-
-  const result = updateDb((db) => {
-    const expense = db.expenses.find((candidate) => String(candidate.id) === String(id));
-    if (!expense) return null;
-
-    const oldStatus = expense.status;
-    const newStatus = status;
-
-    if (oldStatus === newStatus) return { expense, state: bootstrapPayload(db) };
-
-    expense.status = newStatus;
-    const now = new Date().toISOString();
-
-    // 1. Transition to 'rejected' -> Restore cash and reverse stock movements
-    if (newStatus === 'rejected') {
-      const txId = expense.cashTransactionId;
-      const tx = db.cashTransactions.find(t => String(t.id) === String(txId)) || 
-                 db.cashTransactions.find(t => t.sourceType === 'receipt_expense' && String(t.sourceId) === String(expense.id));
-      
-      const cashAccountId = expense.cashAccountId || tx?.accountId;
-      if (cashAccountId) {
-        const cashAccount = db.cashAccounts.find(a => String(a.id) === String(cashAccountId));
-        if (cashAccount) {
-          cashAccount.balance = Number(cashAccount.balance || 0) + expense.total;
-        }
-      }
-      
-      if (tx || txId) {
-        db.cashTransactions = db.cashTransactions.filter(
-          t => String(t.id) !== String(txId) && !(t.sourceType === 'receipt_expense' && String(t.sourceId) === String(expense.id))
-        );
-        expense.cashTransactionId = null;
-      }
-
-      // Reverse stock movements
-      const movements = db.stockMovements.filter(m => String(m.sourceId) === String(expense.id));
-      movements.forEach((m) => {
-        const ingredient = db.ingredients.find(i => String(i.id) === String(m.ingredientId));
-        if (ingredient) {
-          ingredient.stock = Math.max(0, Number((Number(ingredient.stock || 0) - m.qty).toFixed(3)));
-          ingredient.status = getIngredientStatus(ingredient.stock, ingredient.minStock);
-        }
-      });
-      db.stockMovements = db.stockMovements.filter(m => String(m.sourceId) !== String(expense.id));
-    }
-
-    // 2. Transition from 'rejected' back to active -> Re-deduct cash and apply stock movements
-    if (oldStatus === 'rejected' && ['approved', 'pending', 'auto_approved'].includes(newStatus)) {
-      const defaultCashAccountId = db.cashAccounts.find((account) => (
-        ['cash', 'tunai'].includes(String(account.type || '').toLowerCase())
-      ))?.id || db.cashAccounts[0]?.id || null;
-      const cashAccountId = expense.cashAccountId || defaultCashAccountId;
-      const cashAccount = cashAccountId
-        ? db.cashAccounts.find((account) => String(account.id) === String(cashAccountId))
-        : null;
-
-      if (cashAccount) {
-        const cashTransaction = {
-          id: `CTX-${Date.now()}-${expense.id}`,
-          date: expense.date,
-          type: 'out',
-          amount: expense.total,
-          category: 'pengeluaran',
-          description: expense.description,
-          accountId: cashAccount.id,
-          sourceType: 'receipt_expense',
-          sourceId: expense.id,
-          user: expense.user,
-        };
-        cashAccount.balance = Number(cashAccount.balance || 0) - expense.total;
-        expense.cashTransactionId = cashTransaction.id;
-        expense.cashAccountId = cashAccount.id;
-        db.cashTransactions = [cashTransaction, ...db.cashTransactions];
-      }
-
-      // Recreate stock movements
-      const movements = buildExpenseStockMovements(expense);
-      db.stockMovements.push(...movements);
-      db.ingredients = applyPurchaseCosts(db.ingredients, expense.items || []);
-      db.ingredients = applyStockMovements(db.ingredients, movements);
-    }
-
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: now,
-      action: `Pengeluaran ${expense.id} ${newStatus === 'approved' ? 'disetujui' : newStatus === 'rejected' ? 'ditolak' : 'diubah status ke ' + newStatus}`,
-      user,
-      type: 'approval',
-    });
-    return { expense, state: bootstrapPayload(db) };
-  });
-
-  if (!result) return notFound(res, 'Pengeluaran');
-  return res.json(result);
 });
 
 app.put('/api/expenses/:id', (req, res) => {
   const { id } = req.params;
   const result = updateDb((db) => {
-    const body = req.body || {};
-    const expenseIndex = db.expenses.findIndex((candidate) => String(candidate.id) === String(id));
-    if (expenseIndex === -1) return { error: 'Pengeluaran tidak ditemukan', statusCode: 404 };
-
+    const expenseIndex = db.expenses.findIndex(exp => String(exp.id) === String(id));
+    if (expenseIndex === -1) return { error: 'Expense tidak ditemukan', statusCode: 404 };
+    
     const oldExpense = db.expenses[expenseIndex];
+    const oldVal = oldExpense.amount !== undefined ? oldExpense.amount : (oldExpense.total !== undefined ? oldExpense.total : 0);
+    const newAmount = req.body.amount !== undefined ? Number(req.body.amount) : req.body.total !== undefined ? Number(req.body.total) : oldVal;
+    const newWalletId = req.body.walletId !== undefined ? req.body.walletId : oldExpense.walletId;
     
-    // Check lock for old date
-    const oldLockError = checkCashLock(db, oldExpense.date.substring(0, 10));
-    if (oldLockError) return oldLockError;
-
-    // Determine new date
-    const newDate = body.date || oldExpense.date;
+    if (newAmount <= 0) {
+      return { error: 'Nominal expense harus lebih dari 0', statusCode: 400 };
+    }
     
-    // Check lock for new date
-    const newLockError = checkCashLock(db, newDate.substring(0, 10));
-    if (newLockError) return newLockError;
-
-    const description = String(body.description || oldExpense.description || '').trim();
-    const total = Number(body.total ?? oldExpense.total ?? 0);
-    const category = body.category || oldExpense.category || 'lainnya';
-
-    if (!description || total <= 0) {
-      return { error: 'Deskripsi dan nominal wajib diisi', statusCode: 400 };
+    const oldWallet = db.wallets.find(w => String(w.id) === String(oldExpense.walletId));
+    const newWallet = db.wallets.find(w => String(w.id) === String(newWalletId));
+    if (!newWallet) {
+      return { error: 'Wallet tidak ditemukan', statusCode: 404 };
     }
-
-    const priceDiff = total - oldExpense.total;
-    const oldCashAccountId = oldExpense.cashAccountId;
-    const newCashAccountId = body.cashAccountId || oldExpense.cashAccountId;
-
-    if (String(oldCashAccountId) !== String(newCashAccountId)) {
-      if (oldCashAccountId) {
-        const oldAccount = db.cashAccounts.find(a => String(a.id) === String(oldCashAccountId));
-        if (oldAccount) oldAccount.balance = Number(oldAccount.balance || 0) + oldExpense.total;
-      }
-      if (newCashAccountId) {
-        const newAccount = db.cashAccounts.find(a => String(a.id) === String(newCashAccountId));
-        if (newAccount) newAccount.balance = Number(newAccount.balance || 0) - total;
-      }
-    } else {
-      if (newCashAccountId) {
-        const cashAccount = db.cashAccounts.find(a => String(a.id) === String(newCashAccountId));
-        if (cashAccount) cashAccount.balance = Number(cashAccount.balance || 0) - priceDiff;
-      }
+    
+    if (oldWallet) {
+      oldWallet.balance = Number((Number(oldWallet.balance || 0) + Number(oldVal)).toFixed(2));
     }
-
-    // Update corresponding cash transactions
-    db.cashTransactions = db.cashTransactions.map(tx => {
-      if ((tx.sourceType === 'expense' || tx.sourceType === 'receipt_expense') && String(tx.sourceId) === String(id)) {
-        return {
-          ...tx,
-          accountId: newCashAccountId,
-          amount: total,
-          description,
-          date: newDate,
-        };
-      }
-      return tx;
-    });
-
-    // Update expense in db
+    newWallet.balance = Number((Number(newWallet.balance || 0) - Number(newAmount)).toFixed(2));
+    
+    const category = req.body.category !== undefined ? String(req.body.category).trim() : oldExpense.category;
+    const purchasedIngredients = req.body.purchasedIngredients !== undefined ? req.body.purchasedIngredients : oldExpense.purchasedIngredients;
+    
     const updatedExpense = {
       ...oldExpense,
-      description,
-      total,
-      date: newDate,
+      amount: newAmount,
+      total: newAmount,
+      walletId: newWalletId,
       category,
-      cashAccountId: newCashAccountId,
-      items: [{
-        name: description,
-        qty: 1,
-        unit: 'pcs',
-        price: total,
-        total: total,
-        addsStock: false,
-      }],
-      updatedAt: new Date().toISOString(),
+      description: req.body.description !== undefined ? String(req.body.description).trim() : oldExpense.description,
+      date: req.body.date !== undefined ? req.body.date : oldExpense.date,
+      user: req.body.user !== undefined ? req.body.user : oldExpense.user,
+      purchasedIngredients,
+      updatedAt: new Date().toISOString()
     };
-
+    
     db.expenses[expenseIndex] = updatedExpense;
-
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: new Date().toISOString(),
-      action: `Perbarui pengeluaran: ${oldExpense.description} (Rp ${oldExpense.total}) menjadi ${description} (Rp ${total}) tanggal ${newDate.substring(0, 10)}`,
-      user: body.user || 'Owner',
-      type: 'pengeluaran',
-    });
-
-    return { expense: updatedExpense, state: bootstrapPayload(db) };
+    
+    if (category === 'Pembelian Bahan Baku' && purchasedIngredients) {
+      updateIngredientCosts(db, purchasedIngredients);
+    }
+    
+    return updatedExpense;
   });
-
-  if (!result) return notFound(res, 'Pengeluaran');
-  if (result.error) return res.status(result.statusCode || 400).json(result);
-  return res.json(result);
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
 });
 
-app.post('/api/receipts/scan', upload.single('receipt'), async (req, res, next) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'File resi wajib diunggah' });
-    }
-
-    const uploadRecord = saveUploadedFile(req.file, { folder: 'receipts' });
-    const result = await scanReceipt({
-      file: req.file,
-      upload: uploadRecord,
-      ingredients: readDb().ingredients,
-    });
-    if (result?.error) return res.status(result.statusCode || 400).json(result);
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-app.post('/api/sales-notes/scan', upload.single('note'), async (req, res, next) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'File catatan wajib diunggah' });
-    }
-
-    const db = readDb();
-    const uploadRecord = saveUploadedFile(req.file, { folder: 'sales-notes' });
-    const result = await scanSalesNote({
-      file: req.file,
-      upload: uploadRecord,
-      products: refreshProductCosts(db.products, db.ingredients),
-    });
-    if (result?.error) return res.status(result.statusCode || 400).json(result);
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-app.post('/api/receipt-expenses', (req, res) => {
+app.delete('/api/expenses/:id', (req, res) => {
+  const { id } = req.params;
   const result = updateDb((db) => {
-    const body = req.body || {};
-    const receipt = body.receipt || {};
-    const receiptDate = normalizeReceiptDate(receipt.transactionDate || body.expense?.date);
-    if (!receiptDate) return { error: 'Tanggal resi tidak valid', statusCode: 400 };
-
-    const lockError = checkCashLock(db, receiptDate.substring(0, 10));
-    if (lockError) return lockError;
-
-    const normalizedItems = normalizeReceiptItems(receipt.items || body.expense?.items, db.ingredients);
-    if (normalizedItems.error) return normalizedItems;
-
-    const items = normalizedItems.items;
-    const total = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
-    if (!Number.isFinite(total) || total <= 0) {
-      return { error: 'Total resi wajib lebih dari 0', statusCode: 400 };
+    const index = db.expenses.findIndex(exp => String(exp.id) === String(id));
+    if (index === -1) return { error: 'Expense tidak ditemukan', statusCode: 404 };
+    
+    const expense = db.expenses[index];
+    const expenseVal = expense.amount !== undefined ? expense.amount : (expense.total !== undefined ? expense.total : 0);
+    const wallet = db.wallets.find(w => String(w.id) === String(expense.walletId));
+    if (wallet) {
+      wallet.balance = Number((Number(wallet.balance || 0) + Number(expenseVal)).toFixed(2));
     }
-
-    const incomingUpload = body.upload || receipt.upload || {};
-    const uploadRecord = {
-      id: incomingUpload.id || `RCPT-${Date.now()}`,
-      originalFileName: incomingUpload.originalFileName || receipt.originalFileName || null,
-      imageUrl: incomingUpload.imageUrl || receipt.imageUrl || body.imageUrl || null,
-      fileName: incomingUpload.fileName || null,
-      mimeType: incomingUpload.mimeType || null,
-      fileSize: incomingUpload.fileSize || receipt.fileSize || null,
-      aiStatus: 'confirmed',
-      aiSource: receipt.source || null,
-      aiConfidence: Number(receipt.confidence || 0),
-      aiRaw: receipt,
-      createdAt: new Date().toISOString(),
-      user: body.user || body.expense?.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner',
-    };
-    if (receiptAlreadyConfirmed(db.receiptUploads, uploadRecord)) {
-      return { error: 'Resi ini sudah pernah dikonfirmasi', statusCode: 409, upload: uploadRecord };
-    }
-
-    const requestedStatus = body.expense?.status;
-    if (requestedStatus && !EXPENSE_STATUSES.has(requestedStatus)) {
-      return { error: 'Status pengeluaran tidak valid', statusCode: 400 };
-    }
-
-    const defaultCashAccountId = db.cashAccounts.find((account) => (
-      ['cash', 'tunai'].includes(String(account.type || '').toLowerCase())
-    ))?.id || db.cashAccounts[0]?.id || null;
-    const cashAccountId = body.cashAccountId || body.expense?.cashAccountId || defaultCashAccountId;
-    const cashAccount = cashAccountId
-      ? db.cashAccounts.find((account) => String(account.id) === String(cashAccountId))
-      : null;
-    if (cashAccountId && !cashAccount) {
-      return { error: 'Akun kas pengeluaran tidak ditemukan', statusCode: 400 };
-    }
-
-    const merchantName = String(receipt.merchantName || body.expense?.merchantName || '').trim();
-    const expense = {
-      id: body.expense?.id || `EXP-${Date.now()}`,
-      date: receiptDate,
-      category: body.expense?.category || (items.some((item) => item.category === 'packaging') ? 'packaging' : 'bahan_baku'),
-      description: body.expense?.description || `Resi ${merchantName || 'pembelian'}`,
-      items,
-      total,
-      status: 'approved',
-      photoUrl: uploadRecord.imageUrl,
-      proofUrl: uploadRecord.imageUrl,
-      sourceType: 'receipt_ai',
-      cashAccountId: cashAccount?.id || null,
-      receiptUploadId: uploadRecord.id,
-      user: uploadRecord.user,
-    };
-    uploadRecord.expenseId = expense.id;
-
-    const cashTransaction = cashAccount ? {
-      id: `CTX-${Date.now()}-${expense.id}`,
-      date: expense.date,
-      type: 'out',
-      amount: expense.total,
-      category: 'pengeluaran',
-      description: expense.description,
-      accountId: cashAccount.id,
-      sourceType: 'receipt_expense',
-      sourceId: expense.id,
-      user: expense.user,
-    } : null;
-    if (cashTransaction) {
-      cashAccount.balance = Number(cashAccount.balance || 0) - expense.total;
-      expense.cashTransactionId = cashTransaction.id;
-    }
-    // Automatically apply stock movements and update purchase costs if approved
-    let movements = [];
-    if (expense.status === 'approved' || expense.status === 'auto_approved') {
-      movements = buildExpenseStockMovements(expense);
-      db.stockMovements.push(...movements);
-      db.ingredients = applyPurchaseCosts(db.ingredients, expense.items || []);
-      db.ingredients = applyStockMovements(db.ingredients, movements);
-    }
-
-    db.expenses.unshift(expense);
-    db.receiptUploads.unshift(uploadRecord);
-    if (cashTransaction) db.cashTransactions = [cashTransaction, ...db.cashTransactions];
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: expense.date,
-      action: `Upload resi ${expense.description} Rp ${Number(expense.total || 0).toLocaleString('id-ID')}`,
-      user: expense.user,
-      type: 'pengeluaran',
-    });
-
-    return { expense, upload: uploadRecord, cashTransaction, movements, state: bootstrapPayload(db) };
+    
+    db.expenses.splice(index, 1);
+    return { success: true };
   });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  res.status(201).json(result);
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
 });
 
-app.get('/api/stock-movements', (req, res) => {
-  res.json(readDb().stockMovements);
-});
-
-app.get('/api/stock', (req, res) => {
-  res.json(readDb().ingredients.map(stockContractFrom));
-});
-
-app.post('/api/stock/adjust', (req, res) => {
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const ingredient = db.ingredients.find(
-      (candidate) => String(candidate.id) === String(body.ingredientId),
-    );
-    if (!ingredient) return { error: 'Bahan tidak ditemukan' };
-
-    const requestedType = String(body.type || body.movementType || '').trim();
-    const directionMap = {
-      in: 'masuk',
-      masuk: 'masuk',
-      out: 'keluar',
-      keluar: 'keluar',
-      waste: 'keluar',
-    };
-    const direction = directionMap[requestedType];
-    if (!direction) return { error: 'Type stok harus in, out, atau waste', statusCode: 400 };
-
-    const qty = Number(body.amount ?? body.qty ?? 0);
-    const now = new Date().toISOString();
-    const movement = {
-      id: 'SM-' + Date.now() + '-' + ingredient.id,
-      ingredientId: ingredient.id,
-      type: direction,
-      movementType: requestedType === 'waste' ? 'waste' : direction === 'masuk' ? 'in' : 'out',
-      qty: Math.abs(qty),
-      unit: body.unit || ingredient.unit,
-      source: body.notes || body.reason || 'Koreksi stok manual',
-      sourceType: 'manual',
-      sourceId: null,
-      date: now,
-      user: body.user || 'Owner',
-    };
-
-    if (!movement.qty) return { error: 'Jumlah koreksi stok wajib lebih dari 0', statusCode: 400 };
-
-    db.stockMovements.push(movement);
-    db.ingredients = applyStockMovements(db.ingredients, [movement]);
-    db.activityLog.push({
-      id: 'ACT-' + Date.now(),
-      time: now,
-      action: 'Koreksi stok ' + ingredient.name + ': ' + (body.reason || '-'),
-      user: movement.user,
-      type: 'stok',
-    });
-
-    return {
-      movement,
-      movements: [movement],
-      stock: db.ingredients.map(stockContractFrom),
-      state: bootstrapPayload(db),
-    };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  return res.status(201).json(result);
-});
-
-app.get('/api/opening-capital', requireRole('owner'), (req, res) => {
-  res.json(openingCapitalPayload(readDb().openingCapital));
-});
-
-app.put('/api/opening-capital', requireRole('owner'), (req, res) => {
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const businessStartDate = body.businessStartDate || body.date || null;
-    const cashCapital = Number(body.cashCapital ?? 0);
-    const assetContributions = normalizeCapitalItems(body.assetContributions, 'asset');
-    const inventoryContributions = normalizeCapitalItems(body.inventoryContributions, 'inventory');
-    const personalExcludedItems = normalizeCapitalItems(body.personalExcludedItems, 'personal');
-
-    if (businessStartDate && !/^\d{4}-\d{2}-\d{2}$/.test(String(businessStartDate))) {
-      return { error: 'businessStartDate harus format YYYY-MM-DD', statusCode: 400 };
-    }
-    if (!Number.isFinite(cashCapital) || cashCapital < 0) {
-      return { error: 'cashCapital harus berupa angka positif', statusCode: 400 };
-    }
-
-    const validations = [
-      validateCapitalItems(assetContributions, 'assetContributions'),
-      validateCapitalItems(inventoryContributions, 'inventoryContributions'),
-      validateCapitalItems(personalExcludedItems, 'personalExcludedItems'),
-    ].filter(Boolean);
-    if (validations[0]) return { ...validations[0], statusCode: 400 };
-
-    const now = new Date().toISOString();
-    const user = getAuthenticatedUser(db, req.auth)?.name || body.user || 'Owner';
-    const previous = db.openingCapital || {};
-    db.openingCapital = {
-      businessStartDate,
-      cashCapital,
-      assetContributions,
-      inventoryContributions,
-      personalExcludedItems,
-      notes: String(body.notes || '').trim(),
-      createdBy: previous.createdBy || user,
-      createdAt: previous.createdAt || now,
-      updatedBy: user,
-      updatedAt: now,
-    };
-
-    // Update ingredients starting stock and unit cost based on inventory contributions
-    db.ingredients = db.ingredients.map((ingredient) => {
-      const contribution = inventoryContributions.find(
-        (c) => String(c.ingredientId) === String(ingredient.id)
-      );
-      if (contribution) {
-        const qty = Number(contribution.quantity || 0);
-        const val = Number(contribution.estimatedValue || 0);
-        const cost = qty > 0 ? Number((val / qty).toFixed(3)) : 0;
-        return {
-          ...ingredient,
-          stock: qty,
-          costPerUnit: cost,
-          status: qty <= (ingredient.minStock || 0) ? 'kritis' : 'aman',
-          updatedAt: now,
-        };
-      }
-      return ingredient;
-    });
-
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: now,
-      action: `Update modal awal usaha: Rp ${openingCapitalPayload(db.openingCapital).totals.businessCapital.toLocaleString('id-ID')}`,
-      user,
-      type: 'kas',
-    });
-
-    return { openingCapital: openingCapitalPayload(db.openingCapital), state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  return res.json(result);
-});
-
-app.get('/api/cash/expected', (req, res) => {
-  const openingCash = req.query.openingCash != null ? Number(req.query.openingCash) : undefined;
-  if (openingCash != null && (!Number.isFinite(openingCash) || openingCash < 0)) {
-    return res.status(400).json({ error: 'openingCash harus berupa angka positif' });
-  }
-
-  return res.json(cashExpectedPayload(readDb(), {
-    date: req.query.date,
-    openingCash,
-  }));
-});
-
-app.get('/api/cash/owner', requireRole('owner'), (req, res) => {
-  const openingCash = req.query.openingCash != null ? Number(req.query.openingCash) : undefined;
-  if (openingCash != null && (!Number.isFinite(openingCash) || openingCash < 0)) {
-    return res.status(400).json({ error: 'openingCash harus berupa angka positif' });
-  }
-
-  res.json(ownerCashPayload(readDb(), {
-    date: req.query.date,
-    openingCash,
-    limit: req.query.limit,
-    type: req.query.type,
-    accountId: req.query.accountId,
-  }));
-});
-
-app.get('/api/cash/accounts', requireRole('owner'), (req, res) => {
-  res.json(cashLedgerPayload(readDb(), {
-    limit: req.query.limit,
-    type: req.query.type,
-    accountId: req.query.accountId,
-    date: req.query.date,
-  }));
-});
-
-app.get('/api/cash/transactions', requireRole('owner'), (req, res) => {
-  res.json(cashLedgerPayload(readDb(), {
-    limit: req.query.limit,
-    type: req.query.type,
-    accountId: req.query.accountId,
-    date: req.query.date,
-  }).cashTransactions);
-});
-
-app.post('/api/cash/transactions', requireRole('owner'), (req, res) => {
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const type = String(body.type || '').trim();
-    const amount = Number(body.amount || 0);
-    const description = String(body.description || '').trim();
-    const user = body.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner';
-
-    if (!['in', 'out', 'transfer', 'koreksi'].includes(type)) {
-      return { error: 'Jenis mutasi kas tidak valid', statusCode: 400 };
-    }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return { error: 'Nominal kas wajib lebih dari 0', statusCode: 400 };
-    }
-    if (!description) {
-      return { error: 'Catatan atau alasan wajib diisi', statusCode: 400 };
-    }
-
-    const now = new Date().toISOString();
-    const transactionDate = body.date || now;
-    // Bypassed cash lock check for owner manual cash adjustments (Transfer, Koreksi, dll)
-    // const lockError = checkCashLock(db, String(transactionDate).substring(0, 10));
-    // if (lockError) return lockError;
-
-    const transaction = {
-      id: `CTX-${Date.now()}`,
-      date: transactionDate,
-      type,
-      amount,
-      category: body.category || type,
-      description,
-      user,
-    };
-
-    const findAccount = (id) => db.cashAccounts.find((account) => String(account.id) === String(id));
-
-    if (type === 'transfer') {
-      const fromAccount = findAccount(body.fromAccountId);
-      const toAccount = findAccount(body.toAccountId);
-      if (!fromAccount || !toAccount) return { error: 'Akun asal atau tujuan tidak ditemukan', statusCode: 400 };
-      if (fromAccount.id === toAccount.id) return { error: 'Akun asal dan tujuan tidak boleh sama', statusCode: 400 };
-      if (Number(fromAccount.balance || 0) < amount) return { error: 'Saldo akun asal tidak cukup', statusCode: 400 };
-      fromAccount.balance = Number(fromAccount.balance || 0) - amount;
-      toAccount.balance = Number(toAccount.balance || 0) + amount;
-      transaction.fromAccountId = fromAccount.id;
-      transaction.toAccountId = toAccount.id;
-    } else {
-      const account = findAccount(body.accountId);
-      if (!account) return { error: 'Akun kas tidak ditemukan', statusCode: 400 };
-      const direction = type === 'out' ? -1 : body.adjustmentType === 'minus' ? -1 : 1;
-      if (direction < 0 && Number(account.balance || 0) < amount) {
-        return { error: 'Saldo akun tidak cukup', statusCode: 400 };
-      }
-      account.balance = Number(account.balance || 0) + direction * amount;
-      transaction.accountId = account.id;
-      if (type === 'koreksi') transaction.adjustmentType = direction < 0 ? 'minus' : 'plus';
-    }
-
-    db.cashTransactions = [transaction, ...db.cashTransactions];
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: now,
-      action: `Mutasi kas ${type}: ${description}`,
-      user,
-      type: 'kas',
-    });
-
-    return { transaction, ...cashLedgerPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  return res.status(201).json(result);
-});
-
-app.post('/api/cash/open', (req, res) => {
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const businessDate = body.date || today();
-    const existing = db.cashSessions.find((session) => session.date === businessDate);
-    if (existing) {
-      return {
-        error: `Kas untuk tanggal ${businessDate} sudah diinisialisasi`,
-        statusCode: 409,
-        cashSession: existing,
-      };
-    }
-
-    if (body.openingCash == null || body.openingCash === '') {
-      return { error: 'openingCash wajib diisi', statusCode: 400 };
-    }
-
-    const openingCash = Number(body.openingCash);
-    if (!Number.isFinite(openingCash) || openingCash < 0) {
-      return { error: 'openingCash harus berupa angka positif', statusCode: 400 };
-    }
-
-    const openedBy = body.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner';
-    const drawerAccount = findCashDrawerAccount(db);
-    const sourceCashAccountId = body.sourceCashAccountId || body.openingCashSourceAccountId || body.sourceAccountId || '';
-    const sourceAccount = sourceCashAccountId
-      ? findCashAccountById(db, sourceCashAccountId)
-      : findDefaultOpeningCashSourceAccount(db, drawerAccount);
-
-    if (sourceCashAccountId && !sourceAccount) {
-      return { error: 'Sumber kas untuk uang laci tidak ditemukan', statusCode: 400 };
-    }
-    if (drawerAccount && sourceAccount && String(drawerAccount.id) === String(sourceAccount.id)) {
-      return { error: 'Sumber kas tidak boleh sama dengan laci kasir', statusCode: 400 };
-    }
-    if (sourceCashAccountId && sourceAccount && Number(sourceAccount.balance || 0) < openingCash) {
-      return { error: `Saldo ${sourceAccount.name} tidak cukup untuk modal awal`, statusCode: 400 };
-    }
-
-    const newSession = {
-      date: businessDate,
-      openingCash,
-      openingCashSourceAccountId: sourceAccount?.id || null,
-      openingCashSourceAccountName: sourceAccount?.name || null,
-      status: 'open',
-      openedBy,
-      openedAt: new Date().toISOString(),
-    };
-
-    db.cashSessions = [newSession, ...db.cashSessions.filter((session) => session.date !== businessDate)];
-
-    if (drawerAccount) {
-      drawerAccount.balance = openingCash;
-      db.cashTransactions.unshift({
-        id: `CTX-OPEN-${Date.now()}`,
-        date: new Date().toISOString(),
-        type: 'in',
-        amount: openingCash,
-        category: 'modal_awal',
-        description: `Buka kas tanggal ${businessDate} dengan modal awal`,
-        accountId: drawerAccount.id,
-        user: openedBy,
-      });
-
-      if (sourceAccount && openingCash > 0) {
-        sourceAccount.balance = Number(sourceAccount.balance || 0) - openingCash;
-        db.cashTransactions.unshift({
-          id: `CTX-TRSF-OPEN-${Date.now()}`,
-          date: new Date().toISOString(),
-          type: 'transfer',
-          amount: openingCash,
-          category: 'transfer',
-          description: `Ambil modal awal dari ${sourceAccount.name} ke Laci tanggal ${businessDate}`,
-          fromAccountId: sourceAccount.id,
-          toAccountId: drawerAccount.id,
-          user: openedBy,
-        });
-      }
-    }
-
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: new Date().toISOString(),
-      action: `Buka kas harian tanggal ${businessDate} dengan modal awal Rp ${openingCash.toLocaleString('id-ID')}`,
-      user: openedBy,
-      type: 'kas',
-    });
-
-    return { cashSession: newSession, state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  res.status(201).json(result);
-});
-
-app.post('/api/cash/close', (req, res) => {
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const businessDate = body.date || today();
-    const existing = db.cashSessions.find((session) => session.date === businessDate);
-    if (existing?.status === 'closed') {
-      return {
-        error: 'Kas untuk tanggal ini sudah ditutup',
-        statusCode: 409,
-        cashSession: existing,
-      };
-    }
-
-    if (body.actualCash == null || body.actualCash === '') {
-      return { error: 'actualCash wajib diisi', statusCode: 400 };
-    }
-
-    const actualCash = Number(body.actualCash);
-    if (!Number.isFinite(actualCash) || actualCash < 0) {
-      return { error: 'actualCash harus berupa angka positif', statusCode: 400 };
-    }
-
-    const openingCashInput = existing?.openingCash ?? body.openingCash;
-    const requestedOpeningCash = openingCashInput == null || openingCashInput === ''
-      ? undefined
-      : Number(openingCashInput);
-    if (requestedOpeningCash != null && (!Number.isFinite(requestedOpeningCash) || requestedOpeningCash < 0)) {
-      return { error: 'openingCash harus berupa angka positif', statusCode: 400 };
-    }
-
-    const expected = cashExpectedPayload(db, {
-      date: businessDate,
-      openingCash: requestedOpeningCash,
-    });
-    const qris = Number(body.qris ?? expected.salesByMethod.qris ?? 0);
-    const transfer = Number(body.transfer ?? expected.salesByMethod.transfer ?? 0);
-    if (!Number.isFinite(qris) || qris < 0 || !Number.isFinite(transfer) || transfer < 0) {
-      return { error: 'qris dan transfer harus berupa angka positif', statusCode: 400 };
-    }
-
-    const closedBy = body.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner';
-    const difference = actualCash - expected.expectedCash;
-    const closedSession = {
-      date: businessDate,
-      openingCash: expected.openingCash,
-      closingCash: actualCash,
-      expectedCash: expected.expectedCash,
-      difference,
-      differenceStatus: difference === 0 ? 'balanced' : difference > 0 ? 'over' : 'short',
-      qris,
-      transfer,
-      totalExpenseCash: expected.totalExpenseCash,
-      status: 'closed',
-      notes: body.notes || '',
-      closedBy,
-      closedAt: new Date().toISOString(),
-    };
-
-    db.cashSessions = [closedSession, ...db.cashSessions.filter((session) => session.date !== businessDate)];
-
-    let drawerAccount = db.cashAccounts.find((a) => String(a.id) === 'acc-01' || String(a.id) === 'kas-utama');
-    if (!drawerAccount) {
-      drawerAccount = db.cashAccounts.find((a) => a.type === 'cash' || a.type === 'tunai');
-    }
-    const brankasAccount = findDefaultOpeningCashSourceAccount(db, drawerAccount);
-
-    if (drawerAccount) {
-      drawerAccount.balance = actualCash;
-      if (difference !== 0) {
-        db.cashTransactions.unshift({
-          id: `CTX-DIFF-${Date.now()}`,
-          date: new Date().toISOString(),
-          type: 'koreksi',
-          amount: Math.abs(difference),
-          category: 'koreksi',
-          description: `Koreksi selisih tutup kas tanggal ${businessDate}: ${body.notes || 'Selisih kas'}`,
-          accountId: drawerAccount.id,
-          adjustmentType: difference < 0 ? 'minus' : 'plus',
-          user: closedBy,
-        });
-      }
-
-      if (brankasAccount && actualCash > 0) {
-        brankasAccount.balance = Number(brankasAccount.balance || 0) + actualCash;
-        db.cashTransactions.unshift({
-          id: `CTX-TRSF-CLOSE-${Date.now()}`,
-          date: new Date().toISOString(),
-          type: 'transfer',
-          amount: actualCash,
-          category: 'transfer',
-          description: `Transfer saldo laci akhir shift ke Brankas tanggal ${businessDate}`,
-          fromAccountId: drawerAccount.id,
-          toAccountId: brankasAccount.id,
-          user: closedBy,
-        });
-      }
-
-      drawerAccount.balance = 0;
-    }
-
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: new Date().toISOString(),
-      action: `Tutup kas harian dengan selisih Rp ${closedSession.difference.toLocaleString('id-ID')}`,
-      user: closedBy,
-      type: 'kas',
-    });
-
-    return { cashSession: closedSession, state: bootstrapPayload(db) };
-  });
-
-  if (result?.error) return res.status(result.statusCode || 400).json(result);
-  res.status(201).json(result);
-});
-
-app.post('/api/daily-notes', (req, res) => {
-  const result = updateDb((db) => {
-    const body = req.body || {};
-    const note = String(body.note || '').trim();
-    if (!note) return null;
-
-    const entry = {
-      date: body.date || today(),
-      note,
-      createdBy: body.user || getAuthenticatedUser(db, req.auth)?.name || 'Owner',
-      createdAt: new Date().toISOString(),
-    };
-    db.dailyNotes = [entry, ...db.dailyNotes.filter((item) => item.date !== entry.date)];
-    db.activityLog.push({
-      id: `ACT-${Date.now()}`,
-      time: entry.createdAt,
-      action: 'Owner memperbarui catatan operasional',
-      user: entry.createdBy,
-      type: 'catatan',
-    });
-
-    return { dailyNote: entry, state: bootstrapPayload(db) };
-  });
-
-  if (!result) return res.status(400).json({ error: 'Catatan tidak boleh kosong' });
-  return res.status(201).json(result);
-});
-
-app.get('/api/reports/today', (req, res) => {
+// -------------------------------------------------------------
+// Transfers CRUD
+// -------------------------------------------------------------
+app.get('/api/transfers', (req, res) => {
   const db = readDb();
-  const businessDate = req.query.date || today();
-  const sales = db.sales.filter((sale) => sale.date?.startsWith(businessDate));
-  const expenses = db.expenses.filter((expense) => expense.date?.startsWith(businessDate) && expense.status !== 'rejected');
-  const summary = getSalesSummary(sales);
-  const hpp = getEstimatedHpp(sales, refreshProductCosts(db.products, db.ingredients));
-  const operationalExpense = getExpenseTotal(expenses);
-
-  res.json({
-    businessDate,
-    totalOmzet: summary.totalOmzet,
-    totalHpp: hpp,
-    grossProfit: summary.totalOmzet - hpp,
-    operationalExpense,
-    netProfitEstimate: summary.totalOmzet - hpp - operationalExpense,
-    totalTransactions: summary.totalTransaksi,
-    totalCup: summary.totalCup,
-    topMenus: summary.menuTerlaris,
-  });
+  res.json(db.transfers || []);
 });
 
-app.get('/api/copilot/insights', (req, res) => {
+app.post('/api/transfers', (req, res) => {
+  const result = updateDb((db) => {
+    const { id, fromWalletId, toWalletId, amount, description, date, user } = req.body;
+    if (!amount || Number(amount) <= 0) {
+      return { error: 'Nominal transfer harus lebih dari 0', statusCode: 400 };
+    }
+    if (!fromWalletId || !toWalletId) {
+      return { error: 'Wallet asal dan tujuan wajib ditentukan', statusCode: 400 };
+    }
+    if (String(fromWalletId) === String(toWalletId)) {
+      return { error: 'Wallet asal dan tujuan tidak boleh sama', statusCode: 400 };
+    }
+    
+    const fromWallet = db.wallets.find(w => String(w.id) === String(fromWalletId));
+    const toWallet = db.wallets.find(w => String(w.id) === String(toWalletId));
+    if (!fromWallet || !toWallet) {
+      return { error: 'Wallet asal atau tujuan tidak ditemukan', statusCode: 404 };
+    }
+    
+    const transferId = id || `trf-${Date.now()}`;
+    const newTransfer = {
+      id: transferId,
+      fromWalletId,
+      toWalletId,
+      amount: Number(amount),
+      description: description ? String(description).trim() : '',
+      date: date || new Date().toISOString(),
+      user: user || 'Owner',
+      createdAt: new Date().toISOString()
+    };
+    
+    fromWallet.balance = Number((Number(fromWallet.balance || 0) - Number(amount)).toFixed(2));
+    toWallet.balance = Number((Number(toWallet.balance || 0) + Number(amount)).toFixed(2));
+    
+    db.transfers.push(newTransfer);
+    return newTransfer;
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.status(201).json(result);
+});
+
+app.put('/api/transfers/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const transferIndex = db.transfers.findIndex(t => String(t.id) === String(id));
+    if (transferIndex === -1) return { error: 'Transfer tidak ditemukan', statusCode: 404 };
+    
+    const oldTransfer = db.transfers[transferIndex];
+    const newAmount = req.body.amount !== undefined ? Number(req.body.amount) : oldTransfer.amount;
+    const newFromWalletId = req.body.fromWalletId !== undefined ? req.body.fromWalletId : oldTransfer.fromWalletId;
+    const newToWalletId = req.body.toWalletId !== undefined ? req.body.toWalletId : oldTransfer.toWalletId;
+    
+    if (newAmount <= 0) {
+      return { error: 'Nominal transfer harus lebih dari 0', statusCode: 400 };
+    }
+    if (String(newFromWalletId) === String(newToWalletId)) {
+      return { error: 'Wallet asal dan tujuan tidak boleh sama', statusCode: 400 };
+    }
+    
+    const oldFromWallet = db.wallets.find(w => String(w.id) === String(oldTransfer.fromWalletId));
+    const oldToWallet = db.wallets.find(w => String(w.id) === String(oldTransfer.toWalletId));
+    const newFromWallet = db.wallets.find(w => String(w.id) === String(newFromWalletId));
+    const newToWallet = db.wallets.find(w => String(w.id) === String(newToWalletId));
+    
+    if (!newFromWallet || !newToWallet) {
+      return { error: 'Wallet asal atau tujuan tidak ditemukan', statusCode: 404 };
+    }
+    
+    if (oldFromWallet) {
+      oldFromWallet.balance = Number((Number(oldFromWallet.balance || 0) + Number(oldTransfer.amount)).toFixed(2));
+    }
+    if (oldToWallet) {
+      oldToWallet.balance = Number((Number(oldToWallet.balance || 0) - Number(oldTransfer.amount)).toFixed(2));
+    }
+    
+    newFromWallet.balance = Number((Number(newFromWallet.balance || 0) - Number(newAmount)).toFixed(2));
+    newToWallet.balance = Number((Number(newToWallet.balance || 0) + Number(newAmount)).toFixed(2));
+    
+    const updatedTransfer = {
+      ...oldTransfer,
+      fromWalletId: newFromWalletId,
+      toWalletId: newToWalletId,
+      amount: newAmount,
+      description: req.body.description !== undefined ? String(req.body.description).trim() : oldTransfer.description,
+      date: req.body.date !== undefined ? req.body.date : oldTransfer.date,
+      user: req.body.user !== undefined ? req.body.user : oldTransfer.user,
+      updatedAt: new Date().toISOString()
+    };
+    
+    db.transfers[transferIndex] = updatedTransfer;
+    return updatedTransfer;
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
+});
+
+app.delete('/api/transfers/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const index = db.transfers.findIndex(t => String(t.id) === String(id));
+    if (index === -1) return { error: 'Transfer tidak ditemukan', statusCode: 404 };
+    
+    const transfer = db.transfers[index];
+    const fromWallet = db.wallets.find(w => String(w.id) === String(transfer.fromWalletId));
+    const toWallet = db.wallets.find(w => String(w.id) === String(transfer.toWalletId));
+    
+    if (fromWallet) {
+      fromWallet.balance = Number((Number(fromWallet.balance || 0) + Number(transfer.amount)).toFixed(2));
+    }
+    if (toWallet) {
+      toWallet.balance = Number((Number(toWallet.balance || 0) - Number(transfer.amount)).toFixed(2));
+    }
+    
+    db.transfers.splice(index, 1);
+    return { success: true };
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
+});
+
+// -------------------------------------------------------------
+// Ingredients CRUD
+// -------------------------------------------------------------
+app.get('/api/ingredients', (req, res) => {
   const db = readDb();
-  const user = getAuthenticatedUser(db, req.auth);
-  const context = buildCopilotContext(db, {
-    date: req.query.date,
-    user,
-  });
-
-  res.json({
-    insights: buildCopilotInsights(context),
-    context: {
-      businessDate: context.businessDate,
-      role: user?.role || null,
-      summary: context.summary,
-      cash: context.cash,
-    },
-    source: 'local',
-  });
+  res.json(db.ingredients || []);
 });
 
-app.post('/api/copilot/chat', async (req, res, next) => {
-  try {
-    const db = readDb();
-    const user = getAuthenticatedUser(db, req.auth);
-    const result = await answerCopilot({
-      db,
-      prompt: req.body?.prompt,
-      history: req.body?.history,
-      date: req.body?.date,
-      user,
-    });
-
-    if (result?.error) return res.status(result.statusCode || 400).json(result);
-    return res.json(result);
-  } catch (error) {
-    return next(error);
-  }
+app.post('/api/ingredients', (req, res) => {
+  const result = updateDb((db) => {
+    const { id, name, category, unit, stock, minStock, costPerUnit } = req.body;
+    if (!name || !String(name).trim()) {
+      return { error: 'Nama bahan baku wajib diisi', statusCode: 400 };
+    }
+    const ingredientName = String(name).trim();
+    const isDuplicate = db.ingredients.some(ing => ing.name.toLowerCase() === ingredientName.toLowerCase());
+    if (isDuplicate) {
+      return { error: 'Bahan baku dengan nama tersebut sudah ada', statusCode: 409 };
+    }
+    
+    const ingredientId = id || `ing-${Date.now()}`;
+    const newIngredient = {
+      id: ingredientId,
+      name: ingredientName,
+      category: category ? String(category).trim() : 'Bahan Baku',
+      unit: unit ? String(unit).trim() : 'pcs',
+      stock: Number(stock || 0),
+      minStock: Number(minStock || 0),
+      costPerUnit: Number(costPerUnit || 0),
+      createdAt: new Date().toISOString()
+    };
+    db.ingredients.push(newIngredient);
+    return newIngredient;
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.status(201).json(result);
 });
 
+app.put('/api/ingredients/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const ingredient = db.ingredients.find(ing => String(ing.id) === String(id));
+    if (!ingredient) return { error: 'Bahan baku tidak ditemukan', statusCode: 404 };
+    
+    const { name, category, unit, stock, minStock, costPerUnit } = req.body;
+    if (name !== undefined) {
+      const ingredientName = String(name).trim();
+      if (!ingredientName) return { error: 'Nama bahan baku tidak boleh kosong', statusCode: 400 };
+      const isDuplicate = db.ingredients.some(ing => String(ing.id) !== String(id) && ing.name.toLowerCase() === ingredientName.toLowerCase());
+      if (isDuplicate) {
+        return { error: 'Bahan baku dengan nama tersebut sudah ada', statusCode: 409 };
+      }
+      ingredient.name = ingredientName;
+    }
+    if (category !== undefined) ingredient.category = String(category).trim();
+    if (unit !== undefined) ingredient.unit = String(unit).trim();
+    if (stock !== undefined) ingredient.stock = Number(stock || 0);
+    if (minStock !== undefined) ingredient.minStock = Number(minStock || 0);
+    if (costPerUnit !== undefined) ingredient.costPerUnit = Number(costPerUnit || 0);
+    
+    return ingredient;
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
+});
+
+app.delete('/api/ingredients/:id', (req, res) => {
+  const { id } = req.params;
+  const result = updateDb((db) => {
+    const index = db.ingredients.findIndex(ing => String(ing.id) === String(id));
+    if (index === -1) return { error: 'Bahan baku tidak ditemukan', statusCode: 404 };
+    db.ingredients.splice(index, 1);
+    return { success: true };
+  });
+  if (result.error) return res.status(result.statusCode).json({ error: result.error });
+  res.json(result);
+});
+
+// -------------------------------------------------------------
+// Dev Reset Route
+// -------------------------------------------------------------
 if (process.env.NODE_ENV !== 'production') {
   app.post('/api/dev/reset', (req, res) => {
-    res.json(bootstrapPayload(resetDb()));
+    const db = resetDb();
+    res.json({
+      wallets: db.wallets || [],
+      categories: db.categories || { income: [], expense: [] },
+      incomes: db.incomes || [],
+      expenses: db.expenses || [],
+      transfers: db.transfers || [],
+      ingredients: db.ingredients || [],
+    });
   });
 }
 
+// -------------------------------------------------------------
+// Global Error Handler & Startup
+// -------------------------------------------------------------
 app.use((error, req, res, _next) => {
-  if (error instanceof multer.MulterError) {
-    const message = error.code === 'LIMIT_FILE_SIZE'
-      ? 'Ukuran file resi maksimal 8MB'
-      : 'File resi harus berupa gambar';
-    return res.status(400).json({ error: message });
-  }
-
   console.error(error);
   res.status(500).json({ error: 'Terjadi error di server RUTE API' });
 });
