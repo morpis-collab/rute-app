@@ -55,6 +55,7 @@ try {
     description: 'Belanja lekor dan kentang manual',
     total: 50000,
     items: [{ name: 'Belanja lekor dan kentang manual', qty: 1, unit: 'pcs', price: 50000, total: 50000, addsStock: false }],
+    walletId: 'acc-bahan-baku',
     user: 'Owner RUTE',
   }, { headers: authHeaders });
   const expenseId = manualExpenseRes.data.expense.id;
