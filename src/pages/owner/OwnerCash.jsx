@@ -233,7 +233,7 @@ export default function OwnerCash() {
         tx.notes.toLowerCase().includes(searchLower) ||
         tx.category.toLowerCase().includes(searchLower) ||
         tx.details.toLowerCase().includes(searchLower) ||
-        tx.user.toLowerCase().includes(searchLower);
+        (tx.user || '').toLowerCase().includes(searchLower);
       return matchesType && matchesSearch;
     });
   }, [incomes, expenses, transfers, wallets, ledgerTypeFilter, ledgerSearchQuery]);
@@ -491,7 +491,7 @@ export default function OwnerCash() {
                       key={type}
                       type="button"
                       onClick={() => setLedgerTypeFilter(type)}
-                      className={`px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-semibold cursor-pointer transition-colors ${
+                      className={`px-3 py-2.5 min-h-[44px] rounded-[var(--radius-sm)] text-xs font-semibold cursor-pointer transition-colors flex items-center justify-center ${
                         ledgerTypeFilter === type
                           ? 'bg-white text-[var(--color-accent-primary)] shadow-sm'
                           : 'text-[var(--color-text-secondary)] hover:text-[var(--color-accent-primary)]'
@@ -600,7 +600,7 @@ export default function OwnerCash() {
                   setIsWalletModalOpen(false);
                   setEditingWallet(null);
                 }}
-                className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer text-lg font-bold p-2"
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer text-lg font-bold p-3 min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 ✕
               </button>
