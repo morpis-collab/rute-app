@@ -1,257 +1,177 @@
 import { useState } from 'react';
-import { Palette, Receipt, User, Lock, Save, LogOut } from 'lucide-react';
+import { Plus, Trash2, Tag, ShoppingCart } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
-import useAuthStore from '../../store/useAuthStore';
-import useSettingsStore from '../../store/useSettingsStore';
+import useAppStore from '../../store/useAppStore';
 import useToastStore from '../../store/useToastStore';
 
+const DEFAULT_INCOME_CATEGORIES = [
+  'Penjualan Harian',
+  'Katering / Pesanan',
+  'Pendapatan Bunga',
+  'Lain-lain',
+];
+
+const DEFAULT_EXPENSE_CATEGORIES = [
+  'Pembelian Bahan Baku',
+  'Gaji Staff',
+  'Sewa Tempat',
+  'Listrik & Air',
+  'Operasional',
+  'Lain-lain',
+];
+
+function CategorySection({ title, type, icon: Icon, iconColor, categories, onAdd, onDelete }) {
+  const [newCat, setNewCat] = useState('');
+
+  const handleAdd = (e) => {
+    e.preventDefault();
+    const trimmed = newCat.trim();
+    if (!trimmed) return;
+    if (categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      useToastStore.getState().addToast('Kategori sudah ada', 'error');
+      return;
+    }
+    onAdd(type, trimmed);
+    setNewCat('');
+  };
+
+  return (
+    <div className="rounded-xl bg-white border border-[var(--color-border)] overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3.5 border-b border-[var(--color-border)] flex items-center gap-2.5 bg-[var(--color-bg-primary)]">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: iconColor + '20', color: iconColor }}
+        >
+          <Icon size={16} />
+        </div>
+        <div>
+          <p className="text-sm font-bold text-[var(--color-text-primary)]">{title}</p>
+          <p className="text-[11px] text-[var(--color-text-muted)]">{categories.length} kategori</p>
+        </div>
+      </div>
+
+      {/* Category list */}
+      <div className="divide-y divide-[var(--color-border)]">
+        {categories.length === 0 ? (
+          <div className="px-4 py-4 text-sm text-[var(--color-text-muted)] text-center">
+            Belum ada kategori. Tambahkan kategori baru di bawah.
+          </div>
+        ) : (
+          categories.map((cat) => (
+            <div key={cat} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 group">
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ background: iconColor }}
+                />
+                <span className="text-sm text-[var(--color-text-primary)]">{cat}</span>
+              </div>
+              <button
+                onClick={() => onDelete(type, cat)}
+                className="opacity-0 group-hover:opacity-100 p-2 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:border-red-300 transition-all cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                title={`Hapus "${cat}"`}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Add form */}
+      <form onSubmit={handleAdd} className="px-4 py-3 border-t border-dashed border-[var(--color-border)] flex gap-2 bg-gray-50/30">
+        <input
+          type="text"
+          className="form-input text-sm p-3 flex-1 bg-white border border-[var(--color-border)] rounded-xl focus:border-[var(--color-band-1)]"
+          placeholder={`Tambah kategori ${type === 'income' ? 'pemasukan' : 'pengeluaran'} baru...`}
+          value={newCat}
+          onChange={(e) => setNewCat(e.target.value)}
+          maxLength={50}
+        />
+        <button
+          type="submit"
+          className="px-3 py-3 rounded-xl border-2 text-sm font-semibold flex items-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
+          style={{
+            borderColor: iconColor,
+            color: iconColor,
+            background: iconColor + '10',
+          }}
+        >
+          <Plus size={16} />
+          <span className="hidden sm:inline">Tambah</span>
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function OwnerSettings() {
-  const { user, token, login, logout } = useAuthStore();
-  const { addToast } = useToastStore();
-  const {
-    receiptHeaderName,
-    receiptAddress,
-    receiptPhone,
-    receiptFooter,
-    receiptPaperSize,
-    theme,
-    updateSettings,
-  } = useSettingsStore();
+  const categories = useAppStore((state) => state.categories || { income: [], expense: [] });
+  const addCategory = useAppStore((state) => state.addCategory);
+  const deleteCategory = useAppStore((state) => state.deleteCategory);
 
-  // Receipt form states
-  const [headerName, setHeaderName] = useState(receiptHeaderName || '');
-  const [address, setAddress] = useState(receiptAddress || '');
-  const [phone, setPhone] = useState(receiptPhone || '');
-  const [footer, setFooter] = useState(receiptFooter || '');
-  const [paperSize, setPaperSize] = useState(receiptPaperSize || '58mm');
+  const incomeCategories =
+    (categories.income || []).length > 0
+      ? categories.income
+      : DEFAULT_INCOME_CATEGORIES;
 
-  // Account form states
-  const [profileName, setProfileName] = useState(user?.name || '');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const expenseCategories =
+    (categories.expense || []).length > 0
+      ? categories.expense
+      : DEFAULT_EXPENSE_CATEGORIES;
 
-  const handleSaveReceiptSettings = (e) => {
-    e.preventDefault();
-    if (!headerName.trim()) {
-      addToast('Nama usaha di struk tidak boleh kosong!', 'error');
-      return;
+  const handleAdd = async (type, name) => {
+    try {
+      await addCategory(type, name);
+      useToastStore.getState().addToast(`Kategori "${name}" berhasil ditambahkan`, 'success');
+    } catch (err) {
+      console.error(err);
+      useToastStore.getState().addToast('Gagal menambahkan kategori', 'error');
     }
-    updateSettings({
-      receiptHeaderName: headerName.trim(),
-      receiptAddress: address.trim(),
-      receiptPhone: phone.trim(),
-      receiptFooter: footer,
-      receiptPaperSize: paperSize,
-    });
-    addToast('Pengaturan struk kasir berhasil disimpan!', 'success');
   };
 
-  const handleSaveAccountSettings = (e) => {
-    e.preventDefault();
-    if (!profileName.trim()) {
-      addToast('Nama lengkap tidak boleh kosong!', 'error');
-      return;
-    }
-
-    if (newPassword || confirmPassword) {
-      if (newPassword.length < 6) {
-        addToast('Kata sandi baru minimal harus 6 karakter!', 'error');
-        return;
-      }
-      if (newPassword !== confirmPassword) {
-        addToast('Konfirmasi kata sandi tidak cocok!', 'error');
-        return;
-      }
-    }
-
-    // Update locally in auth store
-    login({ ...user, name: profileName.trim() }, token);
-    
-    addToast('Profil & keamanan berhasil diperbarui!', 'success');
-    setNewPassword('');
-    setConfirmPassword('');
-  };
-
-  const handleThemeChange = (newTheme) => {
-    updateSettings({ theme: newTheme });
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-      addToast('Tema Espresso Aktif!', 'success');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      addToast('Tema Terang Aktif!', 'success');
+  const handleDelete = async (type, name) => {
+    if (!window.confirm(`Hapus kategori "${name}"? Transaksi yang sudah menggunakan kategori ini tidak akan terpengaruh.`)) return;
+    try {
+      await deleteCategory(type, name);
+      useToastStore.getState().addToast(`Kategori "${name}" berhasil dihapus`, 'success');
+    } catch (err) {
+      console.error(err);
+      useToastStore.getState().addToast('Gagal menghapus kategori', 'error');
     }
   };
 
   return (
-    <PageWrapper title="Pengaturan" subtitle="Manajemen akun dan sistem">
-      <div className="space-y-6 max-w-2xl">
-        {/* System Theme Card */}
-        <div className="kpi-card">
-          <div className="flex items-center gap-2 mb-4">
-            <Palette className="text-[var(--color-band-1)]" size={18} />
-            <h3 className="text-sm font-semibold">Tema Sistem</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleThemeChange('light')}
-              className={`p-3 rounded-xl border-2 text-center transition-all cursor-pointer ${
-                theme !== 'dark'
-                  ? 'border-[var(--color-band-1)] bg-[var(--color-band-4)] text-[var(--color-band-1)] font-bold'
-                  : 'border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]'
-              }`}
-            >
-              Mode Terang
-            </button>
-            <button
-              onClick={() => handleThemeChange('dark')}
-              className={`p-3 rounded-xl border-2 text-center transition-all cursor-pointer ${
-                theme === 'dark'
-                  ? 'border-[var(--color-band-1)] bg-[var(--color-band-1)] text-white font-bold'
-                  : 'border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]'
-              }`}
-            >
-              Mode Espresso (Gelap)
-            </button>
-          </div>
-        </div>
+    <PageWrapper title="Pengaturan" subtitle="Kelola kategori pemasukan dan pengeluaran">
+      {/* Info Banner */}
+      <div className="mb-5 rounded-xl border border-[var(--color-accent-warm)]/40 bg-[var(--color-accent-light)]/15 px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+        <p className="font-semibold text-[var(--color-accent-primary)] mb-0.5">Kategori Kustom</p>
+        <p className="text-xs text-[var(--color-text-muted)]">
+          Kategori yang Anda tambahkan akan muncul sebagai pilihan saat mencatat pemasukan dan pengeluaran.
+          Menghapus kategori tidak mempengaruhi transaksi yang sudah tercatat.
+        </p>
+      </div>
 
-        {/* Receipt Settings Card */}
-        <form onSubmit={handleSaveReceiptSettings} className="kpi-card space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-[var(--color-border)]">
-            <Receipt className="text-[var(--color-band-1)]" size={18} />
-            <h3 className="text-sm font-semibold">Pengaturan Struk Kasir</h3>
-          </div>
-          
-          <div className="space-y-3">
-            <div>
-              <label className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block mb-1">Nama Usaha (Header)</label>
-              <input
-                type="text"
-                value={headerName}
-                onChange={(e) => setHeaderName(e.target.value)}
-                placeholder="Misal: ruang.tengah"
-                className="form-input text-xs focus:border-[var(--color-band-1)]"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block mb-1">No. Telepon Toko</label>
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Misal: 0812-3456-7890"
-                  className="form-input text-xs focus:border-[var(--color-band-1)]"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block mb-1">Ukuran Kertas</label>
-                <select
-                  value={paperSize}
-                  onChange={(e) => setPaperSize(e.target.value)}
-                  className="form-select text-xs p-2.5 focus:border-[var(--color-band-1)]"
-                >
-                  <option value="58mm">Thermal 58mm</option>
-                  <option value="80mm">Thermal 80mm</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block mb-1">Alamat Toko</label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Alamat lengkap usaha"
-                className="form-input text-xs focus:border-[var(--color-band-1)]"
-              />
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block mb-1">Teks Kaki Struk (Footer)</label>
-              <textarea
-                value={footer}
-                onChange={(e) => setFooter(e.target.value)}
-                rows={2}
-                placeholder="Kalimat penutup struk"
-                className="form-input text-xs resize-none focus:border-[var(--color-band-1)]"
-              />
-            </div>
-          </div>
-
-          <button type="submit" className="btn btn-primary w-full text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
-            <Save size={14} /> Simpan Struk
-          </button>
-        </form>
-
-        {/* Profile & Password Card */}
-        <form onSubmit={handleSaveAccountSettings} className="kpi-card space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-[var(--color-border)]">
-            <User className="text-[var(--color-band-1)]" size={18} />
-            <h3 className="text-sm font-semibold">Profil & Keamanan Akun</h3>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block mb-1">Nama Lengkap</label>
-              <input
-                type="text"
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-                className="form-input text-xs focus:border-[var(--color-band-1)]"
-              />
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block mb-1">Email Pengguna (Muted)</label>
-              <input
-                type="email"
-                value={user?.email || ''}
-                disabled
-                className="form-input text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)] cursor-not-allowed border-dashed"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[var(--color-border)] border-dashed">
-              <div>
-                <label className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block mb-1 flex items-center gap-1">
-                  <Lock size={12} /> Sandi Baru
-                </label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Min. 6 karakter"
-                  className="form-input text-xs focus:border-[var(--color-band-1)]"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block mb-1">Konfirmasi Sandi</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Ketik ulang sandi"
-                  className="form-input text-xs focus:border-[var(--color-band-1)]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <button type="submit" className="btn btn-primary w-full text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
-            <Save size={14} /> Simpan Perubahan Akun
-          </button>
-        </form>
-
-        {/* Log Out */}
-        <button onClick={logout} className="w-full btn btn-danger py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
-          <LogOut size={16} /> Keluar dari Akun
-        </button>
+      <div className="space-y-4">
+        <CategorySection
+          title="Kategori Pemasukan"
+          type="income"
+          icon={Tag}
+          iconColor="var(--color-band-1)"
+          categories={incomeCategories}
+          onAdd={handleAdd}
+          onDelete={handleDelete}
+        />
+        <CategorySection
+          title="Kategori Pengeluaran"
+          type="expense"
+          icon={ShoppingCart}
+          iconColor="#dc2626"
+          categories={expenseCategories}
+          onAdd={handleAdd}
+          onDelete={handleDelete}
+        />
       </div>
     </PageWrapper>
   );
