@@ -1,15 +1,13 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Activity,
-  Banknote,
-  Check,
-  Coffee,
-  FileText,
-  Gift,
-  Package,
-  ReceiptText,
-  TrendingUp,
   Wallet,
+  ArrowUpRight,
+  ArrowDownRight,
+  ArrowLeftRight,
+  TrendingUp,
+  TrendingDown,
+  RefreshCw,
 } from 'lucide-react';
 import {
   Area,
@@ -19,17 +17,13 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  Legend,
 } from 'recharts';
 import PageWrapper from '../../components/layout/PageWrapper';
-import DailyFlowIndicator from '../../components/owner/DailyFlowIndicator';
-import { KpiTile, ProductThumb, SectionHeader, StatusAlert } from '../../components/common/DashboardPrimitives';
 import useAppStore from '../../store/useAppStore';
-import { formatRupiah, formatWaktu } from '../../utils/formatters';
-import { getBusinessDate, isSameBusinessDate } from '../../utils/businessDate';
-import EmptyState from '../../components/common/EmptyState';
-import AnimatedNumber from '../../components/common/AnimatedNumber';
+import { formatRupiah, formatTanggalSingkat, getGreeting } from '../../utils/formatters';
+import { getBusinessDate } from '../../utils/businessDate';
 import { motion } from 'framer-motion';
-import { getPromotionPerformance, getPromotionStatus } from '../../utils/promotions';
 
 const BUSINESS_TIME_ZONE = 'Asia/Makassar';
 
@@ -62,312 +56,422 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 350, damping: 30 } },
 };
 
+function KpiCard({ icon: Icon, title, value, helperText, tone = 'green' }) {
+  const toneClasses = {
+    green: 'bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+    red: 'bg-rose-50 border-rose-100 dark:bg-rose-950/20 dark:border-rose-900/30 text-rose-700 dark:text-rose-400',
+    blue: 'bg-blue-50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900/30 text-blue-700 dark:text-blue-400',
+    sage: 'bg-[var(--color-band-4)] border-[var(--color-border)] text-[var(--color-band-1)]',
+  };
+
+  return (
+    <div className="rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-5 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex items-center justify-between">
+        <span className={`rounded-full p-2.5 ${toneClasses[tone] || toneClasses.sage}`}>
+          <Icon size={20} />
+        </span>
+      </div>
+      <h3 className="mt-4 text-xs font-extrabold uppercase tracking-wider text-[var(--color-text-secondary)]">{title}</h3>
+      <p className="mt-1 font-mono text-2xl font-black text-[var(--color-text-primary)]">{value}</p>
+      {helperText && (
+        <p className="mt-2 text-xs text-[var(--color-text-muted)] font-semibold">{helperText}</p>
+      )}
+    </div>
+  );
+}
+
 export default function OwnerDashboard() {
-  const sales = useAppStore((state) => state.sales);
-  const products = useAppStore((state) => state.products);
+  const wallets = useAppStore((state) => state.wallets);
+  const incomes = useAppStore((state) => state.incomes);
   const expenses = useAppStore((state) => state.expenses);
-  const activityLog = useAppStore((state) => state.activityLog);
-  const dailyNotes = useAppStore((state) => state.dailyNotes);
-  const cashAccounts = useAppStore((state) => state.cashAccounts);
-  const cashSessions = useAppStore((state) => state.cashSessions);
-  const ingredients = useAppStore((state) => state.ingredients);
-  const promotions = useAppStore((state) => state.promotions);
-  const getSalesSummary = useAppStore((state) => state.getSalesSummary);
-  const getEstimatedHpp = useAppStore((state) => state.getEstimatedHpp);
-  const getCashExpected = useAppStore((state) => state.getCashExpected);
+  const transfers = useAppStore((state) => state.transfers);
+  const loadRemoteData = useAppStore((state) => state.loadRemoteData);
+  const apiStatus = useAppStore((state) => state.apiStatus);
 
+  useEffect(() => {
+    loadRemoteData().catch((err) => {
+      console.error('Failed to load remote data:', err);
+    });
+  }, [loadRemoteData]);
+
+  // Current Month calculations
   const businessDate = getBusinessDate();
-  const summary = getSalesSummary(businessDate);
-  const recentActivity = (activityLog || []).slice(-5).reverse();
-  const todayNote = (dailyNotes || []).find((note) => note.date === businessDate);
-  const estimasiHPP = Number(getEstimatedHpp(businessDate) || 0);
-  const todayExpenseTotal = (expenses || [])
-    .filter((expense) => isSameBusinessDate(expense.date, businessDate) && expense.status !== 'rejected')
-    .reduce((sum, expense) => sum + Number(expense.total || 0), 0);
-  const estimasiLabaBersih = Number(summary.totalOmzet || 0) - estimasiHPP - todayExpenseTotal;
+  const currentMonth = businessDate.substring(0, 7); // YYYY-MM
+  const monthName = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
-  const totalOmzetKeseluruhan = (sales || []).reduce((sum, sale) => sum + Number(sale.total || 0), 0);
-  const totalHppKeseluruhan = (sales || []).reduce((sum, sale) => (
-    sum + ((sale.items || []).reduce((itemSum, item) => {
-      if (item.estimatedHpp != null) return itemSum + Number(item.estimatedHpp || 0);
-      const product = (products || []).find((candidate) => String(candidate.id) === String(item.productId));
-      return itemSum + Number(product?.hpp || 0) * Number(item.qty || 0);
-    }, 0))
-  ), 0);
-  const totalPengeluaranKeseluruhan = (expenses || [])
-    .filter((expense) => expense.status !== 'rejected')
-    .reduce((sum, expense) => sum + Number(expense.total || 0), 0);
-  const totalKeuntunganKeseluruhan = totalOmzetKeseluruhan - totalHppKeseluruhan - totalPengeluaranKeseluruhan;
+  const totalSaldoKas = (wallets || []).reduce((sum, w) => sum + Number(w.balance || 0), 0);
 
-  const todaySession = (cashSessions || []).find((session) => session.date === businessDate);
-  const systemExpectedCash = Number(getCashExpected(businessDate) || 0);
-  const pendingApprovalsCount = (expenses || []).filter((expense) => expense.status === 'pending').length;
-  const hasDiscrepancy = todaySession && todaySession.status === 'closed' && Number(todaySession.difference || 0) !== 0;
-  const criticalStockList = (ingredients || []).filter((item) => item.status === 'kritis' || Number(item.stock || 0) <= Number(item.minStock || 0));
-  const isCashNotClosed = !todaySession || todaySession.status !== 'closed';
-  const activePromotions = (promotions || []).filter((promotion) => getPromotionStatus(promotion, businessDate) === 'active');
-  const scheduledPromotions = (promotions || []).filter((promotion) => getPromotionStatus(promotion, businessDate) === 'scheduled');
-  const todayPromoOmzet = activePromotions.reduce((sum, promotion) => (
-    sum + Number(getPromotionPerformance(promotion, summary ? (sales || []).filter((sale) => isSameBusinessDate(sale.date, businessDate)) : []).totalOmzet || 0)
-  ), 0);
+  const totalPemasukan = (incomes || [])
+    .filter((inc) => inc.date && inc.date.substring(0, 7) === currentMonth)
+    .reduce((sum, inc) => sum + Number(inc.amount || 0), 0);
 
+  const totalPengeluaran = (expenses || [])
+    .filter((exp) => exp.date && exp.date.substring(0, 7) === currentMonth && exp.status !== 'rejected')
+    .reduce((sum, exp) => sum + Number(exp.amount || exp.total || 0), 0);
+
+  const arusKasBersih = totalPemasukan - totalPengeluaran;
+
+  // Last 7 days trend calculations
   const trendData = Array.from({ length: 7 }, (_, index) => {
     const date = dateKey(6 - index);
-    const daySales = (sales || []).filter((sale) => isSameBusinessDate(sale.date, date));
-    const omzet = daySales.reduce((sum, sale) => sum + Number(sale.total || 0), 0);
-    const hpp = daySales.reduce((sum, sale) => sum + ((sale.items || []).reduce((itemSum, item) => {
-      if (item.estimatedHpp != null) return itemSum + Number(item.estimatedHpp || 0);
-      const product = (products || []).find((candidate) => String(candidate.id) === String(item.productId));
-      return itemSum + Number(product?.hpp || 0) * Number(item.qty || 0);
-    }, 0)), 0);
+    const dayIncomes = (incomes || []).filter((inc) => inc.date && inc.date.substring(0, 10) === date);
+    const dayExpenses = (expenses || []).filter((exp) => exp.date && exp.date.substring(0, 10) === date && exp.status !== 'rejected');
+
+    const pemasukan = dayIncomes.reduce((sum, inc) => sum + Number(inc.amount || 0), 0);
+    const pengeluaran = dayExpenses.reduce((sum, exp) => sum + Number(exp.amount || exp.total || 0), 0);
+
     return {
       date,
       label: shortDateLabel(date),
-      omzet,
-      laba: Math.max(omzet - hpp, 0),
+      pemasukan,
+      pengeluaran,
     };
   });
 
-  const totalPayment = Number(summary.byMethod.cash || 0) + Number(summary.byMethod.qris || 0) + Number(summary.byMethod.transfer || 0) || 1;
-  const paymentRows = [
-    { label: 'Cash / Tunai', value: Number(summary.byMethod.cash || 0), color: 'bg-[var(--color-accent-green)]' },
-    { label: 'QRIS', value: Number(summary.byMethod.qris || 0), color: 'bg-[var(--color-accent-orange)]' },
-    { label: 'Transfer Bank', value: Number(summary.byMethod.transfer || 0), color: 'bg-[var(--color-accent-blue)]' },
+  const getWalletName = (walletId) => {
+    const wallet = wallets.find((w) => String(w.id) === String(walletId));
+    return wallet ? wallet.name : 'Wallet Lain';
+  };
+
+  // Combined transactions
+  const allTransactions = [
+    ...(incomes || []).map((inc) => ({
+      id: inc.id,
+      type: 'income',
+      date: inc.date || inc.createdAt,
+      amount: Number(inc.amount || 0),
+      walletName: getWalletName(inc.walletId),
+      category: inc.category || 'Pemasukan',
+      description: inc.description || '-',
+    })),
+    ...(expenses || []).map((exp) => ({
+      id: exp.id,
+      type: 'expense',
+      date: exp.date || exp.createdAt,
+      amount: Number(exp.amount || exp.total || 0),
+      walletName: getWalletName(exp.walletId),
+      category: exp.category || 'Pengeluaran',
+      description: exp.description || '-',
+    })),
+    ...(transfers || []).map((trf) => ({
+      id: trf.id,
+      type: 'transfer',
+      date: trf.date || trf.createdAt,
+      amount: Number(trf.amount || 0),
+      walletName: `${getWalletName(trf.fromWalletId)} → ${getWalletName(trf.toWalletId)}`,
+      category: 'Transfer Saldo',
+      description: trf.description || '-',
+    })),
   ];
 
-  const alerts = [];
-  if (criticalStockList.length > 0) {
-    alerts.push({ level: 'danger', title: `${criticalStockList.length} bahan stok kritis`, message: 'Buka rekomendasi restock', link: '/owner/restock-planner' });
-  }
-  if (pendingApprovalsCount > 0) {
-    alerts.push({ level: 'warning', title: `${pendingApprovalsCount} pengeluaran pending`, message: 'Menunggu approval owner', link: '/owner/approval' });
-  }
-  if (isCashNotClosed) {
-    alerts.push({ level: 'info', title: 'Kas belum ditutup', message: `Ekspektasi laci ${formatRupiah(systemExpectedCash)}`, link: '/owner/close-cash' });
-  }
-  if (hasDiscrepancy) {
-    alerts.push({ level: 'danger', title: 'Selisih kas terdeteksi', message: formatRupiah(todaySession.difference), link: '/owner/cash' });
-  }
+  const sortedTransactions = allTransactions
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
+
+  const getTransactionBadge = (type) => {
+    switch (type) {
+      case 'income':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Pemasukan
+          </span>
+        );
+      case 'expense':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-700 dark:bg-rose-950/20 dark:text-rose-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+            Pengeluaran
+          </span>
+        );
+      case 'transfer':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-950/20 dark:text-blue-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+            Transfer
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getAmountDisplay = (tx) => {
+    if (tx.type === 'income') {
+      return <span className="font-mono font-bold text-emerald-600">+{formatRupiah(tx.amount)}</span>;
+    }
+    if (tx.type === 'expense') {
+      return <span className="font-mono font-bold text-rose-600">-{formatRupiah(tx.amount)}</span>;
+    }
+    return <span className="font-mono font-bold text-blue-600">{formatRupiah(tx.amount)}</span>;
+  };
+
+  const handleRefresh = () => {
+    loadRemoteData().catch(() => {});
+  };
 
   return (
-    <PageWrapper title="Ringkasan Operasional" subtitle="Pantau penjualan, kas, stok, dan aktivitas outlet hari ini">
+    <PageWrapper 
+      title="Dashboard Keuangan" 
+      subtitle={`${getGreeting()}, Owner. Berikut ringkasan arus kas RUTE Coffee.`}
+    >
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
         className="space-y-6"
       >
-        {/* Daily Progress Flow Indicator */}
-        <motion.div variants={itemVariants}>
-          <DailyFlowIndicator />
-        </motion.div>
+        {/* Header Action Row */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
+            Tanggal Bisnis: <span className="font-mono bg-[var(--color-band-4)] px-2.5 py-1 rounded-[var(--radius-sm)] border border-[var(--color-border)]">{businessDate}</span>
+          </p>
+          <button
+            onClick={handleRefresh}
+            disabled={apiStatus === 'loading'}
+            className="flex items-center gap-2 rounded-[var(--radius-button)] border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-band-4)] hover:text-[var(--color-band-1)] active:scale-95 transition-all duration-150 cursor-pointer min-h-11 min-w-11"
+            title="Refresh Data"
+            aria-label="Refresh Data"
+          >
+            <RefreshCw size={16} className={apiStatus === 'loading' ? 'animate-spin' : ''} />
+            <span>{apiStatus === 'loading' ? 'Memuat...' : 'Refresh'}</span>
+          </button>
+        </div>
 
         {/* KPI Tiles Row */}
-        <motion.div variants={itemVariants} className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-5">
-          <KpiTile icon={TrendingUp} label="Omzet Hari Ini" value={<AnimatedNumber value={summary.totalOmzet || 0} />} helper={`${summary.totalTransaksi || 0} transaksi / ${summary.totalCup || 0} cup`} tone="green" />
-          <KpiTile icon={Wallet} label="Laba Bersih" value={<AnimatedNumber value={estimasiLabaBersih} />} helper={`HPP ${formatRupiah(estimasiHPP)}`} tone={estimasiLabaBersih >= 0 ? 'blue' : 'red'} />
-          <KpiTile icon={Package} label="Stok Kritis" value={criticalStockList.length} helper="Bahan di bawah minimum" tone="orange" />
-          <KpiTile icon={Banknote} label="Belum Tutup Kas" value={isCashNotClosed ? 1 : 0} helper={isCashNotClosed ? 'Shift berjalan' : 'Selesai'} tone={isCashNotClosed ? 'red' : 'green'} />
-          <KpiTile icon={ReceiptText} label="Pengeluaran Pending" value={pendingApprovalsCount} helper={formatRupiah(todayExpenseTotal)} tone="purple" />
-        </motion.div>
-
-        {/* Alerts Grid Section */}
-        <motion.div variants={itemVariants} className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {alerts.length ? alerts.map((alert, idx) => (
-            <Link key={`${alert.level}-${alert.title}-${idx}`} to={alert.link} className="block w-full">
-              <StatusAlert level={alert.level} title={alert.title} message={alert.message} actionLabel="Kelola" />
-            </Link>
-          )) : (
-            <div className="md:col-span-2 xl:col-span-3">
-              <StatusAlert level="success" title="Sistem normal" message="Tidak ada kendala operasional prioritas." actionLabel="Aman" />
-            </div>
-          )}
+        <motion.div variants={itemVariants} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard 
+            icon={Wallet} 
+            title="Total Saldo Kas" 
+            value={formatRupiah(totalSaldoKas)} 
+            helperText="Akumulasi semua wallet" 
+            tone="sage" 
+          />
+          <KpiCard 
+            icon={ArrowUpRight} 
+            title="Total Pemasukan" 
+            value={formatRupiah(totalPemasukan)} 
+            helperText={`Bulan ${monthName}`} 
+            tone="green" 
+          />
+          <KpiCard 
+            icon={ArrowDownRight} 
+            title="Total Pengeluaran" 
+            value={formatRupiah(totalPengeluaran)} 
+            helperText={`Bulan ${monthName}`} 
+            tone="red" 
+          />
+          <KpiCard 
+            icon={arusKasBersih >= 0 ? TrendingUp : TrendingDown} 
+            title="Arus Kas Bersih" 
+            value={formatRupiah(arusKasBersih)} 
+            helperText="Pemasukan - Pengeluaran" 
+            tone={arusKasBersih >= 0 ? 'green' : 'red'} 
+          />
         </motion.div>
 
         {/* Main Content Layout */}
-        <motion.div variants={itemVariants} className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
-          {/* Left Column Content */}
+        <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-[1.8fr_1.2fr]">
+          {/* Left Column: Trend & Wallets */}
           <div className="space-y-6">
+            {/* Recharts comparison graph */}
             <section className="glass-card p-5">
-              <SectionHeader title="Tren Penjualan" subtitle="Omzet dan estimasi laba 7 hari terakhir">
-                <span className="rounded-[var(--radius-button)] border border-[var(--color-border)] bg-white px-3 py-2 text-xs font-bold text-[var(--color-text-secondary)]">7 Hari Terakhir</span>
-              </SectionHeader>
-              <div className="h-[310px] mt-4">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-extrabold uppercase tracking-wider text-[var(--color-text-secondary)]">Tren Arus Kas</h3>
+                  <p className="text-xs text-[var(--color-text-muted)]">Perbandingan Pemasukan vs Pengeluaran (7 hari bisnis terakhir)</p>
+                </div>
+                <span className="rounded-[var(--radius-button)] border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-text-secondary)]">7 Hari Terakhir</span>
+              </div>
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trendData} margin={{ left: -18, right: 8, top: 10, bottom: 0 }}>
+                  <AreaChart data={trendData} margin={{ left: -10, right: 10, top: 10, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="omzetGradient" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-band-1)" stopOpacity={0.22} />
-                        <stop offset="95%" stopColor="var(--color-band-1)" stopOpacity={0} />
+                      <linearGradient id="pemasukanGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-band-1)" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="var(--color-band-1)" stopOpacity={0}/>
                       </linearGradient>
-                      <linearGradient id="labaGradient" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-accent-secondary)" stopOpacity={0.18} />
-                        <stop offset="95%" stopColor="var(--color-accent-secondary)" stopOpacity={0} />
+                      <linearGradient id="pengeluaranGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-accent-red)" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="var(--color-accent-red)" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} axisLine={false} tickLine={false} tickFormatter={(value) => `Rp ${Math.round(value / 1000000)}jt`} />
-                    <Tooltip formatter={(value) => formatRupiah(value)} contentStyle={{ borderRadius: 12, border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)' }} />
-                    <Area type="monotone" dataKey="omzet" name="Omzet" stroke="var(--color-band-1)" strokeWidth={3} fill="url(#omzetGradient)" />
-                    <Area type="monotone" dataKey="laba" name="Laba" stroke="var(--color-accent-secondary)" strokeWidth={2.5} fill="url(#labaGradient)" />
+                    <XAxis 
+                      dataKey="label" 
+                      tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
+                      axisLine={false}
+                      tickLine={false} 
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value) => {
+                        if (value >= 1000000) return `Rp ${(value / 1000000).toFixed(1)}jt`;
+                        if (value >= 1000) return `Rp ${(value / 1000).toFixed(0)}rb`;
+                        return `Rp ${value}`;
+                      }}
+                    />
+                    <Tooltip 
+                      formatter={(value) => formatRupiah(value)} 
+                      contentStyle={{ 
+                        borderRadius: 12, 
+                        border: '1px solid var(--color-border)', 
+                        backgroundColor: 'var(--color-bg-glass)', 
+                        backdropFilter: 'blur(10px)',
+                        fontSize: '12px'
+                      }} 
+                    />
+                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                    <Area 
+                      type="monotone" 
+                      dataKey="pemasukan" 
+                      name="Pemasukan" 
+                      stroke="var(--color-band-1)" 
+                      strokeWidth={3} 
+                      fill="url(#pemasukanGrad)" 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="pengeluaran" 
+                      name="Pengeluaran" 
+                      stroke="var(--color-accent-red)" 
+                      strokeWidth={3} 
+                      fill="url(#pengeluaranGrad)" 
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </section>
 
+            {/* List of wallets */}
             <section className="glass-card p-5">
-              <SectionHeader title="Kas Usaha" subtitle="Saldo akun keuangan dan rekonsiliasi terbaru" />
-              <div className="grid gap-3.5 md:grid-cols-4 mt-4">
-                <div className="rounded-[var(--radius-card)] bg-[var(--color-band-4)] p-4 md:col-span-1 border border-[var(--color-border)]">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--color-text-secondary)]">Ekspektasi Laci</p>
-                  <p className="mt-2 font-mono text-lg font-black text-[var(--color-band-1)]">{formatRupiah(systemExpectedCash)}</p>
-                  <p className="mt-1 text-[11px] font-semibold text-[var(--color-text-muted)]">{todaySession?.status === 'closed' ? 'Kas sudah ditutup' : 'Shift berjalan'}</p>
-                </div>
-                {(cashAccounts || []).slice(0, 3).map((account) => (
-                  <div key={account.id} className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-4">
-                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--color-text-secondary)]">{account.name}</p>
-                    <p className="mt-2 font-mono text-lg font-black text-[var(--color-text-primary)]">{formatRupiah(account.balance || 0)}</p>
-                    <p className="mt-1 truncate text-[11px] font-semibold text-[var(--color-text-muted)]">{account.description || 'Akun aktif'}</p>
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-[var(--color-text-secondary)] mb-1">Daftar Dompet & Kas</h3>
+              <p className="text-xs text-[var(--color-text-muted)] mb-4">Saldo masing-masing akun keuangan</p>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                {wallets.map((wallet) => (
+                  <div 
+                    key={wallet.id} 
+                    className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-gradient-to-br from-white to-[var(--color-band-4)] p-5 hover:shadow-md transition-all duration-300 group"
+                  >
+                    <div className="absolute right-0 bottom-0 top-0 w-24 bg-gradient-to-l from-[var(--color-band-1)]/5 to-transparent pointer-events-none" />
+                    <div className="flex items-center justify-between">
+                      <span className="rounded-full bg-[var(--color-band-1)]/10 p-2.5 text-[var(--color-band-1)] group-hover:scale-110 transition-transform duration-200">
+                        <Wallet size={20} />
+                      </span>
+                      {wallet.isDefault && (
+                        <span className="rounded-[var(--radius-badge)] bg-[var(--color-band-1)] px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                          Utama
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="mt-4 text-xs font-extrabold uppercase tracking-wider text-[var(--color-text-secondary)]">{wallet.name}</h4>
+                    <p className="mt-1 font-mono text-xl font-black text-[var(--color-text-primary)]">{formatRupiah(wallet.balance || 0)}</p>
+                    {wallet.description && (
+                      <p className="mt-2 text-xs text-[var(--color-text-muted)] truncate">{wallet.description}</p>
+                    )}
                   </div>
                 ))}
-              </div>
-            </section>
-
-            <section className="glass-card p-5">
-              <SectionHeader title="Status Operasional & Shift" subtitle="Ringkasan pengerjaan outlet hari ini" />
-              <div className="overflow-x-auto mt-4">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Outlet</th>
-                      <th>Omzet Hari Ini</th>
-                      <th>Status Tutup Kas</th>
-                      <th>Catatan Harian</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="font-bold">Ruang Tengah Coffee</td>
-                      <td className="font-mono font-bold text-[var(--color-band-1)]">{formatRupiah(summary.totalOmzet || 0)}</td>
-                      <td>
-                        <span className={`badge ${todaySession?.status === 'closed' ? 'badge-success' : 'badge-danger'}`}>
-                          {todaySession?.status === 'closed' ? 'Selesai' : 'Shift Berjalan'}
-                        </span>
-                      </td>
-                      <td className="text-[var(--color-text-secondary)] font-medium">{todayNote ? 'Ada Catatan' : 'Tidak ada'}</td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
             </section>
           </div>
 
-          {/* Right Column Content */}
+          {/* Right Column: Transactions & Quick Actions */}
           <div className="space-y-6">
+            {/* Quick Actions Panel */}
             <section className="glass-card p-5">
-              <SectionHeader title="Metode Pembayaran" subtitle="Rasio transaksi masuk hari ini" />
-              <div className="space-y-3.5 mt-4">
-                {paymentRows.map((row) => {
-                  const pct = Math.round((row.value / totalPayment) * 100);
-                  return (
-                    <div key={row.label}>
-                      <div className="mb-1.5 flex items-center justify-between text-xs font-bold">
-                        <span>{row.label}</span>
-                        <span className="font-mono text-[var(--color-text-secondary)]">{pct}% ({formatRupiah(row.value)})</span>
-                      </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-[var(--color-bg-secondary)]">
-                        <div className={`h-full rounded-full ${row.color}`} style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-[var(--color-text-secondary)]">Aksi Cepat</h3>
+              <p className="mt-1 text-xs text-[var(--color-text-muted)] mb-4">Catat transaksi keuangan dengan cepat</p>
+              <div className="grid grid-cols-3 gap-3">
+                <Link 
+                  to="/owner/incomes" 
+                  className="flex flex-col items-center justify-center rounded-[var(--radius-xl)] border border-emerald-100 bg-emerald-50/50 p-4 text-center hover:bg-emerald-50 transition-all duration-200 group h-24 min-h-11"
+                >
+                  <span className="rounded-full bg-emerald-100 p-2 text-emerald-700 group-hover:scale-110 transition-transform duration-200">
+                    <ArrowUpRight size={18} />
+                  </span>
+                  <span className="mt-2 text-xs font-bold text-emerald-800">Pemasukan</span>
+                </Link>
+                <Link 
+                  to="/owner/expenses" 
+                  className="flex flex-col items-center justify-center rounded-[var(--radius-xl)] border border-rose-100 bg-rose-50/50 p-4 text-center hover:bg-rose-50 transition-all duration-200 group h-24 min-h-11"
+                >
+                  <span className="rounded-full bg-rose-100 p-2 text-rose-700 group-hover:scale-110 transition-transform duration-200">
+                    <ArrowDownRight size={18} />
+                  </span>
+                  <span className="mt-2 text-xs font-bold text-rose-800">Pengeluaran</span>
+                </Link>
+                <Link 
+                  to="/owner/cash" 
+                  className="flex flex-col items-center justify-center rounded-[var(--radius-xl)] border border-blue-100 bg-blue-50/50 p-4 text-center hover:bg-blue-50 transition-all duration-200 group h-24 min-h-11"
+                >
+                  <span className="rounded-full bg-blue-100 p-2 text-blue-700 group-hover:scale-110 transition-transform duration-200">
+                    <ArrowLeftRight size={18} />
+                  </span>
+                  <span className="mt-2 text-xs font-bold text-blue-800">Transfer</span>
+                </Link>
               </div>
             </section>
 
+            {/* Recent Transactions List */}
             <section className="glass-card p-5">
-              <SectionHeader
-                title="Promo Penjualan"
-                subtitle="Promo aktif dan omzet dari rekap hari ini"
-                action={<Link className="text-xs font-bold text-[var(--color-band-1)] hover:underline" to="/owner/promotions">Kelola</Link>}
-              />
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="rounded-[var(--radius-card)] bg-[var(--color-band-4)] p-3">
-                  <Gift size={16} className="mb-2 text-[var(--color-band-1)]" />
-                  <p className="text-[10px] font-extrabold uppercase text-[var(--color-text-muted)]">Aktif</p>
-                  <p className="font-mono text-lg font-black text-[var(--color-text-primary)]">{activePromotions.length}</p>
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-extrabold uppercase tracking-wider text-[var(--color-text-secondary)]">Transaksi Terkini</h3>
+                  <p className="text-xs text-[var(--color-text-muted)]">5 transaksi terakhir yang dilakukan</p>
                 </div>
-                <div className="rounded-[var(--radius-card)] bg-white p-3 border border-[var(--color-border)]">
-                  <p className="text-[10px] font-extrabold uppercase text-[var(--color-text-muted)]">Terjadwal</p>
-                  <p className="mt-2 font-mono text-lg font-black text-[var(--color-text-primary)]">{scheduledPromotions.length}</p>
-                </div>
-                <div className="rounded-[var(--radius-card)] bg-white p-3 border border-[var(--color-border)]">
-                  <p className="text-[10px] font-extrabold uppercase text-[var(--color-text-muted)]">Omzet</p>
-                  <p className="mt-2 font-mono text-sm font-black text-[var(--color-band-1)]">{formatRupiah(todayPromoOmzet)}</p>
-                </div>
+                <Link 
+                  to="/owner/cash" 
+                  className="text-xs font-bold text-[var(--color-band-1)] hover:underline flex items-center justify-center min-h-11 px-2"
+                >
+                  Lihat Semua
+                </Link>
               </div>
-            </section>
 
-            <section className="glass-card p-5">
-              <SectionHeader title="Menu Terlaris" subtitle="Top 5 menu terjual hari ini" />
-              <div className="space-y-2 mt-4">
-                {(summary.menuTerlaris || []).slice(0, 5).map((menu, index) => {
-                  const product = (products || []).find((candidate) => candidate.name === menu.name) || { name: menu.name };
-                  return (
-                    <div key={menu.name} className="flex items-center gap-3 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-2">
-                      <span className="grid h-6 w-6 place-items-center rounded-full bg-[var(--color-band-4)] text-[10px] font-black text-[var(--color-band-1)]">{index + 1}</span>
-                      <ProductThumb product={product} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-black text-[var(--color-text-primary)]">{menu.name}</p>
-                        <p className="font-mono text-[11px] font-bold text-[var(--color-text-muted)]">{menu.qty} cup</p>
-                      </div>
-                    </div>
-                  );
-                })}
-                {(!summary.menuTerlaris || summary.menuTerlaris.length === 0) && (
-                  <EmptyState message="Belum ada menu terjual." sub="Menu terlaris akan muncul setelah transaksi" icon={<Coffee size={20} />} size="sm" />
-                )}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-[var(--color-border)]">
+                  <thead>
+                    <tr className="text-left text-xs font-extrabold uppercase tracking-wider text-[var(--color-text-secondary)]">
+                      <th className="pb-3 pt-2">Tipe</th>
+                      <th className="pb-3 pt-2">Tanggal</th>
+                      <th className="pb-3 pt-2">Nominal</th>
+                      <th className="pb-3 pt-2">Wallet</th>
+                      <th className="pb-3 pt-2">Kategori/Catatan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--color-border)] text-xs">
+                    {sortedTransactions.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-[var(--color-band-4)]/50 transition-colors duration-150">
+                        <td className="py-3 pr-2">{getTransactionBadge(tx.type)}</td>
+                        <td className="py-3 px-2 font-semibold text-[var(--color-text-primary)]">
+                          {formatTanggalSingkat(tx.date)}
+                        </td>
+                        <td className="py-3 px-2">{getAmountDisplay(tx)}</td>
+                        <td className="py-3 px-2 text-[10px] font-bold text-[var(--color-text-secondary)]">
+                          {tx.walletName}
+                        </td>
+                        <td className="py-3 pl-2">
+                          <div className="font-bold text-[var(--color-text-primary)]">{tx.category}</div>
+                          {tx.description && tx.description !== '-' && (
+                            <div className="text-[10px] text-[var(--color-text-muted)] truncate max-w-[120px]" title={tx.description}>
+                              {tx.description}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {sortedTransactions.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="py-8 text-center text-xs text-[var(--color-text-muted)]">
+                          Belum ada transaksi tercatat.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            </section>
-
-            <section className="glass-card p-5">
-              <SectionHeader title="Catatan Operasional" action={<Link className="text-xs font-bold text-[var(--color-band-1)] hover:underline" to="/owner/activity">Lihat Semua</Link>} />
-              <div className="mt-4">
-                {todayNote ? (
-                  <div className="rounded-[var(--radius-card)] bg-[var(--color-coffee-milk)] p-3.5 text-xs font-medium leading-relaxed text-[var(--color-text-secondary)] border border-[var(--color-border)]">
-                    {todayNote.note}
-                  </div>
-                ) : (
-                  <EmptyState message="Tidak ada catatan hari ini." sub="Belum ada catatan operasional" icon={<FileText size={20} />} size="sm" showParticles={false} />
-                )}
-              </div>
-            </section>
-
-            <section className="glass-card p-5">
-              <SectionHeader title="Aktivitas Terkini" />
-              <div className="space-y-2 mt-4">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 rounded-[var(--radius-card)] border border-[var(--color-border)] p-2.5 bg-white">
-                    <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-[var(--color-band-4)] text-[var(--color-band-1)]">
-                      <Activity size={14} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-[var(--color-text-primary)] leading-tight">{activity.action}</p>
-                      <p className="mt-1 font-mono text-[9px] font-bold text-[var(--color-text-muted)]">{formatWaktu(activity.time)}</p>
-                    </div>
-                  </div>
-                ))}
-                {recentActivity.length === 0 && (
-                  <EmptyState message="Tidak ada aktivitas hari ini." sub="Aktivitas muncul saat ada transaksi" icon={<Check size={20} />} size="sm" showParticles={false} />
-                )}
-              </div>
-            </section>
-
-            <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-5 shadow-sm relative overflow-hidden">
-              <div className="absolute right-0 bottom-0 top-0 w-24 bg-gradient-to-l from-[var(--color-accent-light)]/20 to-transparent pointer-events-none" />
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--color-text-muted)]">Akumulasi Usaha</p>
-              <p className="mt-2 font-mono text-2xl font-black text-success">{formatRupiah(totalKeuntunganKeseluruhan)}</p>
-              <p className="mt-1 text-[11px] font-semibold text-[var(--color-text-muted)] leading-normal">Total keuntungan bersih dihitung dari akumulasi omzet dikurangi HPP dan pengeluaran valid.</p>
             </section>
           </div>
         </motion.div>
