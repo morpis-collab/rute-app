@@ -1,31 +1,19 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, TrendingUp, Receipt, Package,
-  Wallet, BookOpen, BarChart3, Settings, Clock, Briefcase,
-  Percent, Users, ChevronLeft, ChevronRight, LogOut, Gift, ClipboardList
+  LayoutDashboard, TrendingUp, Receipt, Wallet, Package, Settings,
+  Users, ChevronLeft, ChevronRight, LogOut
 } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 import useSettingsStore from '../../store/useSettingsStore';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { softSpring } from '../../utils/motion';
 
-const dailyFlowMenu = [
-  { to: '/owner/opening-capital', icon: Briefcase, label: '1. Modal Awal' },
-  { to: '/owner/live-sales', icon: TrendingUp, label: '2. Rekap Penjualan' },
-  { to: '/owner/close-cash', icon: Clock, label: '3. Tutup Kas' },
-  { to: '/owner/revenue-allocation', icon: Percent, label: '4. Bagi Omzet' },
-];
-
-const secondaryMenu = [
+const menuItems = [
   { to: '/owner/dashboard', icon: LayoutDashboard, label: 'Dasbor' },
-  { to: '/owner/reports', icon: BarChart3, label: 'Laporan' },
+  { to: '/owner/incomes', icon: TrendingUp, label: 'Pemasukan' },
   { to: '/owner/expenses', icon: Receipt, label: 'Pengeluaran' },
-  { to: '/owner/cash', icon: Wallet, label: 'Kas Usaha' },
-  { to: '/owner/stock', icon: Package, label: 'Gudang Bahan' },
-  { to: '/owner/restock-planner', icon: ClipboardList, label: 'Restock Planner' },
-  { to: '/owner/menu-hpp', icon: BookOpen, label: 'Menu & HPP' },
-  { to: '/owner/promotions', icon: Gift, label: 'Promo' },
-  { to: '/owner/activity', icon: Clock, label: 'Riwayat Aktivitas' },
+  { to: '/owner/cash', icon: Wallet, label: 'Kas & Dompet' },
+  { to: '/owner/stock', icon: Package, label: 'Master Bahan' },
   { to: '/owner/settings', icon: Settings, label: 'Pengaturan' },
 ];
 
@@ -124,26 +112,8 @@ export default function Sidebar() {
 
       {/* Sidebar Navigation */}
       <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-5 scrollbar-thin">
-        <div>
-          {!sidebarCollapsed && (
-            <div className="px-3.5 mb-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--color-text-muted)]">
-              Flow Harian
-            </div>
-          )}
-          <div className="space-y-0.5">
-            {dailyFlowMenu.map(renderMenuItem)}
-          </div>
-        </div>
-
-        <div>
-          {!sidebarCollapsed && (
-            <div className="px-3.5 mb-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--color-text-muted)]">
-              Fitur Pendukung
-            </div>
-          )}
-          <div className="space-y-0.5">
-            {secondaryMenu.map(renderMenuItem)}
-          </div>
+        <div className="space-y-0.5">
+          {menuItems.map(renderMenuItem)}
         </div>
       </nav>
 

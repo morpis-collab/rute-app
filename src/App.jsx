@@ -10,21 +10,11 @@ import ToastContainer from './components/common/ToastContainer';
 
 const Login = lazy(() => import('./pages/Login'));
 const OwnerDashboard = lazy(() => import('./pages/owner/OwnerDashboard'));
-const OwnerLiveSales = lazy(() => import('./pages/owner/OwnerLiveSales'));
+const OwnerIncomes = lazy(() => import('./pages/owner/OwnerIncomes'));
 const OwnerExpenses = lazy(() => import('./pages/owner/OwnerExpenses'));
 const OwnerStock = lazy(() => import('./pages/owner/OwnerStock'));
-const OwnerRestockPlanner = lazy(() => import('./pages/owner/OwnerRestockPlanner'));
 const OwnerCash = lazy(() => import('./pages/owner/OwnerCash'));
-const OwnerMenuHPP = lazy(() => import('./pages/owner/OwnerMenuHPP'));
-const OwnerApproval = lazy(() => import('./pages/owner/OwnerApproval'));
-const OwnerReports = lazy(() => import('./pages/owner/OwnerReports'));
-const OwnerPromotions = lazy(() => import('./pages/owner/OwnerPromotions'));
 const OwnerSettings = lazy(() => import('./pages/owner/OwnerSettings'));
-const OwnerOpeningCapital = lazy(() => import('./pages/owner/OwnerOpeningCapital'));
-const OwnerRevenueAllocation = lazy(() => import('./pages/owner/OwnerRevenueAllocation'));
-const OwnerCloseCash = lazy(() => import('./pages/owner/OwnerCloseCash'));
-
-const ActivityLog = lazy(() => import('./pages/shared/ActivityLog'));
 
 function PageLoader() {
   return (
@@ -80,23 +70,14 @@ export default function App() {
 
           {/* Owner Routes */}
           <Route path="/owner/dashboard" element={<ProtectedRoute allowedRole="owner"><OwnerDashboard /></ProtectedRoute>} />
-          <Route path="/owner/live-sales" element={<ProtectedRoute allowedRole="owner"><OwnerLiveSales /></ProtectedRoute>} />
-          <Route path="/owner/close-cash" element={<ProtectedRoute allowedRole="owner"><OwnerCloseCash /></ProtectedRoute>} />
+          <Route path="/owner/incomes" element={<ProtectedRoute allowedRole="owner"><OwnerIncomes /></ProtectedRoute>} />
           <Route path="/owner/expenses" element={<ProtectedRoute allowedRole="owner"><OwnerExpenses /></ProtectedRoute>} />
-          <Route path="/owner/stock" element={<ProtectedRoute allowedRole="owner"><OwnerStock /></ProtectedRoute>} />
-          <Route path="/owner/restock-planner" element={<ProtectedRoute allowedRole="owner"><OwnerRestockPlanner /></ProtectedRoute>} />
           <Route path="/owner/cash" element={<ProtectedRoute allowedRole="owner"><OwnerCash /></ProtectedRoute>} />
-          <Route path="/owner/menu-hpp" element={<ProtectedRoute allowedRole="owner"><OwnerMenuHPP /></ProtectedRoute>} />
-          <Route path="/owner/approval" element={<ProtectedRoute allowedRole="owner"><OwnerApproval /></ProtectedRoute>} />
-          <Route path="/owner/reports" element={<ProtectedRoute allowedRole="owner"><OwnerReports /></ProtectedRoute>} />
-          <Route path="/owner/promotions" element={<ProtectedRoute allowedRole="owner"><OwnerPromotions /></ProtectedRoute>} />
-          <Route path="/owner/activity" element={<ProtectedRoute allowedRole="owner"><ActivityLog /></ProtectedRoute>} />
+          <Route path="/owner/stock" element={<ProtectedRoute allowedRole="owner"><OwnerStock /></ProtectedRoute>} />
           <Route path="/owner/settings" element={<ProtectedRoute allowedRole="owner"><OwnerSettings /></ProtectedRoute>} />
-          <Route path="/owner/opening-capital" element={<ProtectedRoute allowedRole="owner"><OwnerOpeningCapital /></ProtectedRoute>} />
-          <Route path="/owner/revenue-allocation" element={<ProtectedRoute allowedRole="owner"><OwnerRevenueAllocation /></ProtectedRoute>} />
 
           {/* Catch all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/owner/dashboard" replace />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
