@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState } from 'react';
 
 const CATEGORY_OPTIONS = [
   { value: 'bahan_baku', label: 'Bahan Baku' },
@@ -8,38 +7,24 @@ const CATEGORY_OPTIONS = [
   { value: 'lainnya', label: 'Lainnya' },
 ];
 
-const UNIT_OPTIONS = ['gram', 'kg', 'ml', 'l', 'pcs'];
+const UNIT_OPTIONS = ['gram', 'kg', 'ml', 'liter', 'pcs', 'botol', 'sachet', 'lembar', 'buah'];
 
 export default function IngredientModal({ isOpen, onClose, onSave, ingredient }) {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('bahan_baku');
-  const [unit, setUnit] = useState('gram');
-  const [costPerUnit, setCostPerUnit] = useState('');
-  const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
+  const isEditing = !!ingredient;
 
-  useEffect(() => {
-    if (isOpen) {
-      if (ingredient) {
-        setName(ingredient.name || '');
-        setCategory(ingredient.category || 'bahan_baku');
-        setUnit(ingredient.unit || 'gram');
-        setCostPerUnit(ingredient.costPerUnit !== undefined ? String(ingredient.costPerUnit) : '');
-        setNotes(ingredient.notes || '');
-      } else {
-        setName('');
-        setCategory('bahan_baku');
-        setUnit('gram');
-        setCostPerUnit('');
-        setNotes('');
-      }
-    }
-  }, [ingredient, isOpen]);
+  const [name, setName] = useState(ingredient?.name || '');
+  const [category, setCategory] = useState(ingredient?.category || 'bahan_baku');
+  const [unit, setUnit] = useState(ingredient?.unit || 'gram');
+  const [costPerUnit, setCostPerUnit] = useState(
+    ingredient?.costPerUnit != null ? String(ingredient.costPerUnit) : ''
+  );
+  const [notes, setNotes] = useState(ingredient?.notes || '');
+  const [saving, setSaving] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!name.trim()) return;
 
     setSaving(true);
@@ -48,123 +33,132 @@ export default function IngredientModal({ isOpen, onClose, onSave, ingredient })
         name: name.trim(),
         category,
         unit,
-        costPerUnit: costPerUnit === '' ? 0 : Number(costPerUnit),
+        costPerUnit: Number(costPerUnit || 0),
         notes: notes.trim(),
       });
       onClose();
-    } catch (error) {
-      console.error('Gagal menyimpan bahan baku:', error);
+    } catch (err) {
+      console.error(err);
+      // Stay open on error
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm slide-in">
-      <div className="bg-[var(--color-bg-card)] rounded-[var(--radius-xl)] w-full max-w-md shadow-[var(--shadow-lg)] overflow-hidden border border-[var(--color-border)]">
-        <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg-secondary)]">
-          <h3 className="font-bold text-[var(--color-text-primary)] font-display text-lg">
-            {ingredient ? 'Edit Bahan Baku' : 'Tambah Bahan Baku'}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+      <div className="bg-white rounded-[var(--radius-xl)] w-full max-w-md shadow-lg overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg-primary)] shrink-0">
+          <h3 className="font-bold text-[var(--color-text-primary)]">
+            {isEditing ? 'Ubah Bahan Baku' : 'Tambah Bahan Baku'}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full h-11 w-11 flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-            title="Tutup"
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer p-1 min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
-            <X size={20} />
+            ✕
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
+          {/* Nama */}
           <div>
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
-              Nama Bahan
+              Nama Bahan <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
-              className="form-input text-sm p-3 w-full"
-              placeholder="Contoh: Kopi Blend"
+              className="form-input text-sm p-3 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]"
+              placeholder="Contoh: Kopi Blend, Susu UHT..."
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Kategori + Satuan */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
                 Kategori
               </label>
               <select
-                className="form-select text-sm p-3 w-full"
+                className="form-select text-sm p-3 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]"
                 value={category}
-                onChange={(event) => setCategory(event.target.value)}
+                onChange={(e) => setCategory(e.target.value)}
               >
-                {CATEGORY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
             </div>
             <div>
               <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
-                Unit Dasar
+                Satuan
               </label>
               <select
-                className="form-select text-sm p-3 w-full"
+                className="form-select text-sm p-3 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]"
                 value={unit}
-                onChange={(event) => setUnit(event.target.value)}
+                onChange={(e) => setUnit(e.target.value)}
               >
-                {UNIT_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
+                {UNIT_OPTIONS.map((u) => (
+                  <option key={u} value={u}>{u}</option>
                 ))}
               </select>
             </div>
           </div>
 
+          {/* Harga Modal */}
           <div>
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
-              Harga Modal (Biaya / Unit)
+              Harga Modal per Satuan (Rp)
             </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-[var(--color-text-secondary)] font-mono">
-                Rp
-              </span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className="form-input text-sm p-3 pl-9 w-full font-mono"
-                placeholder="0"
-                value={costPerUnit}
-                onChange={(event) => setCostPerUnit(event.target.value)}
-              />
-            </div>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              className="form-input text-sm p-3 font-mono w-full text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]"
+              placeholder="0"
+              value={costPerUnit}
+              onChange={(e) => setCostPerUnit(e.target.value)}
+            />
+            <p className="text-[11px] text-[var(--color-text-muted)] mt-1">
+              Otomatis diperbarui saat ada pembelian bahan baku yang di-link ke item ini.
+            </p>
           </div>
 
+          {/* Catatan */}
           <div>
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
-              Catatan (Notes)
+              Catatan (Opsional)
             </label>
-            <textarea
-              className="form-input text-sm p-3 w-full h-24 resize-none"
-              placeholder="Contoh: Beli di supplier langganan"
+            <input
+              type="text"
+              className="form-input text-sm p-3 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]"
+              placeholder="Contoh: Merk tertentu, spesifikasi kualitas..."
               value={notes}
-              onChange={(event) => setNotes(event.target.value)}
+              onChange={(e) => setNotes(e.target.value)}
             />
           </div>
 
-          <div className="pt-2">
+          {/* Buttons */}
+          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-border)] shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-3 text-sm font-semibold rounded-xl border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-gray-50 cursor-pointer min-h-[44px]"
+            >
+              Batal
+            </button>
             <button
               type="submit"
               disabled={saving}
-              className="btn btn-primary w-full shadow-md disabled:opacity-60 p-3 flex items-center justify-center font-bold text-sm h-11"
+              className="px-4 py-3 text-sm font-semibold rounded-xl bg-[var(--color-accent-primary)] text-white hover:bg-[var(--color-accent-primary)]/90 cursor-pointer min-h-[44px] disabled:opacity-60"
             >
-              {saving ? 'Menyimpan...' : ingredient ? 'Simpan Perubahan' : 'Tambah Bahan Baku'}
+              {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>
         </form>
