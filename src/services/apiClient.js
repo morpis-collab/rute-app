@@ -242,4 +242,89 @@ export async function putPayDebt(saleId, payload) {
   return data;
 }
 
+export async function getWallets() {
+  const { data } = await api.get('/wallets');
+  return data;
+}
+
+export async function postWallet(payload) {
+  const { data } = await api.post('/wallets', payload);
+  return data;
+}
+
+export async function putWallet(id, payload) {
+  const { data } = await api.put(`/wallets/${id}`, payload);
+  return data;
+}
+
+export async function deleteWallet(id) {
+  const { data } = await api.delete(`/wallets/${id}`);
+  return data;
+}
+
+export async function postCategory(payload) {
+  const { data } = await api.post('/categories', payload);
+  return data;
+}
+
+export async function deleteCategory(type, name) {
+  const { data } = await api.delete(`/categories/${type}/${encodeURIComponent(name)}`);
+  return data;
+}
+
+export async function getIncomes() {
+  const { data } = await api.get('/incomes');
+  return data;
+}
+
+export async function postIncome(payload) {
+  const { data } = await api.post('/incomes', payload);
+  return data;
+}
+
+export async function putIncome(id, payload) {
+  const { data } = await api.put(`/incomes/${id}`, payload);
+  return data;
+}
+
+export async function deleteIncome(id) {
+  const { data } = await api.delete(`/incomes/${id}`);
+  return data;
+}
+
+export async function deleteExpense(id) {
+  const { data } = await api.delete(`/expenses/${id}`);
+  return data;
+}
+
+export async function getTransfers() {
+  const { data } = await api.get('/transfers');
+  return data;
+}
+
+export async function postTransfer(payload) {
+  const { data } = await api.post('/transfers', payload);
+  return data;
+}
+
+export async function putTransfer(id, payload) {
+  const { data } = await api.put(`/transfers/${id}`, payload);
+  return data;
+}
+
+export async function deleteTransfer(id) {
+  const { data } = await api.delete(`/transfers/${id}`);
+  return data;
+}
+
+export async function getIngredients() {
+  const { data } = await api.get('/ingredients');
+  return data;
+}
+
+export async function putIngredient(id, payload) {
+  const { data } = await api.put(`/ingredients/${id}`, payload);
+  return data;
+}
+
 export default api;
