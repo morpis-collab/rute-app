@@ -25,6 +25,17 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
   const [linkToIngredient, setLinkToIngredient] = useState(!!initialPurchasedIng);
   const [ingredientId, setIngredientId] = useState(initialPurchasedIng?.ingredientId || '');
   const [qty, setQty] = useState(initialPurchasedIng?.qty || '');
+  const [totalHargaBahan, setTotalHargaBahan] = useState(
+    initialPurchasedIng?.price && initialPurchasedIng?.qty
+      ? String(Number(initialPurchasedIng.price) * Number(initialPurchasedIng.qty))
+      : (expense?.amount || expense?.total || '')
+  );
+
+  const selectedIngredient = ingredients.find(ing => String(ing.id) === String(ingredientId));
+  const unit = selectedIngredient?.unit || '';
+  const qtyNum = Number(qty);
+  const totalHargaBahanNum = Number(totalHargaBahan);
+  const pricePerUnit = qtyNum > 0 ? (totalHargaBahanNum / qtyNum) : 0;
 
   if (!isOpen) return null;
 
@@ -37,7 +48,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
       return;
     }
     if (!walletId) {
-      useToastStore.getState().addToast('Wallet wajib dipilih', 'error');
+      useToastStore.getState().addToast('Dompet wajib dipilih', 'error');
       return;
     }
 
@@ -51,10 +62,13 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
     };
 
     if (isBahanBaku && linkToIngredient && ingredientId && qty) {
+      const qtyVal = Number(qty);
+      const totalVal = Number(totalHargaBahan);
+      const calculatedPrice = qtyVal > 0 ? Number(totalVal / qtyVal) : 0;
       payload.purchasedIngredients = [{
         ingredientId,
-        qty: Number(qty),
-        price: Number(amount / qty)
+        qty: qtyVal,
+        price: calculatedPrice
       }];
     } else {
       payload.purchasedIngredients = [];
@@ -100,7 +114,13 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
               className="form-input text-sm p-3 font-mono w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
               placeholder="0" 
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                const newVal = e.target.value;
+                setAmount(newVal);
+                if (totalHargaBahan === amount || !totalHargaBahan) {
+                  setTotalHargaBahan(newVal);
+                }
+              }}
               required 
             />
           </div>
@@ -134,7 +154,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
               onChange={(e) => setWalletId(e.target.value)} 
               required
             >
-              <option value="">Pilih Wallet</option>
+              <option value="">Pilih Dompet</option>
               {wallets.map(w => (
                 <option key={w.id} value={w.id}>{w.name} (Saldo: {formatRupiah(w.balance)})</option>
               ))}
@@ -179,6 +199,17 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
+                      Satuan (Unit)
+                    </label>
+                    <input 
+                      type="text" 
+                      className="form-input text-sm p-3 w-full font-sans text-gray-500 bg-gray-100 border border-[var(--color-border)] rounded-md cursor-not-allowed" 
+                      value={unit || '-'}
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
                       Kuantitas (Qty)
                     </label>
                     <input 
@@ -190,6 +221,30 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense }) {
                       onChange={(e) => setQty(e.target.value)}
                       required={linkToIngredient}
                       min="0.01"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
+                      Total Harga Bahan (Total Price)
+                    </label>
+                    <input 
+                      type="number"
+                      className="form-input text-sm p-3 w-full font-mono font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
+                      placeholder="0"
+                      value={totalHargaBahan}
+                      onChange={(e) => setTotalHargaBahan(e.target.value)}
+                      required={linkToIngredient}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">
+                      Harga per Satuan (Price per Unit)
+                    </label>
+                    <input 
+                      type="text" 
+                      className="form-input text-sm p-3 w-full font-mono text-gray-500 bg-gray-100 border border-[var(--color-border)] rounded-md cursor-not-allowed" 
+                      value={qtyNum > 0 ? formatRupiah(pricePerUnit) : 'Rp 0'}
+                      readOnly
                     />
                   </div>
                 </div>

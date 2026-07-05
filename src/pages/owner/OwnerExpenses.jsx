@@ -39,7 +39,7 @@ export default function OwnerExpenses() {
 
   const getWalletLabel = (id) => {
     const w = wallets.find(item => String(item.id) === String(id));
-    return w ? w.name : 'Unknown Wallet';
+    return w ? w.name : 'Dompet Tidak Dikenal';
   };
 
   const filteredExpenses = expenses.filter(exp => {
