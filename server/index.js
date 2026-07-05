@@ -553,7 +553,7 @@ app.get('/api/ingredients', (req, res) => {
 
 app.post('/api/ingredients', (req, res) => {
   const result = updateDb((db) => {
-    const { id, name, category, unit, stock, minStock, costPerUnit } = req.body;
+    const { id, name, category, unit, stock, minStock, costPerUnit, notes } = req.body;
     if (!name || !String(name).trim()) {
       return { error: 'Nama bahan baku wajib diisi', statusCode: 400 };
     }
@@ -572,6 +572,7 @@ app.post('/api/ingredients', (req, res) => {
       stock: Number(stock || 0),
       minStock: Number(minStock || 0),
       costPerUnit: Number(costPerUnit || 0),
+      notes: notes ? String(notes).trim() : '',
       createdAt: new Date().toISOString()
     };
     db.ingredients.push(newIngredient);
@@ -587,7 +588,7 @@ app.put('/api/ingredients/:id', (req, res) => {
     const ingredient = db.ingredients.find(ing => String(ing.id) === String(id));
     if (!ingredient) return { error: 'Bahan baku tidak ditemukan', statusCode: 404 };
     
-    const { name, category, unit, stock, minStock, costPerUnit } = req.body;
+    const { name, category, unit, stock, minStock, costPerUnit, notes } = req.body;
     if (name !== undefined) {
       const ingredientName = String(name).trim();
       if (!ingredientName) return { error: 'Nama bahan baku tidak boleh kosong', statusCode: 400 };
@@ -602,6 +603,7 @@ app.put('/api/ingredients/:id', (req, res) => {
     if (stock !== undefined) ingredient.stock = Number(stock || 0);
     if (minStock !== undefined) ingredient.minStock = Number(minStock || 0);
     if (costPerUnit !== undefined) ingredient.costPerUnit = Number(costPerUnit || 0);
+    if (notes !== undefined) ingredient.notes = String(notes).trim();
     
     return ingredient;
   });
