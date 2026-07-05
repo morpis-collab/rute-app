@@ -13,7 +13,7 @@
 2. **Added Search & Filter UI**:
    - Added state hooks for `searchQuery`, `selectedCategory`, and `selectedWallet`.
    - Created a Filter Section layout displaying:
-     - Search input (queries both description and category case-insensitively).
+     - Search input (queries both notes and category case-insensitively).
      - Category dropdown selector (populates from `categories.income` with a fallback option for "Semua Kategori").
      - Wallet dropdown selector (populates from `wallets` with a fallback option for "Semua Wallet").
    - Filtered the active list using `filteredIncomes` dynamically instead of showing all incomes directly.
@@ -23,11 +23,16 @@
    - Modified all form inputs and selects inside `IncomeModal` to use `p-3` (instead of `p-2`) to ensure a height of at least 44px (`min-h-[44px]`).
    - Applied the `.form-input` and `.form-select` base classes to the search and filter inputs/selects in the history list filter section, and updated their padding from `p-2` to `p-3` to ensure they also have a height of at least 44px.
 
+4. **Replaced 'description' with 'notes'**:
+   - In the backend (`server/index.js`), updated `/api/incomes` (POST/PUT) routes to destructure and update `notes` instead of `description`.
+   - In the frontend (`OwnerIncomes.jsx`), changed all references, states, and props of `description` to `notes` (`Catatan`), and updated UI labels/placeholders.
+   - Handled save resolution asynchronously inside `IncomeModal`'s `handleSubmit`, ensuring `onClose()` is only called after `onSave()` resolves successfully.
+
 ## Verification & Tests
 1. **Build Check**:
-   - Ran `npm run build` which successfully completed in `564ms`. All client assets and chunks bundled correctly.
+   - Ran `npm run build` which successfully completed. All client assets and chunks bundled correctly.
 2. **Lint Check**:
-   - Ran `npm run lint` which passed cleanly with 0 errors/warnings on `OwnerIncomes.jsx`.
+   - Ran `npm run lint` which passed cleanly with 0 errors/warnings.
 3. **Owner-Only Check**:
    - Ran `npm run test:owner-only` which passed 100% cleanly.
 4. **Smoke Test Check**:
@@ -38,6 +43,7 @@
 ## Commits
 - `feat(owner/incomes): implement search and filter controls for incomes history list`
 - `fix(owner/incomes): increase form input and select touch targets to at least 44px and apply form classes`
+- `fix(owner/incomes): replace description field with notes for consistency and handle save resolution in modal`
 
 ## Concerns & Notes
 - None. The implementation is lightweight, follows YAGNI, utilizes the existing design variables and components, and aligns with the role requirements in `AGENTS.md`.
