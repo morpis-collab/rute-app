@@ -1,14 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { products } from '../src/data/mock/products.js';
-import { sales } from '../src/data/mock/sales.js';
-import { expenses } from '../src/data/mock/expenses.js';
-import { ingredients, stockMovements } from '../src/data/mock/ingredients.js';
-import { activityLog, cashSessions, dailyNotes } from '../src/data/mock/activity.js';
-import { cashAccounts, cashTransactions } from '../src/data/mock/cashAccounts.js';
-import { promotions } from '../src/data/mock/promotions.js';
-import { convertQuantityToIngredientUnit, getIngredientStatus } from './rules.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataFile = process.env.RUTE_DATA_FILE
@@ -16,14 +8,12 @@ const dataFile = process.env.RUTE_DATA_FILE
   : path.join(__dirname, '.data', 'rute-db.json');
 const dataDir = path.dirname(dataFile);
 
-const clone = (value) => structuredClone(value);
-
 function seedData() {
   const seededAt = new Date().toISOString();
   return {
     meta: {
-      app: 'RUTE CoffeeOps',
-      version: 1,
+      app: 'RUTE Cash Tracer',
+      version: 2,
       seededAt,
     },
     users: {
@@ -36,30 +26,20 @@ function seedData() {
         active: true,
       },
     },
-    products: clone(products),
-    sales: clone(sales),
-    expenses: clone(expenses),
-    ingredients: clone(ingredients),
-    stockMovements: clone(stockMovements),
-    activityLog: clone(activityLog),
-    cashSessions: clone(cashSessions),
-    cashAccounts: clone(cashAccounts),
-    cashTransactions: clone(cashTransactions),
-    openingCapital: {
-      businessStartDate: null,
-      cashCapital: 0,
-      assetContributions: [],
-      inventoryContributions: [],
-      personalExcludedItems: [],
-      notes: '',
-      createdBy: 'System',
-      createdAt: seededAt,
-      updatedBy: 'System',
-      updatedAt: seededAt,
+    wallets: [
+      { id: 'acc-bahan-baku', name: 'Bahan Baku', balance: 0, isDefault: true, createdAt: seededAt },
+      { id: 'acc-operasional', name: 'Operasional', balance: 0, isDefault: false, createdAt: seededAt },
+      { id: 'acc-qris', name: 'QRIS', balance: 0, isDefault: false, createdAt: seededAt },
+      { id: 'acc-keuntungan', name: 'Keuntungan', balance: 0, isDefault: false, createdAt: seededAt }
+    ],
+    categories: {
+      income: ["Penjualan Harian", "Pendapatan Bunga", "Lain-lain"],
+      expense: ["Pembelian Bahan Baku", "Sewa Tempat", "Operasional", "Gaji Staff", "Listrik & Air", "Lain-lain"]
     },
-    dailyNotes: clone(dailyNotes),
-    receiptUploads: [],
-    promotions: clone(promotions),
+    incomes: [],
+    expenses: [],
+    transfers: [],
+    ingredients: []
   };
 }
 
@@ -88,117 +68,19 @@ function normalizeDb(db) {
       },
     ]),
   );
-  const existingIngredients = Array.isArray(db.ingredients) ? db.ingredients : [];
-  const existingById = new Map(existingIngredients.map((ingredient) => [String(ingredient.id), ingredient]));
-
-  const normalizeIngredient = (ingredient) => {
-    const stock = Number(ingredient.stock ?? ingredient.stockCurrent ?? 0);
-    const minStock = Number(ingredient.minStock ?? 0);
-    const safeStock = Number.isFinite(stock) ? stock : 0;
-    const safeMinStock = Number.isFinite(minStock) ? minStock : 0;
-    return {
-      ...ingredient,
-      name: String(ingredient.name || '').trim(),
-      category: ingredient.category || 'bahan_baku',
-      unit: ingredient.unit || 'pcs',
-      stock: Number(safeStock.toFixed(3)),
-      minStock: Number(safeMinStock.toFixed(3)),
-      costPerUnit: Number(ingredient.costPerUnit || 0),
-      status: getIngredientStatus(safeStock, safeMinStock),
-      unitConversions: ingredient.unitConversions && typeof ingredient.unitConversions === 'object'
-        ? ingredient.unitConversions
-        : {},
-    };
-  };
-
-  const normalizedSeedIngredients = seed.ingredients.map((seedIngredient) => {
-    const existing = existingById.get(String(seedIngredient.id));
-    if (!existing) return normalizeIngredient(seedIngredient);
-
-    const stock = existing.unit && existing.unit !== seedIngredient.unit
-      ? convertQuantityToIngredientUnit(existing.stock, existing.unit, seedIngredient)
-      : Number(existing.stock ?? seedIngredient.stock);
-    const minStock = existing.unit && existing.unit !== seedIngredient.unit
-      ? convertQuantityToIngredientUnit(existing.minStock, existing.unit, seedIngredient)
-      : Number(existing.minStock ?? seedIngredient.minStock);
-
-    return {
-      ...seedIngredient,
-      ...existing,
-      unit: seedIngredient.unit,
-      unitConversions: seedIngredient.unitConversions,
-      costPerUnit: seedIngredient.costPerUnit,
-      stock: Number(stock.toFixed(3)),
-      minStock: Number(minStock.toFixed(3)),
-      status: getIngredientStatus(stock, minStock),
-    };
-  });
-  const seedIngredientIds = new Set(seed.ingredients.map((ingredient) => String(ingredient.id)));
-  const customIngredients = existingIngredients
-    .filter((ingredient) => !seedIngredientIds.has(String(ingredient.id)))
-    .map(normalizeIngredient)
-    .filter((ingredient) => ingredient.name);
-  const normalizedIngredients = [...normalizedSeedIngredients, ...customIngredients];
 
   return {
-    ...seed,
-    ...db,
+    meta: {
+      ...seed.meta,
+      ...(db.meta || {}),
+    },
     users: normalizedUsers,
-    products: Array.isArray(db.products) ? db.products : seed.products,
-    sales: Array.isArray(db.sales) ? db.sales : seed.sales,
+    wallets: Array.isArray(db.wallets) ? db.wallets : seed.wallets,
+    categories: db.categories && typeof db.categories === 'object' ? db.categories : seed.categories,
+    incomes: Array.isArray(db.incomes) ? db.incomes : seed.incomes,
     expenses: Array.isArray(db.expenses) ? db.expenses : seed.expenses,
-    ingredients: normalizedIngredients,
-    stockMovements: Array.isArray(db.stockMovements) ? db.stockMovements : seed.stockMovements,
-    activityLog: Array.isArray(db.activityLog) ? db.activityLog : seed.activityLog,
-    cashSessions: Array.isArray(db.cashSessions) ? db.cashSessions : seed.cashSessions,
-    cashAccounts: (() => {
-      let accounts = Array.isArray(db.cashAccounts) ? db.cashAccounts : seed.cashAccounts;
-      if (!accounts.some((acc) => String(acc.id) === 'acc-brankas')) {
-        accounts = [
-          ...accounts,
-          { id: 'acc-brankas', name: 'Brankas', type: 'tunai', balance: 0, status: 'active' },
-        ];
-      }
-      if (!accounts.some((acc) => String(acc.id) === 'acc-brankas-bahan-baku')) {
-        accounts = [
-          ...accounts,
-          { id: 'acc-brankas-bahan-baku', name: 'Brankas Bahan Baku', type: 'tunai', balance: 0, status: 'active' },
-        ];
-      }
-      if (!accounts.some((acc) => String(acc.id) === 'acc-brankas-operasional')) {
-        accounts = [
-          ...accounts,
-          { id: 'acc-brankas-operasional', name: 'Brankas Operasional', type: 'tunai', balance: 0, status: 'active' },
-        ];
-      }
-      if (!accounts.some((acc) => String(acc.id) === 'acc-brankas-keuntungan')) {
-        accounts = [
-          ...accounts,
-          { id: 'acc-brankas-keuntungan', name: 'Brankas Keuntungan', type: 'tunai', balance: 0, status: 'active' },
-        ];
-      }
-      return accounts;
-    })(),
-    cashTransactions: Array.isArray(db.cashTransactions) ? db.cashTransactions : seed.cashTransactions,
-    openingCapital: db.openingCapital && typeof db.openingCapital === 'object'
-      ? {
-          ...seed.openingCapital,
-          ...db.openingCapital,
-          cashCapital: Number(db.openingCapital.cashCapital || 0),
-          assetContributions: Array.isArray(db.openingCapital.assetContributions)
-            ? db.openingCapital.assetContributions
-            : [],
-          inventoryContributions: Array.isArray(db.openingCapital.inventoryContributions)
-            ? db.openingCapital.inventoryContributions
-            : [],
-          personalExcludedItems: Array.isArray(db.openingCapital.personalExcludedItems)
-            ? db.openingCapital.personalExcludedItems
-            : [],
-        }
-      : seed.openingCapital,
-    dailyNotes: Array.isArray(db.dailyNotes) ? db.dailyNotes : seed.dailyNotes,
-    receiptUploads: Array.isArray(db.receiptUploads) ? db.receiptUploads : [],
-    promotions: Array.isArray(db.promotions) ? db.promotions : seed.promotions,
+    transfers: Array.isArray(db.transfers) ? db.transfers : seed.transfers,
+    ingredients: Array.isArray(db.ingredients) ? db.ingredients : seed.ingredients,
   };
 }
 
@@ -209,9 +91,8 @@ export function readDb() {
   if (
     JSON.stringify(normalized.ingredients) !== JSON.stringify(db.ingredients) ||
     JSON.stringify(normalized.users) !== JSON.stringify(db.users) ||
-    JSON.stringify(normalized.openingCapital) !== JSON.stringify(db.openingCapital) ||
-    JSON.stringify(normalized.cashAccounts) !== JSON.stringify(db.cashAccounts) ||
-    JSON.stringify(normalized.promotions) !== JSON.stringify(db.promotions)
+    JSON.stringify(normalized.wallets) !== JSON.stringify(db.wallets) ||
+    JSON.stringify(normalized.categories) !== JSON.stringify(db.categories)
   ) {
     fs.writeFileSync(dataFile, JSON.stringify(normalized, null, 2));
   }

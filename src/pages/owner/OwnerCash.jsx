@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { ArrowRightLeft, AlertTriangle, ArrowDown, ArrowUp, Loader2, Wallet, FileText } from 'lucide-react';
+import { ArrowRightLeft, AlertTriangle, ArrowDown, ArrowUp, Loader2, Wallet } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { formatRupiah, formatWaktu } from '../../utils/formatters';
 import CashModal from '../../components/owner/CashModal';
