@@ -54,7 +54,7 @@ function IncomeModal({ isOpen, onClose, onSave, income, wallets, incomeCategorie
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Deskripsi</label>
             <input 
               type="text" 
-              className="form-input text-sm p-2 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
+              className="form-input text-sm p-3 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
               placeholder="Contoh: Pendapatan Bunga Bank, Penjualan Katering..." 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -65,7 +65,7 @@ function IncomeModal({ isOpen, onClose, onSave, income, wallets, incomeCategorie
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Nominal (Rp)</label>
             <input 
               type="number" 
-              className="form-input text-sm p-2 font-mono w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
+              className="form-input text-sm p-3 font-mono w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
               placeholder="0" 
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -76,7 +76,7 @@ function IncomeModal({ isOpen, onClose, onSave, income, wallets, incomeCategorie
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Tanggal</label>
             <input 
               type="date" 
-              className="form-input text-sm p-2 w-full font-mono bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
+              className="form-input text-sm p-3 w-full font-mono bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required 
@@ -85,7 +85,7 @@ function IncomeModal({ isOpen, onClose, onSave, income, wallets, incomeCategorie
           <div>
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Kategori</label>
             <select 
-              className="form-select text-sm p-2 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
+              className="form-select text-sm p-3 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
               value={category} 
               onChange={(e) => setCategory(e.target.value)}
             >
@@ -97,7 +97,7 @@ function IncomeModal({ isOpen, onClose, onSave, income, wallets, incomeCategorie
           <div>
             <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Wallet Penerima</label>
             <select 
-              className="form-select text-sm p-2 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
+              className="form-select text-sm p-3 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
               value={walletId} 
               onChange={(e) => setWalletId(e.target.value)} 
               required
@@ -224,7 +224,7 @@ export default function OwnerIncomes() {
           <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Cari Deskripsi / Kategori</label>
           <input
             type="text"
-            className="w-full text-sm p-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
+            className="form-input w-full text-sm p-3 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
             placeholder="Cari pemasukan..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -233,7 +233,7 @@ export default function OwnerIncomes() {
         <div className="w-full sm:w-48">
           <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Kategori</label>
           <select
-            className="w-full text-sm p-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
+            className="form-select w-full text-sm p-3 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
@@ -246,7 +246,7 @@ export default function OwnerIncomes() {
         <div className="w-full sm:w-48">
           <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Wallet</label>
           <select
-            className="w-full text-sm p-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
+            className="form-select w-full text-sm p-3 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
             value={selectedWallet}
             onChange={(e) => setSelectedWallet(e.target.value)}
           >
