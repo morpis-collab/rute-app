@@ -196,7 +196,7 @@ app.get('/api/incomes', (req, res) => {
 
 app.post('/api/incomes', (req, res) => {
   const result = updateDb((db) => {
-    const { id, amount, walletId, category, description, date, user } = req.body;
+    const { id, amount, walletId, category, notes, date, user } = req.body;
     if (amount === undefined || Number(amount) <= 0) {
       return { error: 'Nominal income harus lebih dari 0', statusCode: 400 };
     }
@@ -214,7 +214,7 @@ app.post('/api/incomes', (req, res) => {
       amount: Number(amount),
       walletId,
       category: category ? String(category).trim() : 'Lain-lain',
-      description: description ? String(description).trim() : '',
+      notes: notes ? String(notes).trim() : '',
       date: date || new Date().toISOString(),
       user: user || 'Owner',
       createdAt: new Date().toISOString()
@@ -259,7 +259,7 @@ app.put('/api/incomes/:id', (req, res) => {
       amount: newAmount,
       walletId: newWalletId,
       category: req.body.category !== undefined ? String(req.body.category).trim() : oldIncome.category,
-      description: req.body.description !== undefined ? String(req.body.description).trim() : oldIncome.description,
+      notes: req.body.notes !== undefined ? req.body.notes : oldIncome.notes,
       date: req.body.date !== undefined ? req.body.date : oldIncome.date,
       user: req.body.user !== undefined ? req.body.user : oldIncome.user,
       updatedAt: new Date().toISOString()

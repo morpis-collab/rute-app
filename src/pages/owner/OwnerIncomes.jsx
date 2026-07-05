@@ -10,7 +10,7 @@ import { getBusinessDate } from '../../utils/businessDate';
 import { expandCollapse, softSpring, tapPress } from '../../utils/motion';
 
 function IncomeModal({ isOpen, onClose, onSave, income, wallets, incomeCategories }) {
-  const [description, setDescription] = useState(income?.description || '');
+  const [notes, setNotes] = useState(income?.notes || '');
   const [amount, setAmount] = useState(income?.amount || '');
   const [category, setCategory] = useState(income?.category || incomeCategories[0] || 'Penjualan Harian');
   const [date, setDate] = useState(income?.date ? income.date.substring(0, 10) : getBusinessDate());
@@ -18,7 +18,7 @@ function IncomeModal({ isOpen, onClose, onSave, income, wallets, incomeCategorie
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) {
       useToastStore.getState().addToast('Nominal harus lebih dari 0', 'error');
@@ -29,14 +29,18 @@ function IncomeModal({ isOpen, onClose, onSave, income, wallets, incomeCategorie
       return;
     }
 
-    onSave({
-      description,
-      amount: Number(amount),
-      category,
-      walletId,
-      date: date ? `${date}T12:00:00.000Z` : undefined,
-    });
-    onClose();
+    try {
+      await onSave({
+        notes,
+        amount: Number(amount),
+        category,
+        walletId,
+        date: date ? `${date}T12:00:00.000Z` : undefined,
+      });
+      onClose();
+    } catch {
+      // Error handles inside onSave/handleSaveIncome, do not close modal on error
+    }
   };
 
   return (
@@ -51,13 +55,13 @@ function IncomeModal({ isOpen, onClose, onSave, income, wallets, incomeCategorie
         
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
           <div>
-            <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Deskripsi</label>
+            <label className="block text-[11px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Catatan</label>
             <input 
               type="text" 
               className="form-input text-sm p-3 w-full font-sans text-gray-800 bg-white border border-[var(--color-border)] rounded-md focus:border-[var(--color-band-1)]" 
               placeholder="Contoh: Pendapatan Bunga Bank, Penjualan Katering..." 
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
               required 
             />
           </div>
@@ -153,7 +157,7 @@ export default function OwnerIncomes() {
   const filteredIncomes = incomes.filter(inc => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = !searchQuery || 
-      (inc.description && inc.description.toLowerCase().includes(searchLower)) ||
+      (inc.notes && inc.notes.toLowerCase().includes(searchLower)) ||
       (inc.category && inc.category.toLowerCase().includes(searchLower));
     const matchesCategory = selectedCategory === 'all' || inc.category === selectedCategory;
     const matchesWallet = selectedWallet === 'all' || String(inc.walletId) === String(selectedWallet);
@@ -183,6 +187,7 @@ export default function OwnerIncomes() {
     } catch (err) {
       console.error(err);
       useToastStore.getState().addToast('Gagal menyimpan pemasukan', 'error');
+      throw err;
     }
   };
 
@@ -221,7 +226,7 @@ export default function OwnerIncomes() {
       {/* Filter Section */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-xl border border-[var(--color-border)]">
         <div className="flex-1">
-          <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Cari Deskripsi / Kategori</label>
+          <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Cari Catatan / Kategori</label>
           <input
             type="text"
             className="form-input w-full text-sm p-3 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
@@ -282,7 +287,7 @@ export default function OwnerIncomes() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-                        {inc.description || 'Pemasukan Tanpa Nama'}
+                        {inc.notes || 'Pemasukan Tanpa Nama'}
                       </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-accent-light)]/30 text-[var(--color-accent-primary)] font-semibold">
                         {inc.category}
