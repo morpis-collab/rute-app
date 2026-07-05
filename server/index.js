@@ -259,7 +259,7 @@ app.put('/api/incomes/:id', (req, res) => {
       amount: newAmount,
       walletId: newWalletId,
       category: req.body.category !== undefined ? String(req.body.category).trim() : oldIncome.category,
-      notes: req.body.notes !== undefined ? req.body.notes : oldIncome.notes,
+      notes: req.body.notes !== undefined ? String(req.body.notes).trim() : oldIncome.notes,
       date: req.body.date !== undefined ? req.body.date : oldIncome.date,
       user: req.body.user !== undefined ? req.body.user : oldIncome.user,
       updatedAt: new Date().toISOString()

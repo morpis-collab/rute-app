@@ -142,7 +142,7 @@ export default function OwnerDashboard() {
       amount: Number(inc.amount || 0),
       walletName: getWalletName(inc.walletId),
       category: inc.category || 'Pemasukan',
-      description: inc.description || '-',
+      description: inc.notes || '-',
     })),
     ...(expenses || []).map((exp) => ({
       id: exp.id,
