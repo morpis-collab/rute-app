@@ -146,6 +146,20 @@ export default function OwnerIncomes() {
 
   const incomeCategories = categories.income || ["Penjualan Harian", "Pendapatan Bunga", "Lain-lain"];
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedWallet, setSelectedWallet] = useState('all');
+
+  const filteredIncomes = incomes.filter(inc => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = !searchQuery || 
+      (inc.description && inc.description.toLowerCase().includes(searchLower)) ||
+      (inc.category && inc.category.toLowerCase().includes(searchLower));
+    const matchesCategory = selectedCategory === 'all' || inc.category === selectedCategory;
+    const matchesWallet = selectedWallet === 'all' || String(inc.walletId) === String(selectedWallet);
+    return matchesSearch && matchesCategory && matchesWallet;
+  });
+
   const getWalletLabel = (id) => {
     const w = wallets.find(item => String(item.id) === String(id));
     return w ? w.name : 'Unknown Wallet';
@@ -204,13 +218,53 @@ export default function OwnerIncomes() {
         <span className="text-sm font-medium text-[var(--color-accent-primary)]">Tambah Pemasukan</span>
       </motion.button>
 
+      {/* Filter Section */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-xl border border-[var(--color-border)]">
+        <div className="flex-1">
+          <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Cari Deskripsi / Kategori</label>
+          <input
+            type="text"
+            className="w-full text-sm p-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
+            placeholder="Cari pemasukan..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="w-full sm:w-48">
+          <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Kategori</label>
+          <select
+            className="w-full text-sm p-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="all">Semua Kategori</option>
+            {incomeCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+        <div className="w-full sm:w-48">
+          <label className="block text-[10px] font-bold text-[var(--color-text-secondary)] uppercase mb-1">Wallet</label>
+          <select
+            className="w-full text-sm p-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg focus:border-[var(--color-band-1)] outline-none font-sans text-gray-800"
+            value={selectedWallet}
+            onChange={(e) => setSelectedWallet(e.target.value)}
+          >
+            <option value="all">Semua Wallet</option>
+            {wallets.map(w => (
+              <option key={w.id} value={w.id}>{w.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="space-y-2">
-        {incomes.length === 0 ? (
+        {filteredIncomes.length === 0 ? (
           <div className="p-8 text-center border border-dashed border-[var(--color-border)] rounded-xl bg-white text-[var(--color-text-muted)] text-sm">
-            Belum ada data pemasukan. Silakan tambahkan pemasukan baru.
+            {incomes.length === 0 ? 'Belum ada data pemasukan. Silakan tambahkan pemasukan baru.' : 'Tidak ada data pemasukan yang cocok dengan filter.'}
           </div>
         ) : (
-          incomes.map(inc => {
+          filteredIncomes.map(inc => {
             const isExpanded = expandedIncomeId === inc.id;
             return (
               <motion.div
