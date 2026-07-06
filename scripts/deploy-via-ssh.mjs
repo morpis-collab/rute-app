@@ -15,7 +15,8 @@ const config = {
   host: 'ruteapp.cloud',
   port: 22,
   username: 'root',
-  password: 'mhan071099@'
+  password: 'mhan071099@',
+  readyTimeout: 60000
 };
 
 const conn = new Client();
