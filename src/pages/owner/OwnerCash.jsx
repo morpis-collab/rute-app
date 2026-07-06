@@ -31,6 +31,9 @@ export default function OwnerCash() {
   const [editingWallet, setEditingWallet] = useState(null);
   const [walletForm, setWalletForm] = useState({ name: '', balance: '' });
 
+  // Tab State
+  const [activeTab, setActiveTab] = useState('transfer'); // 'transfer' | 'allocate'
+
   // Transfer Form State
   const [transferForm, setTransferForm] = useState({
     date: getBusinessDate(),
@@ -39,6 +42,25 @@ export default function OwnerCash() {
     amount: '',
     notes: ''
   });
+
+  // Allocate (Bagi Omzet) Form State
+  const [allocateForm, setAllocateForm] = useState({
+    date: getBusinessDate(),
+    fromWalletId: '',
+    amount: '',
+    notes: 'Bagi Omzet Penjualan',
+    targetRawId: '',
+    targetOpsId: '',
+    targetProfitId: '',
+    customRawAmt: '',
+    customOpsAmt: '',
+    customProfitAmt: ''
+  });
+
+  // Auto-detect target wallets defaults
+  const defaultRawId = useMemo(() => String(wallets.find(w => w.name.toLowerCase().includes('bahan baku') || w.name.toLowerCase().includes('raw'))?.id || ''), [wallets]);
+  const defaultOpsId = useMemo(() => String(wallets.find(w => w.name.toLowerCase().includes('operasional') || w.name.toLowerCase().includes('ops'))?.id || ''), [wallets]);
+  const defaultProfitId = useMemo(() => String(wallets.find(w => w.name.toLowerCase().includes('keuntungan') || w.name.toLowerCase().includes('profit'))?.id || ''), [wallets]);
 
   // Mutasi / Ledger filters
   const [ledgerTypeFilter, setLedgerTypeFilter] = useState('all');
@@ -171,6 +193,113 @@ export default function OwnerCash() {
     }
   };
 
+  // Handle total amount change
+  const handleTotalAmountChange = (val) => {
+    const num = Number(val || 0);
+    const raw = Math.floor(num * 0.5);
+    const ops = Math.floor(num * 0.2);
+    const profit = num - raw - ops;
+    
+    setAllocateForm(prev => ({
+      ...prev,
+      amount: val,
+      customRawAmt: val ? String(raw) : '',
+      customOpsAmt: val ? String(ops) : '',
+      customProfitAmt: val ? String(profit) : ''
+    }));
+  };
+
+  // Handle custom split amount changes manually
+  const handleCustomSplitChange = (field, val) => {
+    setAllocateForm(prev => {
+      const updated = { ...prev, [field]: val };
+      const sum = Number(updated.customRawAmt || 0) + Number(updated.customOpsAmt || 0) + Number(updated.customProfitAmt || 0);
+      updated.amount = sum ? String(sum) : '';
+      return updated;
+    });
+  };
+
+  // Handle allocate submit (Bagi Omzet 50/20/30)
+  const handleAllocateSubmit = async (e) => {
+    e.preventDefault();
+    const { date, fromWalletId, notes, customRawAmt, customOpsAmt, customProfitAmt } = allocateForm;
+    const finalRawId = allocateForm.targetRawId || defaultRawId;
+    const finalOpsId = allocateForm.targetOpsId || defaultOpsId;
+    const finalProfitId = allocateForm.targetProfitId || defaultProfitId;
+
+    if (!fromWalletId) {
+      addToast('Pilih dompet asal', 'error');
+      return;
+    }
+    const amtRaw = Number(customRawAmt || 0);
+    const amtOps = Number(customOpsAmt || 0);
+    const amtProfit = Number(customProfitAmt || 0);
+    const allocateAmount = amtRaw + amtOps + amtProfit;
+
+    if (allocateAmount <= 0) {
+      addToast('Total nominal alokasi harus lebih dari 0', 'error');
+      return;
+    }
+    const fromWallet = wallets.find(w => String(w.id) === String(fromWalletId));
+    if (!fromWallet) {
+      addToast('Dompet asal tidak ditemukan', 'error');
+      return;
+    }
+    if (fromWallet.balance < allocateAmount) {
+      addToast(`Saldo dompet asal tidak cukup (Tersedia: ${formatRupiah(fromWallet.balance)})`, 'error');
+      return;
+    }
+    if (!finalRawId || !finalOpsId || !finalProfitId) {
+      addToast('Pilih dompet tujuan untuk ketiga pos (Bahan Baku, Operasional, Keuntungan)', 'error');
+      return;
+    }
+    if (String(fromWalletId) === String(finalRawId) || String(fromWalletId) === String(finalOpsId) || String(fromWalletId) === String(finalProfitId)) {
+      addToast('Dompet asal tidak boleh sama dengan dompet tujuan', 'error');
+      return;
+    }
+
+    try {
+      setSavingTransfer(true);
+      const txs = [
+        { to: finalRawId, amt: amtRaw, label: 'Bahan Baku' },
+        { to: finalOpsId, amt: amtOps, label: 'Operasional' },
+        { to: finalProfitId, amt: amtProfit, label: 'Keuntungan' }
+      ];
+
+      // Execute transfers sequentially
+      for (const tx of txs) {
+        if (tx.amt > 0) {
+          await addTransfer({
+            fromWalletId,
+            toWalletId: tx.to,
+            amount: tx.amt,
+            description: `${notes.trim()} - ${tx.label}`,
+            date: date ? `${date}T12:00:00.000Z` : undefined,
+            user: user?.name || 'Owner'
+          });
+        }
+      }
+
+      addToast('Bagi omzet harian berhasil dialokasikan!', 'success');
+      setAllocateForm(prev => ({
+        ...prev,
+        amount: '',
+        notes: 'Bagi Omzet Penjualan',
+        targetRawId: '',
+        targetOpsId: '',
+        targetProfitId: '',
+        customRawAmt: '',
+        customOpsAmt: '',
+        customProfitAmt: ''
+      }));
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Gagal memproses bagi omzet';
+      addToast(msg, 'error');
+    } finally {
+      setSavingTransfer(false);
+    }
+  };
+
   // Consolidated Ledger
   const consolidatedLedger = useMemo(() => {
     const list = [];
@@ -246,6 +375,11 @@ export default function OwnerCash() {
   const selectedFromWallet = useMemo(() => {
     return wallets.find(w => String(w.id) === String(transferForm.fromWalletId));
   }, [wallets, transferForm.fromWalletId]);
+
+  // Selected from wallet for current allocation
+  const selectedAllocateFromWallet = useMemo(() => {
+    return wallets.find(w => String(w.id) === String(allocateForm.fromWalletId));
+  }, [wallets, allocateForm.fromWalletId]);
 
   return (
     <PageWrapper title="Kas & Dompet" subtitle="Manajemen Saldo, Rekening & Transfer Antar Dompet">
@@ -326,123 +460,318 @@ export default function OwnerCash() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Transfer Form Card */}
             <div className="glass-card p-6 border border-[var(--color-border)] bg-white dark:bg-[var(--color-bg-card)] rounded-[var(--radius-lg)] lg:col-span-2">
-              <div className="flex items-center gap-2 mb-4 border-b border-[var(--color-border)] pb-3">
-                <ArrowRightLeft className="text-[var(--color-accent-primary)]" size={20} />
-                <h3 className="font-bold text-lg text-[var(--color-text-primary)]">Transfer Antar Dompet</h3>
+              <div className="flex items-center justify-between mb-4 border-b border-[var(--color-border)] pb-2.5">
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('transfer')}
+                    className={`font-bold text-sm md:text-base pb-2 border-b-2 cursor-pointer transition-all ${
+                      activeTab === 'transfer'
+                        ? 'border-[var(--color-accent-primary)] text-[var(--color-text-primary)]'
+                        : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                    }`}
+                  >
+                    Transfer Biasa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('allocate')}
+                    className={`font-bold text-sm md:text-base pb-2 border-b-2 cursor-pointer transition-all ${
+                      activeTab === 'allocate'
+                        ? 'border-[var(--color-accent-primary)] text-[var(--color-text-primary)]'
+                        : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                    }`}
+                  >
+                    Bagi Omzet (50/20/30)
+                  </button>
+                </div>
+                <ArrowRightLeft className="text-[var(--color-accent-primary)] hidden sm:block" size={20} />
               </div>
 
-              <form onSubmit={handleTransferSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Date */}
-                  <div className="space-y-1">
-                    <label htmlFor="txDate" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Tanggal Transfer</label>
-                    <div className="relative flex items-center">
-                      <Calendar size={16} className="absolute left-3 text-[var(--color-text-muted)] pointer-events-none" />
-                      <input
-                        type="date"
-                        id="txDate"
-                        value={transferForm.date}
-                        onChange={(e) => setTransferForm(prev => ({ ...prev, date: e.target.value }))}
-                        className="w-full min-h-[44px] pl-10 pr-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
+              {activeTab === 'transfer' ? (
+                <form onSubmit={handleTransferSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Date */}
+                    <div className="space-y-1">
+                      <label htmlFor="txDate" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Tanggal Transfer</label>
+                      <div className="relative flex items-center">
+                        <Calendar size={16} className="absolute left-3 text-[var(--color-text-muted)] pointer-events-none" />
+                        <input
+                          type="date"
+                          id="txDate"
+                          value={transferForm.date}
+                          onChange={(e) => setTransferForm(prev => ({ ...prev, date: e.target.value }))}
+                          className="w-full min-h-[44px] pl-10 pr-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* From Wallet */}
+                    <div className="space-y-1">
+                      <label htmlFor="fromWallet" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Dari Dompet</label>
+                      <select
+                        id="fromWallet"
+                        value={transferForm.fromWalletId}
+                        onChange={(e) => setTransferForm(prev => ({ ...prev, fromWalletId: e.target.value }))}
+                        className="w-full min-h-[44px] px-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
                         required
-                      />
+                      >
+                        <option value="">Pilih Dompet Asal</option>
+                        {wallets.map(w => (
+                          <option key={w.id} value={w.id}>{w.name} (Saldo: {formatRupiah(w.balance)})</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
-                  {/* From Wallet */}
-                  <div className="space-y-1">
-                    <label htmlFor="fromWallet" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Dari Dompet</label>
-                    <select
-                      id="fromWallet"
-                      value={transferForm.fromWalletId}
-                      onChange={(e) => setTransferForm(prev => ({ ...prev, fromWalletId: e.target.value }))}
-                      className="w-full min-h-[44px] px-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
-                      required
-                    >
-                      <option value="">Pilih Dompet Asal</option>
-                      {wallets.map(w => (
-                        <option key={w.id} value={w.id}>{w.name} (Saldo: {formatRupiah(w.balance)})</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* To Wallet */}
+                    <div className="space-y-1">
+                      <label htmlFor="toWallet" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Ke Dompet</label>
+                      <select
+                        id="toWallet"
+                        value={transferForm.toWalletId}
+                        onChange={(e) => setTransferForm(prev => ({ ...prev, toWalletId: e.target.value }))}
+                        className="w-full min-h-[44px] px-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
+                        required
+                      >
+                        <option value="">Pilih Dompet Tujuan</option>
+                        {wallets
+                          .filter(w => String(w.id) !== String(transferForm.fromWalletId))
+                          .map(w => (
+                            <option key={w.id} value={w.id}>{w.name} (Saldo: {formatRupiah(w.balance)})</option>
+                          ))
+                        }
+                      </select>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* To Wallet */}
-                  <div className="space-y-1">
-                    <label htmlFor="toWallet" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Ke Dompet</label>
-                    <select
-                      id="toWallet"
-                      value={transferForm.toWalletId}
-                      onChange={(e) => setTransferForm(prev => ({ ...prev, toWalletId: e.target.value }))}
-                      className="w-full min-h-[44px] px-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
-                      required
-                    >
-                      <option value="">Pilih Dompet Tujuan</option>
-                      {wallets
-                        .filter(w => String(w.id) !== String(transferForm.fromWalletId))
-                        .map(w => (
-                          <option key={w.id} value={w.id}>{w.name} (Saldo: {formatRupiah(w.balance)})</option>
-                        ))
-                      }
-                    </select>
+                    {/* Amount */}
+                    <div className="space-y-1">
+                      <label htmlFor="amount" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Nominal Transfer (Rp)</label>
+                      <input
+                        type="number"
+                        id="amount"
+                        placeholder="0"
+                        min="1"
+                        value={transferForm.amount}
+                        onChange={(e) => setTransferForm(prev => ({ ...prev, amount: e.target.value }))}
+                        className="w-full min-h-[44px] px-3 py-2 text-sm font-mono rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
+                        required
+                      />
+                      {selectedFromWallet && (
+                        <p className={`text-[11px] font-medium ${Number(transferForm.amount) > selectedFromWallet.balance ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-text-muted)]'}`}>
+                          Maksimal transfer: {formatRupiah(selectedFromWallet.balance)}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Amount */}
+                  {/* Notes */}
                   <div className="space-y-1">
-                    <label htmlFor="amount" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Nominal Transfer (Rp)</label>
+                    <label htmlFor="notes" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Catatan</label>
                     <input
-                      type="number"
-                      id="amount"
-                      placeholder="0"
-                      min="1"
-                      value={transferForm.amount}
-                      onChange={(e) => setTransferForm(prev => ({ ...prev, amount: e.target.value }))}
-                      className="w-full min-h-[44px] px-3 py-2 text-sm font-mono rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
-                      required
+                      type="text"
+                      id="notes"
+                      placeholder="Contoh: Pemindahan modal bahan baku, settlement QRIS..."
+                      value={transferForm.notes}
+                      onChange={(e) => setTransferForm(prev => ({ ...prev, notes: e.target.value }))}
+                      className="w-full min-h-[44px] px-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
                     />
-                    {selectedFromWallet && (
-                      <p className={`text-[11px] font-medium ${Number(transferForm.amount) > selectedFromWallet.balance ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-text-muted)]'}`}>
-                        Maksimal transfer: {formatRupiah(selectedFromWallet.balance)}
-                      </p>
-                    )}
                   </div>
-                </div>
 
-                {/* Notes */}
-                <div className="space-y-1">
-                  <label htmlFor="notes" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Catatan</label>
-                  <input
-                    type="text"
-                    id="notes"
-                    placeholder="Contoh: Pemindahan modal bahan baku, settlement QRIS..."
-                    value={transferForm.notes}
-                    onChange={(e) => setTransferForm(prev => ({ ...prev, notes: e.target.value }))}
-                    className="w-full min-h-[44px] px-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
-                  />
-                </div>
+                  {/* Submit button */}
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={savingTransfer || !transferForm.fromWalletId || !transferForm.toWalletId || !transferForm.amount || (selectedFromWallet && Number(transferForm.amount) > selectedFromWallet.balance)}
+                      className="btn btn-primary bg-[var(--color-accent-primary)] hover:bg-[var(--color-band-2)] text-white min-h-[44px] px-6 rounded-[var(--radius-md)] font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                    >
+                      {savingTransfer ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Memproses...
+                        </>
+                      ) : (
+                        <>
+                          <ArrowRightLeft size={16} />
+                          Kirim Dana
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleAllocateSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Date */}
+                    <div className="space-y-1">
+                      <label htmlFor="allocDate" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Tanggal Alokasi</label>
+                      <div className="relative flex items-center">
+                        <Calendar size={16} className="absolute left-3 text-[var(--color-text-muted)] pointer-events-none" />
+                        <input
+                          type="date"
+                          id="allocDate"
+                          value={allocateForm.date}
+                          onChange={(e) => setAllocateForm(prev => ({ ...prev, date: e.target.value }))}
+                          className="w-full min-h-[44px] pl-10 pr-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
+                          required
+                        />
+                      </div>
+                    </div>
 
-                {/* Submit button */}
-                <div className="pt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={savingTransfer || !transferForm.fromWalletId || !transferForm.toWalletId || !transferForm.amount || (selectedFromWallet && Number(transferForm.amount) > selectedFromWallet.balance)}
-                    className="btn btn-primary bg-[var(--color-accent-primary)] hover:bg-[var(--color-band-2)] text-white min-h-[44px] px-6 rounded-[var(--radius-md)] font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-                  >
-                    {savingTransfer ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Memproses...
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRightLeft size={16} />
-                        Kirim Dana
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+                    {/* From Wallet */}
+                    <div className="space-y-1">
+                      <label htmlFor="allocFromWallet" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Dari Dompet (Sumber Omzet)</label>
+                      <select
+                        id="allocFromWallet"
+                        value={allocateForm.fromWalletId}
+                        onChange={(e) => setAllocateForm(prev => ({ ...prev, fromWalletId: e.target.value }))}
+                        className="w-full min-h-[44px] px-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
+                        required
+                      >
+                        <option value="">Pilih Dompet Asal</option>
+                        {wallets.map(w => (
+                          <option key={w.id} value={w.id}>{w.name} (Saldo: {formatRupiah(w.balance)})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Amount */}
+                    <div className="space-y-1">
+                      <label htmlFor="allocAmount" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Nominal Omzet (Rp)</label>
+                      <input
+                        type="number"
+                        id="allocAmount"
+                        placeholder="0"
+                        min="1"
+                        value={allocateForm.amount}
+                        onChange={(e) => handleTotalAmountChange(e.target.value)}
+                        className="w-full min-h-[44px] px-3 py-2 text-sm font-mono rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
+                        required
+                      />
+                      {selectedAllocateFromWallet && (
+                        <p className={`text-[11px] font-medium ${Number(allocateForm.amount) > selectedAllocateFromWallet.balance ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-text-muted)]'}`}>
+                          Maksimal alokasi: {formatRupiah(selectedAllocateFromWallet.balance)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Allocation Targets Selection & Previews */}
+                  <div className="border border-[var(--color-border)] p-4 rounded-[var(--radius-md)] bg-[var(--color-bg-secondary)]/55 space-y-3.5">
+                    <h4 className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">Tujuan Pos Anggaran (50% / 20% / 30%)</h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Bahan Baku - 50% */}
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">1. Bahan Baku (50%, Rp)</label>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={allocateForm.customRawAmt}
+                          onChange={(e) => handleCustomSplitChange('customRawAmt', e.target.value)}
+                          className="w-full min-h-[44px] px-3 py-2 text-xs font-mono rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)]"
+                          required
+                        />
+                        <select
+                          value={allocateForm.targetRawId || defaultRawId}
+                          onChange={(e) => setAllocateForm(prev => ({ ...prev, targetRawId: e.target.value }))}
+                          className="w-full min-h-[44px] px-3 py-2 text-xs rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] mt-1.5"
+                          required
+                        >
+                          <option value="">Pilih Dompet</option>
+                          {wallets.map(w => (
+                            <option key={w.id} value={w.id}>{w.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Operasional - 20% */}
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">2. Operasional (20%, Rp)</label>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={allocateForm.customOpsAmt}
+                          onChange={(e) => handleCustomSplitChange('customOpsAmt', e.target.value)}
+                          className="w-full min-h-[44px] px-3 py-2 text-xs font-mono rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)]"
+                          required
+                        />
+                        <select
+                          value={allocateForm.targetOpsId || defaultOpsId}
+                          onChange={(e) => setAllocateForm(prev => ({ ...prev, targetOpsId: e.target.value }))}
+                          className="w-full min-h-[44px] px-3 py-2 text-xs rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] mt-1.5"
+                          required
+                        >
+                          <option value="">Pilih Dompet</option>
+                          {wallets.map(w => (
+                            <option key={w.id} value={w.id}>{w.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Keuntungan - 30% */}
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">3. Keuntungan (30%, Rp)</label>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={allocateForm.customProfitAmt}
+                          onChange={(e) => handleCustomSplitChange('customProfitAmt', e.target.value)}
+                          className="w-full min-h-[44px] px-3 py-2 text-xs font-mono rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)]"
+                          required
+                        />
+                        <select
+                          value={allocateForm.targetProfitId || defaultProfitId}
+                          onChange={(e) => setAllocateForm(prev => ({ ...prev, targetProfitId: e.target.value }))}
+                          className="w-full min-h-[44px] px-3 py-2 text-xs rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] mt-1.5"
+                          required
+                        >
+                          <option value="">Pilih Dompet</option>
+                          {wallets.map(w => (
+                            <option key={w.id} value={w.id}>{w.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div className="space-y-1">
+                    <label htmlFor="allocNotes" className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase">Catatan</label>
+                    <input
+                      type="text"
+                      id="allocNotes"
+                      placeholder="Contoh: Bagi Omzet Penjualan Minggu Ke-1..."
+                      value={allocateForm.notes}
+                      onChange={(e) => setAllocateForm(prev => ({ ...prev, notes: e.target.value }))}
+                      className="w-full min-h-[44px] px-3 py-2 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-band-1)] focus:border-transparent bg-white text-[var(--color-text-primary)]"
+                    />
+                  </div>
+
+                  {/* Submit button */}
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={savingTransfer || !allocateForm.fromWalletId || !(allocateForm.targetRawId || defaultRawId) || !(allocateForm.targetOpsId || defaultOpsId) || !(allocateForm.targetProfitId || defaultProfitId) || !allocateForm.amount || (selectedAllocateFromWallet && Number(allocateForm.amount) > selectedAllocateFromWallet.balance)}
+                      className="btn btn-primary bg-[var(--color-accent-primary)] hover:bg-[var(--color-band-2)] text-white min-h-[44px] px-6 rounded-[var(--radius-md)] font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                    >
+                      {savingTransfer ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Memproses...
+                        </>
+                      ) : (
+                        <>
+                          <ArrowRightLeft size={16} />
+                          Proses Bagi Omzet
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
 
             {/* Quick Wallet Info Guide */}
