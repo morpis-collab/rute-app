@@ -164,6 +164,12 @@ export default function OwnerIncomes() {
     return matchesSearch && matchesCategory && matchesWallet;
   });
 
+  const sortedIncomes = [...filteredIncomes].sort((a, b) => {
+    const dateA = a.date ? new Date(a.date) : new Date(0);
+    const dateB = b.date ? new Date(b.date) : new Date(0);
+    return dateB - dateA;
+  });
+
   const getWalletLabel = (id) => {
     const w = wallets.find(item => String(item.id) === String(id));
     return w ? w.name : 'Unknown Wallet';
@@ -269,7 +275,7 @@ export default function OwnerIncomes() {
             {incomes.length === 0 ? 'Belum ada data pemasukan. Silakan tambahkan pemasukan baru.' : 'Tidak ada data pemasukan yang cocok dengan filter.'}
           </div>
         ) : (
-          filteredIncomes.map(inc => {
+          sortedIncomes.map(inc => {
             const isExpanded = expandedIncomeId === inc.id;
             return (
               <motion.div
