@@ -49,17 +49,14 @@ export default function OwnerCash() {
     fromWalletId: '',
     amount: '',
     notes: 'Bagi Omzet Penjualan',
-    targetRawId: '',
-    targetOpsId: '',
+    targetRawOpsId: '',
     targetProfitId: '',
-    customRawAmt: '',
-    customOpsAmt: '',
+    customRawOpsAmt: '',
     customProfitAmt: ''
   });
 
   // Auto-detect target wallets defaults
-  const defaultRawId = useMemo(() => String(wallets.find(w => w.name.toLowerCase().includes('bahan baku') || w.name.toLowerCase().includes('raw'))?.id || ''), [wallets]);
-  const defaultOpsId = useMemo(() => String(wallets.find(w => w.name.toLowerCase().includes('operasional') || w.name.toLowerCase().includes('ops'))?.id || ''), [wallets]);
+  const defaultRawOpsId = useMemo(() => String(wallets.find(w => w.name.toLowerCase().includes('bahan') || w.name.toLowerCase().includes('operasional') || w.name.toLowerCase().includes('raw'))?.id || ''), [wallets]);
   const defaultProfitId = useMemo(() => String(wallets.find(w => w.name.toLowerCase().includes('keuntungan') || w.name.toLowerCase().includes('profit'))?.id || ''), [wallets]);
 
   // Mutasi / Ledger filters
@@ -193,18 +190,16 @@ export default function OwnerCash() {
     }
   };
 
-  // Handle total amount change
+  // Handle total amount change (70% Bahan Baku & Operasional, 30% Keuntungan)
   const handleTotalAmountChange = (val) => {
     const num = Number(val || 0);
-    const raw = Math.floor(num * 0.5);
-    const ops = Math.floor(num * 0.2);
-    const profit = num - raw - ops;
+    const rawOps = Math.floor(num * 0.7);
+    const profit = num - rawOps;
     
     setAllocateForm(prev => ({
       ...prev,
       amount: val,
-      customRawAmt: val ? String(raw) : '',
-      customOpsAmt: val ? String(ops) : '',
+      customRawOpsAmt: val ? String(rawOps) : '',
       customProfitAmt: val ? String(profit) : ''
     }));
   };
@@ -213,28 +208,26 @@ export default function OwnerCash() {
   const handleCustomSplitChange = (field, val) => {
     setAllocateForm(prev => {
       const updated = { ...prev, [field]: val };
-      const sum = Number(updated.customRawAmt || 0) + Number(updated.customOpsAmt || 0) + Number(updated.customProfitAmt || 0);
+      const sum = Number(updated.customRawOpsAmt || 0) + Number(updated.customProfitAmt || 0);
       updated.amount = sum ? String(sum) : '';
       return updated;
     });
   };
 
-  // Handle allocate submit (Bagi Omzet 50/20/30)
+  // Handle allocate submit (Bagi Omzet 70/30)
   const handleAllocateSubmit = async (e) => {
     e.preventDefault();
-    const { date, fromWalletId, notes, customRawAmt, customOpsAmt, customProfitAmt } = allocateForm;
-    const finalRawId = allocateForm.targetRawId || defaultRawId;
-    const finalOpsId = allocateForm.targetOpsId || defaultOpsId;
+    const { date, fromWalletId, notes, customRawOpsAmt, customProfitAmt } = allocateForm;
+    const finalRawOpsId = allocateForm.targetRawOpsId || defaultRawOpsId;
     const finalProfitId = allocateForm.targetProfitId || defaultProfitId;
 
     if (!fromWalletId) {
       addToast('Pilih dompet asal', 'error');
       return;
     }
-    const amtRaw = Number(customRawAmt || 0);
-    const amtOps = Number(customOpsAmt || 0);
+    const amtRawOps = Number(customRawOpsAmt || 0);
     const amtProfit = Number(customProfitAmt || 0);
-    const allocateAmount = amtRaw + amtOps + amtProfit;
+    const allocateAmount = amtRawOps + amtProfit;
 
     if (allocateAmount <= 0) {
       addToast('Total nominal alokasi harus lebih dari 0', 'error');
@@ -249,11 +242,11 @@ export default function OwnerCash() {
       addToast(`Saldo dompet asal tidak cukup (Tersedia: ${formatRupiah(fromWallet.balance)})`, 'error');
       return;
     }
-    if (!finalRawId || !finalOpsId || !finalProfitId) {
-      addToast('Pilih dompet tujuan untuk ketiga pos (Bahan Baku, Operasional, Keuntungan)', 'error');
+    if (!finalRawOpsId || !finalProfitId) {
+      addToast('Pilih dompet tujuan untuk kedua pos (Bahan Baku & Operasional, Keuntungan)', 'error');
       return;
     }
-    if (String(fromWalletId) === String(finalRawId) || String(fromWalletId) === String(finalOpsId) || String(fromWalletId) === String(finalProfitId)) {
+    if (String(fromWalletId) === String(finalRawOpsId) || String(fromWalletId) === String(finalProfitId)) {
       addToast('Dompet asal tidak boleh sama dengan dompet tujuan', 'error');
       return;
     }
@@ -261,8 +254,7 @@ export default function OwnerCash() {
     try {
       setSavingTransfer(true);
       const txs = [
-        { to: finalRawId, amt: amtRaw, label: 'Bahan Baku' },
-        { to: finalOpsId, amt: amtOps, label: 'Operasional' },
+        { to: finalRawOpsId, amt: amtRawOps, label: 'Bahan Baku & Operasional' },
         { to: finalProfitId, amt: amtProfit, label: 'Keuntungan' }
       ];
 
@@ -285,11 +277,9 @@ export default function OwnerCash() {
         ...prev,
         amount: '',
         notes: 'Bagi Omzet Penjualan',
-        targetRawId: '',
-        targetOpsId: '',
+        targetRawOpsId: '',
         targetProfitId: '',
-        customRawAmt: '',
-        customOpsAmt: '',
+        customRawOpsAmt: '',
         customProfitAmt: ''
       }));
     } catch (err) {
@@ -660,47 +650,23 @@ export default function OwnerCash() {
 
                   {/* Allocation Targets Selection & Previews */}
                   <div className="border border-[var(--color-border)] p-4 rounded-[var(--radius-md)] bg-[var(--color-bg-secondary)]/55 space-y-3.5">
-                    <h4 className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">Tujuan Pos Anggaran (50% / 20% / 30%)</h4>
+                    <h4 className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">Tujuan Pos Anggaran (70% / 30%)</h4>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Bahan Baku - 50% */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Bahan Baku & Operasional - 70% */}
                       <div className="space-y-1">
-                        <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">1. Bahan Baku (50%, Rp)</label>
+                        <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">1. Bahan Baku & Operasional (70%, Rp)</label>
                         <input
                           type="number"
                           placeholder="0"
-                          value={allocateForm.customRawAmt}
-                          onChange={(e) => handleCustomSplitChange('customRawAmt', e.target.value)}
+                          value={allocateForm.customRawOpsAmt}
+                          onChange={(e) => handleCustomSplitChange('customRawOpsAmt', e.target.value)}
                           className="w-full min-h-[44px] px-3 py-2 text-xs font-mono rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)]"
                           required
                         />
                         <select
-                          value={allocateForm.targetRawId || defaultRawId}
-                          onChange={(e) => setAllocateForm(prev => ({ ...prev, targetRawId: e.target.value }))}
-                          className="w-full min-h-[44px] px-3 py-2 text-xs rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] mt-1.5"
-                          required
-                        >
-                          <option value="">Pilih Dompet</option>
-                          {wallets.map(w => (
-                            <option key={w.id} value={w.id}>{w.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Operasional - 20% */}
-                      <div className="space-y-1">
-                        <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">2. Operasional (20%, Rp)</label>
-                        <input
-                          type="number"
-                          placeholder="0"
-                          value={allocateForm.customOpsAmt}
-                          onChange={(e) => handleCustomSplitChange('customOpsAmt', e.target.value)}
-                          className="w-full min-h-[44px] px-3 py-2 text-xs font-mono rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)]"
-                          required
-                        />
-                        <select
-                          value={allocateForm.targetOpsId || defaultOpsId}
-                          onChange={(e) => setAllocateForm(prev => ({ ...prev, targetOpsId: e.target.value }))}
+                          value={allocateForm.targetRawOpsId || defaultRawOpsId}
+                          onChange={(e) => setAllocateForm(prev => ({ ...prev, targetRawOpsId: e.target.value }))}
                           className="w-full min-h-[44px] px-3 py-2 text-xs rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] mt-1.5"
                           required
                         >
@@ -713,7 +679,7 @@ export default function OwnerCash() {
 
                       {/* Keuntungan - 30% */}
                       <div className="space-y-1">
-                        <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">3. Keuntungan (30%, Rp)</label>
+                        <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">2. Keuntungan (30%, Rp)</label>
                         <input
                           type="number"
                           placeholder="0"
@@ -754,7 +720,7 @@ export default function OwnerCash() {
                   <div className="pt-2 flex justify-end">
                     <button
                       type="submit"
-                      disabled={savingTransfer || !allocateForm.fromWalletId || !(allocateForm.targetRawId || defaultRawId) || !(allocateForm.targetOpsId || defaultOpsId) || !(allocateForm.targetProfitId || defaultProfitId) || !allocateForm.amount || (selectedAllocateFromWallet && Number(allocateForm.amount) > selectedAllocateFromWallet.balance)}
+                      disabled={savingTransfer || !allocateForm.fromWalletId || !(allocateForm.targetRawOpsId || defaultRawOpsId) || !(allocateForm.targetProfitId || defaultProfitId) || !allocateForm.amount || (selectedAllocateFromWallet && Number(allocateForm.amount) > selectedAllocateFromWallet.balance)}
                       className="btn btn-primary bg-[var(--color-accent-primary)] hover:bg-[var(--color-band-2)] text-white min-h-[44px] px-6 rounded-[var(--radius-md)] font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                     >
                       {savingTransfer ? (

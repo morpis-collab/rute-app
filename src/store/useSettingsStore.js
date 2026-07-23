@@ -16,8 +16,7 @@ const useSettingsStore = create(
       receiptFooter: 'TERIMA KASIH\nRUTE Coffee Management System',
       receiptPaperSize: '58mm',
       theme: getInitialTheme(),
-      allocationRawMaterials: 50,
-      allocationOperations: 20,
+      allocationRawOps: 70,
       allocationProfit: 30,
       sidebarCollapsed: false,
 
@@ -27,9 +26,11 @@ const useSettingsStore = create(
     }),
     {
       name: 'rute-settings-storage',
-      version: 2,
+      version: 3,
       migrate: (persistedState) => ({
         ...persistedState,
+        allocationRawOps: persistedState?.allocationRawOps ?? 70,
+        allocationProfit: persistedState?.allocationProfit ?? 30,
         theme: 'light',
       }),
     }

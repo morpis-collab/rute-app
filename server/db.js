@@ -27,8 +27,7 @@ function seedData() {
       },
     },
     wallets: [
-      { id: 'acc-bahan-baku', name: 'Bahan Baku', balance: 0, isDefault: true, createdAt: seededAt },
-      { id: 'acc-operasional', name: 'Operasional', balance: 0, isDefault: false, createdAt: seededAt },
+      { id: 'acc-bahan-operasional', name: 'Bahan Baku & Operasional', balance: 0, isDefault: true, createdAt: seededAt },
       { id: 'acc-qris', name: 'QRIS', balance: 0, isDefault: false, createdAt: seededAt },
       { id: 'acc-keuntungan', name: 'Keuntungan', balance: 0, isDefault: false, createdAt: seededAt }
     ],
@@ -69,13 +68,35 @@ function normalizeDb(db) {
     ]),
   );
 
+  let rawWallets = Array.isArray(db.wallets) ? db.wallets : seed.wallets;
+  const oldBahan = rawWallets.find((w) => String(w.id) === 'acc-bahan-baku');
+  const oldOps = rawWallets.find((w) => String(w.id) === 'acc-operasional');
+  
+  if (oldBahan || oldOps) {
+    const mergedBalance = (Number(oldBahan?.balance || 0)) + (Number(oldOps?.balance || 0));
+    let combinedWallet = rawWallets.find((w) => String(w.id) === 'acc-bahan-operasional');
+    if (combinedWallet) {
+      combinedWallet.balance = Number(combinedWallet.balance || 0) + mergedBalance;
+    } else {
+      combinedWallet = {
+        id: 'acc-bahan-operasional',
+        name: 'Bahan Baku & Operasional',
+        balance: mergedBalance,
+        isDefault: true,
+        createdAt: new Date().toISOString(),
+      };
+      rawWallets.push(combinedWallet);
+    }
+    rawWallets = rawWallets.filter((w) => String(w.id) !== 'acc-bahan-baku' && String(w.id) !== 'acc-operasional');
+  }
+
   return {
     meta: {
       ...seed.meta,
       ...(db.meta || {}),
     },
     users: normalizedUsers,
-    wallets: Array.isArray(db.wallets) ? db.wallets : seed.wallets,
+    wallets: rawWallets,
     categories: db.categories && typeof db.categories === 'object' ? db.categories : seed.categories,
     incomes: Array.isArray(db.incomes) ? db.incomes : seed.incomes,
     expenses: Array.isArray(db.expenses) ? db.expenses : seed.expenses,

@@ -27,11 +27,10 @@ export default function OwnerRevenueAllocation() {
   const [manualRevenue, setManualRevenue] = useState('1000000');
 
   // Load percentages from settings store
-  const [pctRawMaterials, setPctRawMaterials] = useState(settings.allocationRawMaterials ?? 50);
-  const [pctOperations, setPctOperations] = useState(settings.allocationOperations ?? 20);
+  const [pctRawOps, setPctRawOps] = useState(settings.allocationRawOps ?? 70);
   const [pctProfit, setPctProfit] = useState(settings.allocationProfit ?? 30);
 
-  const totalPct = Number(pctRawMaterials || 0) + Number(pctOperations || 0) + Number(pctProfit || 0);
+  const totalPct = Number(pctRawOps || 0) + Number(pctProfit || 0);
   const isValidAllocation = totalPct === 100;
 
   // Calculate automatic revenue (sum of sales on selected date)
@@ -42,15 +41,13 @@ export default function OwnerRevenueAllocation() {
   const baseRevenue = calculationMode === 'auto' ? autoRevenue : Number(manualRevenue || 0);
 
   // Split amounts
-  const amtRawMaterials = (baseRevenue * pctRawMaterials) / 100;
-  const amtOperations = (baseRevenue * pctOperations) / 100;
+  const amtRawOps = (baseRevenue * pctRawOps) / 100;
   const amtProfit = (baseRevenue * pctProfit) / 100;
 
   const handleSaveRatios = () => {
     if (!isValidAllocation) return;
     settings.updateSettings({
-      allocationRawMaterials: Number(pctRawMaterials),
-      allocationOperations: Number(pctOperations),
+      allocationRawOps: Number(pctRawOps),
       allocationProfit: Number(pctProfit),
     });
     addToast('Default rasio alokasi omzet berhasil diperbarui secara permanen', 'success');
@@ -61,13 +58,10 @@ export default function OwnerRevenueAllocation() {
   const circumference = 2 * Math.PI * radius;
   
   // Calculate stroke-dasharray offsets
-  const offsetRawMaterials = circumference;
-  const strokeRawMaterials = (pctRawMaterials / 100) * circumference;
+  const offsetRawOps = circumference;
+  const strokeRawOps = (pctRawOps / 100) * circumference;
 
-  const offsetOperations = circumference - strokeRawMaterials;
-  const strokeOperations = (pctOperations / 100) * circumference;
-
-  const offsetProfit = circumference - strokeRawMaterials - strokeOperations;
+  const offsetProfit = circumference - strokeRawOps;
   const strokeProfit = (pctProfit / 100) * circumference;
 
   return (
@@ -163,17 +157,20 @@ export default function OwnerRevenueAllocation() {
 
             {/* Sliders */}
             <div className="space-y-3">
-              {/* Raw Materials Slider */}
+              {/* Raw Materials & Operations Slider */}
               <div className="space-y-1">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-gray-700">1. Bahan Baku</span>
+                  <span className="font-semibold text-gray-700">1. Bahan Baku & Operasional</span>
                   <div className="flex items-center gap-1">
                     <input
                       type="number"
                       min="0"
                       max="100"
-                      value={pctRawMaterials}
-                      onChange={(e) => setPctRawMaterials(Math.min(100, Math.max(0, Number(e.target.value || 0))))}
+                      value={pctRawOps}
+                      onChange={(e) => {
+                        const val = Math.min(100, Math.max(0, Number(e.target.value || 0)));
+                        setPctRawOps(val);
+                      }}
                       className="w-12 text-center rounded border border-gray-300 py-0.5 px-1 font-mono font-bold text-xs"
                     />
                     <span className="text-gray-500 font-semibold">%</span>
@@ -184,50 +181,29 @@ export default function OwnerRevenueAllocation() {
                   min="0"
                   max="100"
                   step="1"
-                  value={pctRawMaterials}
-                  onChange={(e) => setPctRawMaterials(Number(e.target.value))}
+                  value={pctRawOps}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setPctRawOps(val);
+                  }}
                   className="w-full accent-[var(--color-band-2)]"
-                />
-              </div>
-
-              {/* Operations Slider */}
-              <div className="space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-gray-700">2. Operasional</span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={pctOperations}
-                      onChange={(e) => setPctOperations(Math.min(100, Math.max(0, Number(e.target.value || 0))))}
-                      className="w-12 text-center rounded border border-gray-300 py-0.5 px-1 font-mono font-bold text-xs"
-                    />
-                    <span className="text-gray-500 font-semibold">%</span>
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={pctOperations}
-                  onChange={(e) => setPctOperations(Number(e.target.value))}
-                  className="w-full accent-[var(--color-accent-primary)]"
                 />
               </div>
 
               {/* Profit Slider */}
               <div className="space-y-1">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-gray-700">3. Keuntungan Pribadi</span>
+                  <span className="font-semibold text-gray-700">2. Keuntungan Bersih</span>
                   <div className="flex items-center gap-1">
                     <input
                       type="number"
                       min="0"
                       max="100"
                       value={pctProfit}
-                      onChange={(e) => setPctProfit(Math.min(100, Math.max(0, Number(e.target.value || 0))))}
+                      onChange={(e) => {
+                        const val = Math.min(100, Math.max(0, Number(e.target.value || 0)));
+                        setPctProfit(val);
+                      }}
                       className="w-12 text-center rounded border border-gray-300 py-0.5 px-1 font-mono font-bold text-xs"
                     />
                     <span className="text-gray-500 font-semibold">%</span>
@@ -239,7 +215,10 @@ export default function OwnerRevenueAllocation() {
                   max="100"
                   step="1"
                   value={pctProfit}
-                  onChange={(e) => setPctProfit(Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setPctProfit(val);
+                  }}
                   className="w-full accent-[var(--color-accent-orange)]"
                 />
               </div>
@@ -324,8 +303,8 @@ export default function OwnerRevenueAllocation() {
                       strokeWidth="12"
                     />
 
-                    {/* Raw Materials (Greenish Coffee) */}
-                    {pctRawMaterials > 0 && (
+                    {/* Bahan Baku & Operasional (Greenish Coffee) */}
+                    {pctRawOps > 0 && (
                       <circle
                         cx="60"
                         cy="60"
@@ -333,30 +312,14 @@ export default function OwnerRevenueAllocation() {
                         fill="transparent"
                         stroke="var(--color-band-2)"
                         strokeWidth="12"
-                        strokeDasharray={`${strokeRawMaterials} ${circumference}`}
-                        strokeDashoffset={offsetRawMaterials}
+                        strokeDasharray={`${strokeRawOps} ${circumference}`}
+                        strokeDashoffset={offsetRawOps}
                         strokeLinecap="round"
                         className="transition-all duration-350"
                       />
                     )}
 
-                    {/* Operations (Accent Warm) */}
-                    {pctOperations > 0 && (
-                      <circle
-                        cx="60"
-                        cy="60"
-                        r={radius}
-                        fill="transparent"
-                        stroke="var(--color-accent-primary)"
-                        strokeWidth="12"
-                        strokeDasharray={`${strokeOperations} ${circumference}`}
-                        strokeDashoffset={offsetOperations}
-                        strokeLinecap="round"
-                        className="transition-all duration-350"
-                      />
-                    )}
-
-                    {/* Profit (Darker Coffee) */}
+                    {/* Profit (Darker Coffee/Amber) */}
                     {pctProfit > 0 && (
                       <circle
                         cx="60"
@@ -377,7 +340,7 @@ export default function OwnerRevenueAllocation() {
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rasio</span>
                     <span className="text-sm font-extrabold text-[var(--color-text-primary)] font-mono">
-                      {pctRawMaterials}/{pctOperations}/{pctProfit}
+                      {pctRawOps}/{pctProfit}
                     </span>
                   </div>
                 </div>
@@ -385,50 +348,33 @@ export default function OwnerRevenueAllocation() {
 
               {/* Color coded Breakdown cards */}
               <div className="md:col-span-7 space-y-3">
-                {/* Pos 1: Bahan Baku */}
-                <div className="p-3 rounded-xl border border-l-4 border-l-[var(--color-band-2)] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
+                {/* Pos 1: Bahan Baku & Operasional */}
+                <div className="p-3.5 rounded-xl border border-l-4 border-l-[var(--color-band-2)] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-band-2)]" />
-                      <span className="text-xs font-bold text-gray-800">Pos Bahan Baku</span>
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-success/10 text-success">{pctRawMaterials}%</span>
+                      <span className="text-xs font-bold text-gray-800">Bahan Baku & Operasional</span>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-success/10 text-success">{pctRawOps}%</span>
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-1 max-w-[200px] leading-relaxed">
-                      Anggaran belanja kopi blend, susu UHT, sirup, gula, dan packaging cup.
+                    <p className="text-[10px] text-gray-500 mt-1 max-w-[220px] leading-relaxed">
+                      Anggaran belanja kopi blend, susu UHT, sirup, gula, packaging, serta tagihan listrik & biaya operasional.
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-bold font-mono text-gray-900">{formatRupiah(amtRawMaterials)}</span>
+                    <span className="text-xs font-bold font-mono text-gray-900">{formatRupiah(amtRawOps)}</span>
                   </div>
                 </div>
 
-                {/* Pos 2: Operasional */}
-                <div className="p-3 rounded-xl border border-l-4 border-l-[var(--color-accent-primary)] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-accent-primary)]" />
-                      <span className="text-xs font-bold text-gray-800">Pos Operasional</span>
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700">{pctOperations}%</span>
-                    </div>
-                    <p className="text-[10px] text-gray-500 mt-1 max-w-[200px] leading-relaxed">
-                      Alokasi biaya listrik, air bersih, es batu, internet, gas, dan keperluan harian.
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-bold font-mono text-gray-900">{formatRupiah(amtOperations)}</span>
-                  </div>
-                </div>
-
-                {/* Pos 3: Keuntungan Pribadi */}
-                <div className="p-3 rounded-xl border border-l-4 border-l-[var(--color-accent-orange)] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
+                {/* Pos 2: Keuntungan Bersih */}
+                <div className="p-3.5 rounded-xl border border-l-4 border-l-[var(--color-accent-orange)] border-gray-100 bg-[var(--color-bg-secondary)] flex justify-between items-center">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-accent-orange)]" />
                       <span className="text-xs font-bold text-gray-800">Keuntungan Bersih</span>
                       <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-warning-bg text-warning-text">{pctProfit}%</span>
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-1 max-w-[200px] leading-relaxed">
-                      Sisa dana keuntungan yang aman untuk diambil sebagai gaji pribadi / dividen.
+                    <p className="text-[10px] text-gray-500 mt-1 max-w-[220px] leading-relaxed">
+                      Sisa dana keuntungan yang aman untuk diambil sebagai dividen / gaji pribadi owner.
                     </p>
                   </div>
                   <div className="text-right">
@@ -444,7 +390,7 @@ export default function OwnerRevenueAllocation() {
               <div className="leading-relaxed space-y-1">
                 <p className="font-semibold">Saran Pengelolaan:</p>
                 <p className="text-[11px] text-amber-900/80">
-                  Secara berkala, alokasikan uang cash di laci kas ke masing-masing dompet penyimpanan (misal: Rekening Operasional BNI, Brankas Bahan Baku, dan Kantong Pribadi) sesuai porsi Rupiah di atas demi menjaga kedisiplinan keuangan RUTE.
+                  Secara berkala, alokasikan uang cash di laci kas ke masing-masing dompet penyimpanan (misal: Brankas Bahan Baku & Operasional dan Kantong Keuntungan) sesuai porsi Rupiah di atas demi menjaga kedisiplinan keuangan RUTE.
                 </p>
               </div>
             </div>
